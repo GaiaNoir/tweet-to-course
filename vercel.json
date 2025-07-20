@@ -1,0 +1,27 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "OPENAI_API_KEY": "@openai_api_key",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "@clerk_publishable_key",
+    "CLERK_SECRET_KEY": "@clerk_secret_key",
+    "CLERK_WEBHOOK_SECRET": "@clerk_webhook_secret",
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "PAYSTACK_SECRET_KEY": "@paystack_secret_key",
+    "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY": "@paystack_public_key",
+    "PAYSTACK_WEBHOOK_SECRET": "@paystack_webhook_secret",
+    "NOTION_CLIENT_ID": "@notion_client_id",
+    "NOTION_CLIENT_SECRET": "@notion_client_secret",
+    "NOTION_REDIRECT_URI": "@notion_redirect_uri",
+    "NEXT_PUBLIC_APP_URL": "@app_url"
+  }
+}
