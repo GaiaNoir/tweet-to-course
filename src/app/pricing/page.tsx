@@ -40,24 +40,11 @@ export default function PricingPage() {
 
     setIsLoading('pro');
     try {
-      const response = await fetch('/api/payments/create-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          plan: 'pro',
-          userId: user?.id,
-        }),
-      });
-
-      const data = await response.json();
+      // Use the Paystack payment link directly
+      const paymentUrl = 'https://paystack.shop/pay/xbom5adxzi';
       
-      if (data.success && data.authorizationUrl) {
-        window.location.href = data.authorizationUrl;
-      } else {
-        throw new Error(data.error || 'Failed to create subscription');
-      }
+      // Add user metadata to the URL if possible, or redirect directly
+      window.location.href = paymentUrl;
     } catch (error) {
       console.error('Subscription error:', error);
       alert('Failed to start subscription. Please try again.');
@@ -90,20 +77,15 @@ export default function PricingPage() {
     },
     {
       name: 'Pro',
-      price: '$19',
+      price: '$9',
       period: 'per month',
       description: 'For serious content creators and educators',
       features: [
         'Unlimited course generations',
         'Watermark-free PDF exports',
         'Notion export integration',
-        'Custom branding options',
         'Priority email support',
-        'Advanced slide templates',
-        'Cover art generation',
-        'Marketing asset creation',
-        'Sales page generator',
-        'Complete export packages',
+        'Cover art generation (coming soon)',
       ],
       limitations: [],
       popular: true,
