@@ -124,10 +124,43 @@ export default function DemoPage() {
 
   const handleExportPDF = async () => {
     setIsExporting(true);
-    // Simulate PDF export
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsExporting(false);
-    console.log('PDF exported');
+    
+    try {
+      console.log('Demo: Starting PDF export...');
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ courseData: currentCourse }),
+      });
+
+      console.log('Demo: PDF export response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Demo: PDF export error:', errorData);
+        alert(`PDF export failed: ${errorData.error}`);
+        return;
+      }
+
+      // Create download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentCourse.title.replace(/[^a-zA-Z0-9]/g, '_')}_course.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      console.log('Demo: PDF exported successfully');
+    } catch (error) {
+      console.error('Demo: PDF export error:', error);
+      alert('PDF export failed');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleExportNotion = async () => {
@@ -228,34 +261,7 @@ export default function DemoPage() {
           onNotionConnectionRequired={handleNotionConnectionRequired}
         />
 
-        {/* Slide Generator */}
-        <div className="mt-16">
-          <SlideGenerator
-            course={currentCourse}
-            userTier={currentUser.subscriptionTier}
-          />
-        </div>
 
-        {/* Cover Art Generator */}
-        <div className="mt-16">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              AI Cover Art Generator
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Generate professional cover art for your course using AI. Choose from different styles 
-              and download in multiple formats.
-            </p>
-          </div>
-          
-          <CoverArtGenerator
-            courseTitle={currentCourse.title}
-            courseContent={currentCourse.modules.map(m => m.summary).join(' ')}
-            onCoverArtGenerated={(coverArt) => {
-              console.log('Generated cover art:', coverArt);
-            }}
-          />
-        </div>
 
         {/* Feature Highlights */}
         <div className="mt-16 bg-white rounded-2xl shadow-xl p-8">
@@ -263,16 +269,6 @@ export default function DemoPage() {
             Component Features
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">✏️</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Editable Title</h3>
-              <p className="text-gray-600 text-sm">
-                Click on the course title to edit it inline with save/cancel options
-              </p>
-            </div>
-            
             <div className="text-center">
               <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <span className="text-indigo-600 text-xl">📚</span>
@@ -320,56 +316,6 @@ export default function DemoPage() {
               <h3 className="font-semibold text-gray-900 mb-2">Responsive Design</h3>
               <p className="text-gray-600 text-sm">
                 Fully responsive layout that works on mobile and desktop
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">🎨</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Slide Generation</h3>
-              <p className="text-gray-600 text-sm">
-                Generate presentation slides with light/dark themes and custom branding
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">📊</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Multi-Format Export</h3>
-              <p className="text-gray-600 text-sm">
-                Export slides as PDF or PowerPoint with speaker notes and branding
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">🎯</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Interactive Features</h3>
-              <p className="text-gray-600 text-sm">
-                Optional quiz slides and call-to-action slides for engagement
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">🖼️</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">AI Cover Art</h3>
-              <p className="text-gray-600 text-sm">
-                Generate professional cover images with DALL·E, auto-detect style, and download in multiple formats
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">🎨</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Style Detection</h3>
-              <p className="text-gray-600 text-sm">
-                Automatically detects appropriate style (professional, playful, modern, minimalist) based on content
               </p>
             </div>
           </div>

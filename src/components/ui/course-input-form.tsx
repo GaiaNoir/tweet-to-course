@@ -48,24 +48,16 @@ export function CourseInputForm({
 
   const validateInput = (value: string) => {
     if (!value || value.trim().length === 0) {
-      return 'Please enter a Twitter/X URL or paste your content';
+      return 'Please paste your content to generate a course';
     }
     
     const trimmedValue = value.trim();
-    const detectedType = detectInputType(trimmedValue);
     
-    if (detectedType === 'url') {
-      const twitterUrlPattern = /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/i;
-      if (!twitterUrlPattern.test(trimmedValue)) {
-        return 'Please enter a valid Twitter/X URL (e.g., https://twitter.com/username/status/123456789)';
-      }
-    } else {
-      if (trimmedValue.length < 10) {
-        return 'Content must be at least 10 characters long';
-      }
-      if (trimmedValue.length > 5000) {
-        return 'Content must be less than 5000 characters';
-      }
+    if (trimmedValue.length < 10) {
+      return 'Content must be at least 10 characters long';
+    }
+    if (trimmedValue.length > 5000) {
+      return 'Content must be less than 5000 characters';
     }
     
     return true;
@@ -73,7 +65,8 @@ export function CourseInputForm({
 
   const onFormSubmit = async (data: FormData) => {
     const trimmedContent = data.content.trim();
-    const type = detectInputType(trimmedContent);
+    // Always treat input as text content
+    const type = 'text';
     setInputType(type);
     
     try {
@@ -91,16 +84,11 @@ export function CourseInputForm({
   };
 
   const getPlaceholder = () => {
-    return contentValue.trim().startsWith('http') 
-      ? 'https://twitter.com/username/status/123456789'
-      : 'Paste your Twitter/X URL or enter your content manually...';
+    return 'Paste your tweet text or thread content here to generate a course...';
   };
 
   const getInputLabel = () => {
-    const detectedType = detectInputType(contentValue);
-    return detectedType === 'url' 
-      ? 'Twitter/X URL' 
-      : 'Content (Twitter/X URL or manual text)';
+    return 'Course Content';
   };
 
   if (isLoading) {
@@ -182,7 +170,7 @@ export function CourseInputForm({
       
       <div className="mt-4 text-center">
         <p className="text-sm text-gray-500">
-          Free users get 1 generation. 
+          Free users get 1 generation per month. 
           <button 
             onClick={() => window.location.href = '/pricing'}
             className="text-indigo-600 hover:text-indigo-700 ml-1 underline"
@@ -192,15 +180,11 @@ export function CourseInputForm({
         </p>
       </div>
       
-      {/* Input type indicator */}
+      {/* Content length indicator */}
       {contentValue && (
         <div className="mt-3 flex items-center justify-center">
-          <span className={`text-xs px-2 py-1 rounded-full ${
-            detectInputType(contentValue) === 'url' 
-              ? 'bg-blue-100 text-blue-700' 
-              : 'bg-green-100 text-green-700'
-          }`}>
-            {detectInputType(contentValue) === 'url' ? '🔗 URL detected' : '📝 Text content'}
+          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+            📝 {contentValue.length} characters
           </span>
         </div>
       )}

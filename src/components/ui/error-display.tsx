@@ -30,6 +30,9 @@ export function ErrorDisplay({
     if (message.toLowerCase().includes('rate limit') || message.toLowerCase().includes('quota')) {
       return 'Rate Limit Exceeded';
     }
+    if (message.includes('🔒') || message.toLowerCase().includes('twitter blocks')) {
+      return 'Twitter URL Detected';
+    }
     return 'Something went wrong';
   };
 
@@ -46,7 +49,43 @@ export function ErrorDisplay({
     if (message.toLowerCase().includes('quota') || message.toLowerCase().includes('usage')) {
       return 'You\'ve used all your free generations. Upgrade to Pro for unlimited access.';
     }
+    if (message.includes('🔒') || message.toLowerCase().includes('twitter blocks')) {
+      return message; // Return the full Twitter copy instructions as-is
+    }
     return message || 'An unexpected error occurred. Please try again.';
+  };
+
+  const renderTwitterInstructions = (message: string) => {
+    if (!message.includes('🔒') && !message.toLowerCase().includes('twitter blocks')) {
+      return <p className="text-sm opacity-90">{getUserFriendlyMessage(message)}</p>;
+    }
+
+    // Extract URL from the message
+    const urlMatch = message.match(/(https?:\/\/[^\s]+)/);
+    const tweetUrl = urlMatch ? urlMatch[1] : '';
+
+    return (
+      <div className="space-y-3">
+        <p className="text-sm font-medium">X/Twitter blocks automatic content extraction. Here's how to copy the tweet text:</p>
+        <ol className="text-sm space-y-2 ml-4 list-decimal">
+          <li>
+            {tweetUrl ? (
+              <span>
+                Open the tweet: <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline break-all">{tweetUrl}</a>
+              </span>
+            ) : (
+              'Open the tweet in a new tab'
+            )}
+          </li>
+          <li>Copy the tweet text (not the URL)</li>
+          <li>Paste it in the text box above</li>
+          <li>Click "Generate Course" again</li>
+        </ol>
+        <p className="text-xs opacity-75 bg-blue-50 p-2 rounded">
+          💡 This actually works better since you can edit the text before generating your course!
+        </p>
+      </div>
+    );
   };
 
   const baseClasses = "flex items-start space-x-3 p-4 rounded-lg border";
@@ -65,9 +104,7 @@ export function ErrorDisplay({
         <h4 className="font-medium text-sm mb-1">
           {getErrorTitle(errorMessage)}
         </h4>
-        <p className="text-sm opacity-90">
-          {getUserFriendlyMessage(errorMessage)}
-        </p>
+        {renderTwitterInstructions(errorMessage)}
         
         {(onRetry || onDismiss) && (
           <div className="flex items-center space-x-3 mt-3">

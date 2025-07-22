@@ -35,7 +35,7 @@ export default async function DashboardPage() {
   const limits = getSubscriptionLimits(userProfile.subscriptionTier);
   const usagePercentage = limits.monthlyGenerations === -1 
     ? 0 
-    : (userProfile.usageCount / limits.monthlyGenerations) * 100;
+    : (userProfile.monthlyUsageCount / limits.monthlyGenerations) * 100;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,16 +118,21 @@ export default async function DashboardPage() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">
-                        Courses Generated
+                        Monthly Courses Generated
                       </dt>
                       <dd className="text-lg font-medium text-gray-900">
-                        {userProfile.usageCount}
+                        {userProfile.monthlyUsageCount}
                         {limits.monthlyGenerations !== -1 && (
                           <span className="text-sm text-gray-500">
                             {' '}/ {limits.monthlyGenerations}
                           </span>
                         )}
                       </dd>
+                      {userProfile.subscriptionTier === 'free' && userProfile.monthlyUsageResetDate && (
+                        <dd className="text-xs text-gray-400 mt-1">
+                          Resets on {new Date(userProfile.monthlyUsageResetDate).toLocaleDateString()}
+                        </dd>
+                      )}
                     </dl>
                   </div>
                 </div>

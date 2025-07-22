@@ -21,12 +21,6 @@ export function Navigation() {
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-8">
         <Link 
-          href="#how-it-works" 
-          className="text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          How it Works
-        </Link>
-        <Link 
           href="/pricing" 
           className="text-gray-600 hover:text-gray-900 transition-colors"
         >
@@ -46,12 +40,6 @@ export function Navigation() {
           </SignInButton>
         </SignedOut>
         <SignedIn>
-          <Link 
-            href="/dashboard"
-            className="text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Dashboard
-          </Link>
           <UserButton />
         </SignedIn>
       </div>
@@ -74,13 +62,6 @@ export function Navigation() {
       {isMobileMenuOpen && (
         <div className="absolute top-20 left-0 right-0 bg-white shadow-lg border-t md:hidden z-50">
           <div className="px-6 py-4 space-y-4">
-            <Link 
-              href="#how-it-works" 
-              className="block text-gray-600 hover:text-gray-900 transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              How it Works
-            </Link>
             <Link 
               href="/pricing" 
               className="block text-gray-600 hover:text-gray-900 transition-colors"
@@ -106,13 +87,6 @@ export function Navigation() {
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <Link 
-                href="/dashboard"
-                className="block text-gray-600 hover:text-gray-900 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
               <div className="pt-2">
                 <UserButton />
               </div>

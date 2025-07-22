@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { UserService, CourseService, UsageService } from '@/lib/database';
+import { UserService, UsageService } from '@/lib/database';
 import { canPerformAction } from '@/lib/subscription-utils';
 import jsPDF from 'jspdf';
+import { MarketingAssets } from '@/lib/marketing-assets-generator';
 
-interface ExportPDFRequest {
-  courseId?: string;
-  courseData?: any;
+interface ExportMarketingPDFRequest {
+  marketingAssets: MarketingAssets;
+  courseTitle: string;
   includeWatermark?: boolean;
 }
 
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth();
     
     // For debugging - log the auth status
-    console.log('PDF Export - Auth status:', { userId });
+    console.log('Marketing PDF Export - Auth status:', { userId });
     
     if (!userId) {
       return NextResponse.json(
@@ -24,18 +25,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: ExportPDFRequest = await request.json();
-    const { courseId, courseData } = body;
+    const body: ExportMarketingPDFRequest = await request.json();
+    const { marketingAssets, courseTitle } = body;
 
-    if (!courseId && !courseData) {
+    if (!marketingAssets || !courseTitle) {
       return NextResponse.json(
-        { success: false, error: 'Course ID or course data is required' },
+        { success: false, error: 'Marketing assets and course title are required' },
         { status: 400 }
       );
     }
 
-    // Get user data and check permissions (create user if doesn't exist)
-    const user = await UserService.ensureUserExists(userId);
+    // Get user data and check permissions
+    const user = await UserService.getUserByClerkId(userId);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      );
+    }
 
     // Check if user can export PDF
     if (!canPerformAction(user.subscription_tier, user.usage_count, 'export_pdf')) {
@@ -47,34 +54,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 403 }
       );
-    }
-
-    // Get course data - either from database or directly from request
-    let course;
-    
-    if (courseData) {
-      // Use course data directly (for temporary/anonymous courses)
-      course = courseData;
-    } else if (courseId) {
-      // Get course from database
-      course = await CourseService.getCourseById(courseId);
-      if (!course) {
-        return NextResponse.json(
-          { success: false, error: 'Course not found' },
-          { status: 404 }
-        );
-      }
-
-      // Check if user owns the course
-      const userCourses = await CourseService.getUserCourses(user.id);
-      const userOwnsCourse = userCourses.some(c => c.id === courseId);
-      
-      if (!userOwnsCourse) {
-        return NextResponse.json(
-          { success: false, error: 'Access denied' },
-          { status: 403 }
-        );
-      }
     }
 
     // Generate PDF
@@ -103,38 +82,65 @@ export async function POST(request: NextRequest) {
       yPosition += lines.length * fontSize * 0.5 + 5;
     };
 
+    const addSection = (title: string) => {
+      yPosition += 10;
+      addText(title, 16, true);
+      yPosition += 5;
+    };
+
     // Add title
-    addText(course.title, 20, true);
+    addText(`${courseTitle} - Marketing Assets`, 20, true);
     yPosition += 10;
 
     // Add generation date
     addText(`Generated on: ${new Date().toLocaleDateString()}`, 10);
     yPosition += 15;
 
-    // Add modules
-    const modules = Array.isArray(course.modules) ? course.modules : [];
+    // Cold DMs Section
+    addSection('🔥 Cold DMs & Outreach Messages');
+    marketingAssets.coldDMs.forEach((dm, index) => {
+      addText(`Message ${index + 1}:`, 12, true);
+      addText(dm, 11);
+      yPosition += 10;
+    });
+
+    // Ad Copy Templates Section
+    addSection('📱 Ad Copy Templates');
     
-    modules.forEach((module: any, index: number) => {
-      // Module title
-      addText(`Module ${index + 1}: ${module.title}`, 16, true);
-      yPosition += 5;
-      
-      // Module summary
-      if (module.summary) {
-        addText(module.summary, 12);
-        yPosition += 10;
-      }
-      
-      // Takeaways
-      if (module.takeaways && Array.isArray(module.takeaways)) {
-        addText('Key Takeaways:', 14, true);
-        yPosition += 5;
-        
-        module.takeaways.forEach((takeaway: string) => {
-          addText(`• ${takeaway}`, 12);
-        });
-        yPosition += 15;
-      }
+    addText('Facebook/Meta Ads:', 12, true);
+    addText(marketingAssets.adCopyTemplate.facebook, 11);
+    yPosition += 10;
+    
+    addText('Twitter/X Promoted Posts:', 12, true);
+    addText(marketingAssets.adCopyTemplate.twitter, 11);
+    yPosition += 10;
+    
+    addText('Instagram Ads:', 12, true);
+    addText(marketingAssets.adCopyTemplate.instagram, 11);
+    yPosition += 15;
+
+    // Spreadsheet Template Section
+    addSection('📊 Marketing Tracking Spreadsheet');
+    addText(marketingAssets.spreadsheetTemplate.description, 11);
+    yPosition += 10;
+    
+    addText('Headers:', 12, true);
+    addText(marketingAssets.spreadsheetTemplate.headers.join(' | '), 10);
+    yPosition += 10;
+    
+    addText('Sample Data:', 12, true);
+    marketingAssets.spreadsheetTemplate.sampleData.forEach((row, index) => {
+      addText(`Row ${index + 1}: ${row.join(' | ')}`, 9);
+    });
+    yPosition += 15;
+
+    // Bonus Resource Section
+    addSection(`🎯 Bonus Resource: ${marketingAssets.bonusResource.title}`);
+    addText(`Type: ${marketingAssets.bonusResource.type.charAt(0).toUpperCase() + marketingAssets.bonusResource.type.slice(1)}`, 11);
+    yPosition += 5;
+    
+    marketingAssets.bonusResource.content.forEach((item, index) => {
+      addText(`${index + 1}. ${item}`, 11);
     });
 
     // Add watermark for free users
@@ -156,12 +162,11 @@ export async function POST(request: NextRequest) {
     // Log the export action
     await UsageService.logAction({
       user_id: user.id,
-      action: 'export_pdf',
+      action: 'export_marketing_pdf',
       metadata: {
-        course_id: courseId || 'temporary',
-        course_title: course.title,
+        course_title: courseTitle,
         has_watermark: shouldAddWatermark,
-        is_temporary_course: !courseId,
+        asset_types: ['coldDMs', 'adCopy', 'spreadsheet', 'bonusResource'],
       },
     });
 
@@ -169,7 +174,7 @@ export async function POST(request: NextRequest) {
     const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
 
     // Return PDF as download
-    const filename = `${course.title.replace(/[^a-zA-Z0-9]/g, '_')}_course.pdf`;
+    const filename = `${courseTitle.replace(/[^a-zA-Z0-9]/g, '_')}_marketing_assets.pdf`;
     
     return new NextResponse(pdfBuffer, {
       headers: {
@@ -180,11 +185,11 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('PDF export error:', error);
+    console.error('Marketing PDF export error:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Failed to export PDF',
+        error: 'Failed to export marketing assets as PDF',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

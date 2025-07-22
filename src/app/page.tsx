@@ -7,23 +7,40 @@ import { CourseInputForm } from '@/components/ui';
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generatedCourse, setGeneratedCourse] = useState<any>(null);
 
   const handleCourseGeneration = async (data: { content: string; type: 'url' | 'text' }) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // TODO: This will be implemented in task 5 - OpenAI integration
-      // For now, simulate the API call
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Simulate different outcomes for testing
-      if (data.content.includes('error')) {
-        throw new Error('Failed to generate course. Please try again.');
+      const response = await fetch('/api/generate-course', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: data.content,
+          type: data.type,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to generate course');
       }
+
+      // Success! Store the generated course and redirect to full course page
+      console.log('Course generated successfully:', result.course);
       
-      console.log('Course generation requested:', data);
-      // TODO: Redirect to course display or handle success
+      // Store course in localStorage for the course page to access
+      localStorage.setItem(`course-${result.course.id}`, JSON.stringify(result.course));
+      
+      // Redirect to the full course display page
+      window.location.href = `/course/${result.course.id}`;
+      
+      setError(null); // Clear any previous errors
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -35,6 +52,106 @@ export default function Home() {
 
   const handleErrorDismiss = () => {
     setError(null);
+  };
+
+  const handleExportPDF = async (courseId: string) => {
+    try {
+      setIsLoading(true);
+      
+      // For courses that might not be saved to DB, send the course data directly
+      const requestBody = courseId.startsWith('course-') 
+        ? { courseData: generatedCourse } // Temporary course, send data directly
+        : { courseId }; // Saved course, use ID
+
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          setError('Please sign in to export courses as PDF. PDF export requires an account.');
+          return;
+        }
+        if (errorData.upgradeRequired) {
+          setError('PDF export is only available for Pro subscribers. Please upgrade your plan to export courses as PDF.');
+          return;
+        }
+        throw new Error(errorData.error || 'Failed to export PDF');
+      }
+
+      // Create download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${generatedCourse.title.replace(/[^a-zA-Z0-9]/g, '_')}_course.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to export PDF';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExportNotion = async (courseId: string) => {
+    try {
+      setIsLoading(true);
+      
+      // For courses that might not be saved to DB, send the course data directly
+      const requestBody = courseId.startsWith('course-') 
+        ? { courseData: generatedCourse, exportType: 'direct' } // Temporary course, send data directly
+        : { courseId, exportType: 'direct' }; // Saved course, use ID
+
+      const response = await fetch('/api/export-notion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Please sign in to export courses to Notion. Notion export requires an account.');
+          return;
+        }
+        if (result.upgradeRequired) {
+          setError('Notion export is only available for Pro and Lifetime subscribers. Please upgrade your plan to export courses to Notion.');
+          return;
+        }
+        if (result.requiresConnection) {
+          setError('Please connect your Notion account first. Go to your dashboard to set up Notion integration.');
+          return;
+        }
+        throw new Error(result.error || 'Failed to export to Notion');
+      }
+
+      if (result.success && result.pageUrl) {
+        // Success - show success message and optionally open Notion page
+        alert(`Course exported to Notion successfully! Opening your Notion page...`);
+        window.open(result.pageUrl, '_blank');
+      } else {
+        throw new Error('Export completed but no page URL returned');
+      }
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to export to Notion';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -62,6 +179,81 @@ export default function Home() {
           error={error}
           onErrorDismiss={handleErrorDismiss}
         />
+
+        {/* Generated Course Display */}
+        {generatedCourse && (
+          <div className="mt-12 bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto text-left">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                🎉 Course Generated Successfully!
+              </h2>
+              <button
+                onClick={() => setGeneratedCourse(null)}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold text-indigo-600 mb-2">
+                  {generatedCourse.title}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Generated on {new Date(generatedCourse.generatedAt).toLocaleDateString()}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900">Course Modules:</h4>
+                {generatedCourse.modules.map((module: any, index: number) => (
+                  <div key={module.id} className="border border-gray-200 rounded-lg p-4">
+                    <h5 className="font-medium text-gray-900 mb-2">
+                      Module {index + 1}: {module.title}
+                    </h5>
+                    <p className="text-gray-600 text-sm mb-3">
+                      {module.summary}
+                    </p>
+                    {module.takeaways && module.takeaways.length > 0 && (
+                      <div>
+                        <p className="font-medium text-gray-700 text-sm mb-1">Key Takeaways:</p>
+                        <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                          {module.takeaways.map((takeaway: string, idx: number) => (
+                            <li key={idx}>{takeaway}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                <button 
+                  onClick={() => handleExportPDF(generatedCourse.id)}
+                  disabled={isLoading}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  📄 Export as PDF
+                </button>
+                <button 
+                  onClick={() => handleExportNotion(generatedCourse.id)}
+                  disabled={isLoading}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                >
+                  📝 Export to Notion
+                </button>
+                <button 
+                  onClick={() => setGeneratedCourse(null)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  ✨ Generate Another Course
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Features Preview */}
         <div className="grid md:grid-cols-3 gap-8 mt-16">
@@ -119,7 +311,7 @@ export default function Home() {
                 Paste Your Content
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Simply paste a Twitter/X URL or enter your content manually. Our system accepts threads, individual tweets, or any text content you want to transform.
+                Simply paste your tweet text or thread content. Our system accepts threads, individual tweets, or any text content you want to transform into a comprehensive course.
               </p>
             </div>
 

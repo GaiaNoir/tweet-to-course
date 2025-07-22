@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import SlideGenerator, { SlideOptions, SlideTheme } from '@/lib/slide-generator';
-import { database } from '@/lib/database';
+import { UserService, CourseService, UsageService } from '@/lib/database';
 import { Course } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -42,26 +42,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user subscription to check permissions
-    const { data: user } = await database
-      .from('users')
-      .select('subscription_tier')
-      .eq('clerk_user_id', userId)
-      .single();
+    const user = await UserService.getUserByClerkId(userId);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      );
+    }
 
-    const isPaidUser = user?.subscription_tier === 'pro' || user?.subscription_tier === 'lifetime';
+    const isPaidUser = user.subscription_tier === 'pro' || user.subscription_tier === 'lifetime';
 
     // Get course data from database
-    const { data: course, error: courseError } = await database
-      .from('courses')
-      .select('*')
-      .eq('id', courseId)
-      .eq('user_id', userId)
-      .single();
-
-    if (courseError || !course) {
+    const course = await CourseService.getCourseById(courseId);
+    if (!course) {
       return NextResponse.json(
         { success: false, error: 'Course not found' },
         { status: 404 }
+      );
+    }
+
+    // Check if user owns the course
+    const userCourses = await CourseService.getUserCourses(user.id);
+    const userOwnsCourse = userCourses.some(c => c.id === courseId);
+    
+    if (!userOwnsCourse) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
       );
     }
 
@@ -69,11 +76,12 @@ export async function POST(request: NextRequest) {
     const courseData: Course = {
       id: course.id,
       title: course.title,
-      description: course.description,
-      modules: course.modules as any,
+      description: course.description || 'Transform your knowledge into actionable insights',
+      modules: Array.isArray(course.modules) ? course.modules : [],
       metadata: {
-        sourceType: course.source_type as 'tweet' | 'thread' | 'manual',
-        sourceUrl: course.source_url || undefined,
+        sourceType: 'manual' as const,
+        sourceUrl: undefined,
+        originalContent: course.original_content,
         generatedAt: course.created_at,
         version: 1,
       },
@@ -101,8 +109,8 @@ export async function POST(request: NextRequest) {
       const pdfBuffer = await slideGenerator.exportToPDF(slideContent, slideOptions);
       
       // Log usage
-      await database.from('usage_logs').insert({
-        user_id: userId,
+      await UsageService.logAction({
+        user_id: user.id,
         action: 'export_slides_pdf',
         metadata: {
           courseId,
@@ -123,8 +131,8 @@ export async function POST(request: NextRequest) {
       const pptxBuffer = await slideGenerator.exportToPPTX(slideContent, slideOptions);
       
       // Log usage
-      await database.from('usage_logs').insert({
-        user_id: userId,
+      await UsageService.logAction({
+        user_id: user.id,
         action: 'export_slides_ppt',
         metadata: {
           courseId,

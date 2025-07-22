@@ -34,6 +34,7 @@ export function NotionExport({
     setExportResult(null);
 
     try {
+      console.log('Starting Notion export...', { exportType, courseId });
       const response = await fetch('/api/export-notion', {
         method: 'POST',
         headers: {
@@ -45,7 +46,11 @@ export function NotionExport({
         }),
       });
 
+      console.log('Notion export response status:', response.status);
+      console.log('Notion export response headers:', Object.fromEntries(response.headers.entries()));
+
       const data = await response.json();
+      console.log('Notion export response data:', data);
 
       if (data.success) {
         if (exportType === 'direct') {

@@ -7,6 +7,8 @@ export interface UserProfile {
   email: string;
   subscriptionTier: 'free' | 'pro' | 'lifetime';
   usageCount: number;
+  monthlyUsageCount: number;
+  monthlyUsageResetDate: string;
   createdAt: string;
   lastActive: string;
   customerCode?: string;
@@ -60,6 +62,8 @@ export async function getUserProfile(clerkUserId: string): Promise<UserProfile |
       email: existingUser.email,
       subscriptionTier: existingUser.subscription_tier,
       usageCount: existingUser.usage_count,
+      monthlyUsageCount: existingUser.monthly_usage_count || 0,
+      monthlyUsageResetDate: existingUser.monthly_usage_reset_date,
       createdAt: existingUser.created_at,
       lastActive: existingUser.updated_at,
       customerCode: existingUser.customer_code,
@@ -92,6 +96,8 @@ export async function getUserProfile(clerkUserId: string): Promise<UserProfile |
     email: newUser.email,
     subscriptionTier: newUser.subscription_tier,
     usageCount: newUser.usage_count,
+    monthlyUsageCount: newUser.monthly_usage_count || 0,
+    monthlyUsageResetDate: newUser.monthly_usage_reset_date,
     createdAt: newUser.created_at,
     lastActive: newUser.updated_at,
   };
@@ -123,7 +129,7 @@ export function canPerformAction(
   switch (action) {
     case 'generate':
       return userProfile.subscriptionTier === 'free' 
-        ? userProfile.usageCount < 1 
+        ? userProfile.monthlyUsageCount < 1 
         : true;
     
     case 'export_pdf':

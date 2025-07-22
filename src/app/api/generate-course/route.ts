@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { generateCourseContent, OpenAIError } from '@/lib/openai';
 import { processContent, ContentProcessingError, prepareContentForAI } from '@/lib/content-processor';
-import { createClient } from '@/lib/database';
+import { supabaseAdmin } from '@/lib/supabase';
+import { checkMonthlyUsage, incrementMonthlyUsage } from '@/lib/usage-limits';
+import { UserService } from '@/lib/database';
 
 // Types for the API
 interface GenerateCourseRequest {
@@ -23,7 +25,13 @@ interface GenerateCourseResponse {
       takeaways: string[];
       order: number;
     }>;
-    generatedAt: string;
+    metadata: {
+      sourceType: 'tweet' | 'thread' | 'manual';
+      sourceUrl?: string;
+      originalContent?: string;
+      generatedAt: string;
+      version: number;
+    };
   };
   error?: {
     code: string;
@@ -60,9 +68,12 @@ function checkUserRateLimit(userId: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚀 Starting course generation API...');
+    
     // Parse request body
     const body: GenerateCourseRequest = await request.json();
     const { content, regenerate = false } = body;
+    console.log('📝 Request body parsed:', { contentLength: content?.length, regenerate });
 
     // Validate required fields
     if (!content || typeof content !== 'string') {
@@ -81,6 +92,7 @@ export async function POST(request: NextRequest) {
 
     // Get user authentication
     const { userId } = await auth();
+    console.log('👤 User authentication:', { userId: userId ? 'authenticated' : 'anonymous' });
     
     // Check user rate limiting
     if (userId && !checkUserRateLimit(userId)) {
@@ -100,8 +112,11 @@ export async function POST(request: NextRequest) {
     // Process content
     let processedContent;
     try {
+      console.log('🔄 Processing content...');
       processedContent = await processContent(content);
+      console.log('✅ Content processed successfully:', { type: processedContent.type, contentLength: processedContent.content.length });
     } catch (error) {
+      console.log('❌ Content processing failed:', error);
       if (error instanceof ContentProcessingError) {
         return NextResponse.json(
           {
@@ -118,55 +133,55 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    // Check user subscription and usage limits
-    let currentUsageCount = 0;
-    let userTier = 'free';
+    // Check user subscription and monthly usage limits
+    let usageInfo;
     
+    let dbUser = null;
     if (userId) {
-      const supabase = createClient();
-      
-      // Get user data
-      const userQuery = await supabase
-        .from('users')
-        .select('subscription_tier, usage_count')
-        .eq('clerk_user_id', userId)
-        .single();
-      
-      const { data: userData, error: userError } = userQuery;
-
-      if (userError && userError.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('Database error:', userError);
+      try {
+        // First, ensure user exists in Supabase (get from Clerk if needed)
+        const clerkUser = await currentUser();
+        if (clerkUser) {
+          const email = clerkUser.emailAddresses[0]?.emailAddress || '';
+          // This will create the user if they don't exist
+          dbUser = await UserService.getOrCreateUser(userId, email);
+        }
+        
+        usageInfo = await checkMonthlyUsage(userId);
+        
+        // Check if user can generate a course (skip check for regenerations)
+        if (!regenerate && !usageInfo.canGenerate) {
+          const resetDate = new Date(usageInfo.resetDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+          
+          return NextResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'MONTHLY_LIMIT_EXCEEDED',
+                message: `Free plan allows 1 course generation per month. Your limit resets on ${resetDate}. Please upgrade to Pro for unlimited generations.`,
+                retryable: false,
+              },
+              usageCount: usageInfo.currentUsage,
+            } as GenerateCourseResponse,
+            { status: 403 }
+          );
+        }
+      } catch (error) {
+        console.error('Error checking monthly usage:', error);
         return NextResponse.json(
           {
             success: false,
             error: {
               code: 'DATABASE_ERROR',
-              message: 'Failed to check user status',
+              message: 'Failed to check usage limits',
               retryable: true,
             },
           } as GenerateCourseResponse,
           { status: 500 }
-        );
-      }
-
-      if (userData) {
-        currentUsageCount = userData.usage_count || 0;
-        userTier = userData.subscription_tier || 'free';
-      }
-
-      // Check usage limits for free users
-      if (userTier === 'free' && currentUsageCount >= 1 && !regenerate) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              code: 'USAGE_LIMIT_EXCEEDED',
-              message: 'Free plan allows 1 course generation. Please upgrade to Pro for unlimited generations.',
-              retryable: false,
-            },
-            usageCount: currentUsageCount,
-          } as GenerateCourseResponse,
-          { status: 403 }
         );
       }
     }
@@ -196,18 +211,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Save course to database and update usage
-    let courseId = `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    let courseId = `course-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     
-    if (userId) {
-      const supabase = createClient();
-      
+    if (userId && dbUser) {
       try {
         // Start a transaction-like operation
-        // First, save the course
-        const { data: courseData, error: courseError } = await supabase
+        // First, save the course using the database user ID
+        const { data: courseData, error: courseError } = await supabaseAdmin
           .from('courses')
           .insert({
-            user_id: userId,
+            user_id: dbUser.id, // Use database user ID, not Clerk user ID
             title: generatedCourse.title,
             original_content: processedContent.content,
             modules: generatedCourse.modules,
@@ -221,30 +234,25 @@ export async function POST(request: NextRequest) {
           courseId = courseData.id;
         }
 
-        // Update user usage count (only for new generations, not regenerations)
+        // Update monthly usage count (only for new generations, not regenerations)
         if (!regenerate) {
-          const { error: usageError } = await supabase
-            .from('users')
-            .upsert({
-              clerk_user_id: userId,
-              usage_count: currentUsageCount + 1,
-              subscription_tier: userTier,
-            });
-
-          if (usageError) {
-            console.error('Usage update error:', usageError);
+          try {
+            await incrementMonthlyUsage(userId);
+          } catch (error) {
+            console.error('Monthly usage update error:', error);
           }
 
           // Log the usage
-          const { error: logError } = await supabase
+          const { error: logError } = await supabaseAdmin
             .from('usage_logs')
             .insert({
-              user_id: userId,
+              user_id: dbUser.id, // Use database user ID, not Clerk user ID
               action: 'generate',
               metadata: {
                 content_type: processedContent.type,
                 course_id: courseId,
               },
+              usage_month: new Date().toISOString().slice(0, 10), // YYYY-MM-DD format
             });
 
           if (logError) {
@@ -265,22 +273,29 @@ export async function POST(request: NextRequest) {
           id: courseId,
           title: generatedCourse.title,
           modules: generatedCourse.modules,
-          generatedAt: new Date().toISOString(),
+          metadata: {
+            sourceType: processedContent.type === 'url' ? 'tweet' : 'manual',
+            sourceUrl: processedContent.type === 'url' ? content : undefined,
+            originalContent: processedContent.content,
+            generatedAt: new Date().toISOString(),
+            version: 1,
+          },
         },
-        usageCount: userId ? currentUsageCount + (regenerate ? 0 : 1) : undefined,
+        usageCount: userId && usageInfo ? usageInfo.currentUsage + (regenerate ? 0 : 1) : undefined,
       } as GenerateCourseResponse,
       { status: 200 }
     );
 
   } catch (error) {
     console.error('Unexpected error in generate-course API:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     return NextResponse.json(
       {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: 'An unexpected error occurred. Please try again.',
+          message: `An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
           retryable: true,
         },
       } as GenerateCourseResponse,

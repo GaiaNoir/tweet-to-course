@@ -17,6 +17,7 @@ export interface Course {
   metadata: {
     sourceType: 'tweet' | 'thread' | 'manual';
     sourceUrl?: string;
+    originalContent?: string;
     generatedAt: string;
     version: number;
   };

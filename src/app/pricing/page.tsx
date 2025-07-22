@@ -69,7 +69,7 @@ export default function PricingPage() {
         'Watermarked exports',
         'No Notion export',
         'No custom branding',
-        'Limited to 1 generation',
+        'Limited to 1 generation per month',
       ],
       buttonText: isSignedIn ? 'Current Plan' : 'Get Started Free',
       buttonAction: handleFreeTier,

@@ -96,6 +96,34 @@ export class UserService {
 
     return user;
   }
+
+  /**
+   * Ensure user exists in database (get from Clerk if needed)
+   * This is a helper function for API endpoints to ensure users exist before operations
+   */
+  static async ensureUserExists(clerkUserId: string): Promise<DbUser> {
+    let user = await this.getUserByClerkId(clerkUserId);
+    
+    if (!user) {
+      // Get user info from Clerk
+      const { currentUser } = await import('@clerk/nextjs/server');
+      const clerkUser = await currentUser();
+      
+      if (!clerkUser) {
+        throw new Error('User not found in Clerk');
+      }
+      
+      const email = clerkUser.emailAddresses[0]?.emailAddress || '';
+      user = await this.createUser({
+        clerk_user_id: clerkUserId,
+        email,
+        subscription_tier: 'free',
+        usage_count: 0,
+      });
+    }
+
+    return user;
+  }
 }
 
 // Course operations

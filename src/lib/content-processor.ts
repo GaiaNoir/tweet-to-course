@@ -74,7 +74,7 @@ export function extractUsername(url: string): string | null {
   return null;
 }
 
-// Process tweet URL (placeholder for actual tweet fetching)
+// Process tweet URL - provide helpful guidance since X/Twitter blocks scraping
 async function processTweetUrl(url: string): Promise<ProcessedContent> {
   if (!isValidTweetUrl(url)) {
     throw new ContentProcessingError(
@@ -95,25 +95,19 @@ async function processTweetUrl(url: string): Promise<ProcessedContent> {
     );
   }
 
-  // Note: In a real implementation, you would use Twitter API or a scraping service
-  // For now, we'll return a placeholder that instructs users to paste content manually
+  // X/Twitter now blocks most scraping attempts, so provide helpful guidance
   throw new ContentProcessingError(
-    'Tweet content extraction is not yet implemented. Please copy and paste the tweet content manually.',
-    'TWEET_EXTRACTION_NOT_IMPLEMENTED',
+    `🔒 X/Twitter blocks automatic content extraction. Here's how to get the tweet text:
+
+1. Open the tweet: ${url}
+2. Copy the tweet text (not the URL)
+3. Paste it in the text box above
+4. Click "Generate Course" again
+
+This works better anyway since you can edit the text before generating your course!`,
+    'TWITTER_REQUIRES_MANUAL_COPY',
     false
   );
-
-  // Future implementation would look like:
-  // const tweetContent = await fetchTweetContent(tweetId);
-  // return {
-  //   content: tweetContent,
-  //   type: 'url',
-  //   metadata: {
-  //     tweetId,
-  //     username,
-  //     originalUrl: url,
-  //   },
-  // };
 }
 
 // Process manual text input

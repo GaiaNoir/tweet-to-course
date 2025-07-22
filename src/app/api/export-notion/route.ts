@@ -5,7 +5,8 @@ import { canPerformAction } from '@/lib/subscription-utils';
 import { supabaseAdmin } from '@/lib/supabase';
 
 interface ExportNotionRequest {
-  courseId: string;
+  courseId?: string;
+  courseData?: any;
   parentPageId?: string;
   exportType: 'direct' | 'markdown';
 }
@@ -41,11 +42,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body: ExportNotionRequest = await request.json();
-    const { courseId, parentPageId, exportType = 'direct' } = body;
+    const { courseId, courseData, parentPageId, exportType = 'direct' } = body;
 
-    if (!courseId) {
+    if (!courseId && !courseData) {
       return NextResponse.json(
-        { success: false, error: 'Course ID is required' },
+        { success: false, error: 'Course ID or course data is required' },
         { status: 400 }
       );
     }
@@ -72,24 +73,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get course data
-    const course = await CourseService.getCourseById(courseId);
-    if (!course) {
-      return NextResponse.json(
-        { success: false, error: 'Course not found' },
-        { status: 404 }
-      );
-    }
-
-    // Check if user owns the course
-    const userCourses = await CourseService.getUserCourses(user.id);
-    const userOwnsCourse = userCourses.some(c => c.id === courseId);
+    // Get course data - either from database or directly from request
+    let course;
     
-    if (!userOwnsCourse) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      );
+    if (courseData) {
+      // Use course data directly (for temporary/anonymous courses)
+      course = courseData;
+    } else if (courseId) {
+      // Get course from database
+      course = await CourseService.getCourseById(courseId);
+      if (!course) {
+        return NextResponse.json(
+          { success: false, error: 'Course not found' },
+          { status: 404 }
+        );
+      }
+
+      // Check if user owns the course
+      const userCourses = await CourseService.getUserCourses(user.id);
+      const userOwnsCourse = userCourses.some(c => c.id === courseId);
+      
+      if (!userOwnsCourse) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied' },
+          { status: 403 }
+        );
+      }
     }
 
     if (exportType === 'direct') {
@@ -134,10 +143,11 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         action: 'export_notion',
         metadata: {
-          course_id: courseId,
+          course_id: courseId || 'temporary',
           course_title: course.title,
           notion_page_id: notionResult.pageId,
           export_type: 'direct',
+          is_temporary_course: !courseId,
         },
       });
 
@@ -157,9 +167,10 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         action: 'export_notion',
         metadata: {
-          course_id: courseId,
+          course_id: courseId || 'temporary',
           course_title: course.title,
           export_type: 'markdown',
+          is_temporary_course: !courseId,
         },
       });
 

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Course, UserProfile } from '@/types';
 import { NotionExport } from './notion-export';
+import { MarketingAssetsGenerator } from './marketing-assets-generator';
 
 interface CourseDisplayProps {
   course: Course;
@@ -286,6 +287,19 @@ export function CourseDisplay({
               </div>
             );
           })}
+      </div>
+
+      {/* Marketing Assets Generator - PROMINENT SECTION */}
+      <div className="mt-12 pt-8 border-t-4 border-purple-200">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">🚀 Ready to Market Your Course?</h2>
+          <p className="text-xl text-gray-600">Generate professional marketing materials in seconds!</p>
+        </div>
+        <MarketingAssetsGenerator
+          courseTitle={course.title}
+          courseContent={course.modules.map(m => `${m.title}: ${m.summary}\n${m.takeaways.join('\n')}`).join('\n\n')}
+          originalTweet={course.metadata.originalContent || ''}
+        />
       </div>
 
       {/* Export Options */}
