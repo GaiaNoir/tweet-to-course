@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin, handleSupabaseError } from './supabase';
+import { supabase, createAdminClient, handleSupabaseError } from './supabase';
 import type { 
   DbUser, 
   DbUserInsert, 
@@ -11,7 +11,7 @@ import type {
 } from '@/types/database';
 
 // Re-export createClient for compatibility
-export { supabase as createClient, supabaseAdmin, handleSupabaseError } from './supabase';
+export { supabase as createClient, createAdminClient, handleSupabaseError } from './supabase';
 
 // Export the database instance for backward compatibility
 export const database = supabase;
@@ -22,7 +22,8 @@ export class UserService {
    * Create a new user in the database
    */
   static async createUser(userData: DbUserInsert): Promise<DbUser> {
-    const { data, error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
       .from('users')
       .insert(userData)
       .select()
@@ -33,10 +34,11 @@ export class UserService {
   }
 
   /**
-   * Get user by Clerk user ID
+   * Get user by Clerk user ID (legacy)
    */
   static async getUserByClerkId(clerkUserId: string): Promise<DbUser | null> {
-    const { data, error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
       .from('users')
       .select('*')
       .eq('clerk_user_id', clerkUserId)
@@ -50,10 +52,59 @@ export class UserService {
   }
 
   /**
-   * Update user data
+   * Get user by Supabase Auth user ID
+   */
+  static async getUserByAuthId(authUserId: string): Promise<DbUser | null> {
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
+      .from('users')
+      .select('*')
+      .eq('auth_user_id', authUserId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      handleSupabaseError(error);
+    }
+
+    return data;
+  }
+
+  /**
+   * Get or create user by Supabase Auth user ID and email
+   */
+  static async getOrCreateUser(authUserId: string, email: string): Promise<DbUser> {
+    // First try to get existing user
+    let user = await this.getUserByAuthId(authUserId);
+    
+    if (user) {
+      return user;
+    }
+
+    // If user doesn't exist, create a new one
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
+      .from('users')
+      .insert({
+        auth_user_id: authUserId,
+        email: email,
+        subscription_tier: 'free',
+        usage_count: 0,
+        monthly_usage_count: 0,
+        monthly_usage_reset_date: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return data;
+  }
+
+  /**
+   * Update user data (legacy - Clerk)
    */
   static async updateUser(clerkUserId: string, updates: DbUserUpdate): Promise<DbUser> {
-    const { data, error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
       .from('users')
       .update(updates)
       .eq('clerk_user_id', clerkUserId)
@@ -65,12 +116,29 @@ export class UserService {
   }
 
   /**
-   * Increment user usage count
+   * Update user data by auth ID
+   */
+  static async updateUserByAuthId(authUserId: string, updates: DbUserUpdate): Promise<DbUser> {
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
+      .from('users')
+      .update(updates)
+      .eq('auth_user_id', authUserId)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return data;
+  }
+
+  /**
+   * Increment user usage count (legacy - Clerk)
    */
   static async incrementUsageCount(clerkUserId: string): Promise<DbUser> {
-    const { data, error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
       .from('users')
-      .update({ usage_count: supabaseAdmin.raw('usage_count + 1') })
+      .update({ usage_count: adminClient.raw('usage_count + 1') })
       .eq('clerk_user_id', clerkUserId)
       .select()
       .single();
@@ -80,12 +148,55 @@ export class UserService {
   }
 
   /**
-   * Get or create user (upsert operation)
+   * Increment user usage count by auth ID
    */
-  static async getOrCreateUser(clerkUserId: string, email: string): Promise<DbUser> {
+  static async incrementUsageCountByAuthId(authUserId: string): Promise<DbUser> {
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
+      .from('users')
+      .update({ usage_count: adminClient.raw('usage_count + 1') })
+      .eq('auth_user_id', authUserId)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return data;
+  }
+
+
+
+  /**
+   * Get or create user by auth ID
+   */
+  static async getOrCreateUserByAuthId(authUserId: string, email: string): Promise<DbUser> {
+    let user = await this.getUserByAuthId(authUserId);
+    
+    if (!user) {
+      user = await this.createUser({
+        auth_user_id: authUserId,
+        email,
+        subscription_tier: 'free',
+        usage_count: 0,
+        monthly_usage_count: 0,
+        monthly_usage_reset_date: new Date().toISOString(),
+      });
+    }
+
+    return user;
+  }
+
+  /**
+   * Ensure user exists in database (legacy - Clerk)
+   */
+  static async ensureUserExists(clerkUserId: string, email?: string): Promise<DbUser> {
     let user = await this.getUserByClerkId(clerkUserId);
     
     if (!user) {
+      // Create user with provided email if not found
+      if (!email) {
+        throw new Error('User not found and no email provided');
+      }
+      
       user = await this.createUser({
         clerk_user_id: clerkUserId,
         email,
@@ -98,27 +209,24 @@ export class UserService {
   }
 
   /**
-   * Ensure user exists in database (get from Clerk if needed)
-   * This is a helper function for API endpoints to ensure users exist before operations
+   * Ensure user exists in database by auth ID
    */
-  static async ensureUserExists(clerkUserId: string): Promise<DbUser> {
-    let user = await this.getUserByClerkId(clerkUserId);
+  static async ensureUserExistsByAuthId(authUserId: string, email?: string): Promise<DbUser> {
+    let user = await this.getUserByAuthId(authUserId);
     
     if (!user) {
-      // Get user info from Clerk
-      const { currentUser } = await import('@clerk/nextjs/server');
-      const clerkUser = await currentUser();
-      
-      if (!clerkUser) {
-        throw new Error('User not found in Clerk');
+      // Create user with provided email if not found
+      if (!email) {
+        throw new Error('User not found and no email provided');
       }
       
-      const email = clerkUser.emailAddresses[0]?.emailAddress || '';
       user = await this.createUser({
-        clerk_user_id: clerkUserId,
+        auth_user_id: authUserId,
         email,
         subscription_tier: 'free',
         usage_count: 0,
+        monthly_usage_count: 0,
+        monthly_usage_reset_date: new Date().toISOString(),
       });
     }
 
@@ -132,7 +240,8 @@ export class CourseService {
    * Create a new course
    */
   static async createCourse(courseData: DbCourseInsert): Promise<DbCourse> {
-    const { data, error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
       .from('courses')
       .insert(courseData)
       .select()
@@ -221,7 +330,8 @@ export class UsageService {
    * Log user action
    */
   static async logAction(logData: DbUsageLogInsert): Promise<DbUsageLog> {
-    const { data, error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
       .from('usage_logs')
       .insert(logData)
       .select()
@@ -328,10 +438,11 @@ export class DatabaseService {
     totalCourses: number;
     totalUsageLogs: number;
   }> {
+    const adminClient = createAdminClient();
     const [usersResult, coursesResult, logsResult] = await Promise.all([
-      supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('courses').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('usage_logs').select('*', { count: 'exact', head: true }),
+      adminClient.from('users').select('*', { count: 'exact', head: true }),
+      adminClient.from('courses').select('*', { count: 'exact', head: true }),
+      adminClient.from('usage_logs').select('*', { count: 'exact', head: true }),
     ]);
 
     return {

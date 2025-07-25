@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { UserService, CourseService, UsageService } from '@/lib/database';
+import { createClient } from '@/lib/supabase';
 import { canPerformAction } from '@/lib/subscription-utils';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase';
 
 interface ExportNotionRequest {
   courseId?: string;
@@ -32,7 +32,9 @@ interface NotionPageResult {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json(
@@ -52,8 +54,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user data and check permissions
-    const user = await UserService.getUserByClerkId(userId);
-    if (!user) {
+    const dbUser = await UserService.getUserByAuthId(userId);
+    if (!dbUser) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user can export to Notion (Pro/Lifetime only)
-    if (!canPerformAction(user.subscription_tier, user.usage_count, 'export_notion')) {
+    if (!canPerformAction(dbUser.subscription_tier, dbUser.usage_count, 'export_notion')) {
       return NextResponse.json(
         { 
           success: false, 
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if user owns the course
-      const userCourses = await CourseService.getUserCourses(user.id);
+      const userCourses = await CourseService.getUserCourses(dbUser.id);
       const userOwnsCourse = userCourses.some(c => c.id === courseId);
       
       if (!userOwnsCourse) {
@@ -103,10 +105,11 @@ export async function POST(request: NextRequest) {
 
     if (exportType === 'direct') {
       // Check if user has Notion connected
-      const { data: integration, error: integrationError } = await supabaseAdmin
+      const adminClient = createAdminClient();
+      const { data: integration, error: integrationError } = await adminClient
         .from('user_integrations')
         .select('access_token')
-        .eq('user_id', user.id)
+        .eq('user_id', dbUser.id)
         .eq('provider', 'notion')
         .single();
 
@@ -140,7 +143,7 @@ export async function POST(request: NextRequest) {
 
       // Log the export action
       await UsageService.logAction({
-        user_id: user.id,
+        user_id: dbUser.id,
         action: 'export_notion',
         metadata: {
           course_id: courseId || 'temporary',
@@ -164,7 +167,7 @@ export async function POST(request: NextRequest) {
 
       // Log the export action
       await UsageService.logAction({
-        user_id: user.id,
+        user_id: dbUser.id,
         action: 'export_notion',
         metadata: {
           course_id: courseId || 'temporary',

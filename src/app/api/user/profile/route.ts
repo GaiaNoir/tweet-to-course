@@ -1,27 +1,22 @@
-import { auth } from '@clerk/nextjs/server';
-import { getUserProfile, updateUserActivity } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser, getUserProfile } from '@/lib/auth-supabase';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = auth();
+    const user = await getCurrentUser();
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // Update user activity
-    await updateUserActivity(userId);
-    
-    // Get user profile
-    const profile = await getUserProfile(userId);
+    const profile = await getUserProfile(user.id);
     
     if (!profile) {
       return NextResponse.json(
-        { error: 'User profile not found' },
+        { success: false, error: 'Profile not found' },
         { status: 404 }
       );
     }
@@ -30,10 +25,14 @@ export async function GET() {
       success: true,
       profile,
     });
+
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    console.error('Profile fetch error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Internal server error' 
+      },
       { status: 500 }
     );
   }

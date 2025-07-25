@@ -1,12 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { userId } = auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -15,8 +15,6 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
     const { subscriptionTier, usageCount } = body;
-
-    const supabase = createClient();
     
     const updateData: any = {
       updated_at: new Date().toISOString(),
@@ -33,7 +31,7 @@ export async function PATCH(request: NextRequest) {
     const { data, error } = await supabase
       .from('users')
       .update(updateData)
-      .eq('clerk_user_id', userId)
+      .eq('auth_user_id', user.id)
       .select()
       .single();
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@/lib/supabase';
 
 interface PaystackInitializeResponse {
   status: boolean;
@@ -13,9 +13,10 @@ interface PaystackInitializeResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -31,19 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user email from Clerk
-    const userResponse = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
-      headers: {
-        'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-      },
-    });
-
-    if (!userResponse.ok) {
-      throw new Error('Failed to fetch user data');
-    }
-
-    const userData = await userResponse.json();
-    const userEmail = userData.email_addresses?.[0]?.email_address;
+    const userEmail = user.email;
 
     if (!userEmail) {
       return NextResponse.json(
@@ -66,13 +55,13 @@ export async function POST(request: NextRequest) {
         plan: 'PLN_pro_monthly', // This should be created in Paystack dashboard
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/callback`,
         metadata: {
-          userId,
+          userId: user.id,
           plan: 'pro',
           custom_fields: [
             {
               display_name: 'User ID',
               variable_name: 'user_id',
-              value: userId,
+              value: user.id,
             },
             {
               display_name: 'Plan',

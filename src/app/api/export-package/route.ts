@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { database } from '@/lib/database';
+import { createClient } from '@/lib/supabase';
 import { exportSystem, ExportOptions } from '@/lib/export-system';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json(
@@ -97,7 +99,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { UserService, CourseService, UsageService } from '@/lib/database';
+import { createClient } from '@/lib/supabase';
 import { canPerformAction } from '@/lib/subscription-utils';
 import jsPDF from 'jspdf';
 
@@ -12,7 +12,9 @@ interface ExportPDFRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     // For debugging - log the auth status
     console.log('PDF Export - Auth status:', { userId });

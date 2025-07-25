@@ -1,23 +1,46 @@
 'use client';
 
-import { useUser, useAuth as useClerkAuth } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase';
 import { UserProfile } from '@/lib/auth';
 
 export function useAuth() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { getToken } = useClerkAuth();
-  
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
   return {
-    isLoaded,
-    isSignedIn,
     user,
-    getToken,
+    isLoaded: !loading,
+    isSignedIn: !!user,
+    loading,
   };
 }
 
 export function useUserProfile() {
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

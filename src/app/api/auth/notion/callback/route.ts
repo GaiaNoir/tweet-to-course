@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
-      return NextResponse.redirect(new URL('/sign-in', request.url));
+      return NextResponse.redirect(new URL('/auth/sign-in', request.url));
     }
 
     const { searchParams } = new URL(request.url);
@@ -56,10 +58,11 @@ export async function GET(request: NextRequest) {
     const { access_token, workspace_name, workspace_id } = tokenData;
 
     // Get user from database
-    const { data: userData, error: userError } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data: userData, error: userError } = await adminClient
       .from('users')
       .select('id')
-      .eq('clerk_user_id', userId)
+      .eq('auth_user_id', userId)
       .single();
 
     if (userError || !userData) {
@@ -70,7 +73,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Store the integration
-    const { error: integrationError } = await supabaseAdmin
+    const { error: integrationError } = await adminClient
       .from('user_integrations')
       .upsert({
         user_id: userData.id,

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { generateCourseContent, OpenAIError } from '@/lib/openai';
 import { processContent, ContentProcessingError, prepareContentForAI } from '@/lib/content-processor';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase';
 import { checkMonthlyUsage, incrementMonthlyUsage } from '@/lib/usage-limits';
 import { UserService } from '@/lib/database';
 
@@ -91,7 +91,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user authentication
-    const { userId } = await auth();
+    const supabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const userId = user?.id;
     console.log('👤 User authentication:', { userId: userId ? 'authenticated' : 'anonymous' });
     
     // Check user rate limiting
@@ -137,15 +139,12 @@ export async function POST(request: NextRequest) {
     let usageInfo;
     
     let dbUser = null;
-    if (userId) {
+    if (userId && user) {
       try {
-        // First, ensure user exists in Supabase (get from Clerk if needed)
-        const clerkUser = await currentUser();
-        if (clerkUser) {
-          const email = clerkUser.emailAddresses[0]?.emailAddress || '';
-          // This will create the user if they don't exist
-          dbUser = await UserService.getOrCreateUser(userId, email);
-        }
+        // First, ensure user exists in Supabase
+        const email = user.email || '';
+        // This will create the user if they don't exist
+        dbUser = await UserService.getOrCreateUser(userId, email);
         
         usageInfo = await checkMonthlyUsage(userId);
         
@@ -217,7 +216,8 @@ export async function POST(request: NextRequest) {
       try {
         // Start a transaction-like operation
         // First, save the course using the database user ID
-        const { data: courseData, error: courseError } = await supabaseAdmin
+        const adminClient = createAdminClient();
+        const { data: courseData, error: courseError } = await adminClient
           .from('courses')
           .insert({
             user_id: dbUser.id, // Use database user ID, not Clerk user ID
@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Log the usage
-          const { error: logError } = await supabaseAdmin
+          const { error: logError } = await adminClient
             .from('usage_logs')
             .insert({
               user_id: dbUser.id, // Use database user ID, not Clerk user ID

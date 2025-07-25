@@ -170,12 +170,12 @@ export function CourseInputForm({
       
       <div className="mt-4 text-center">
         <p className="text-sm text-gray-500">
-          Free users get 1 generation per month. 
+          Need more generations? 
           <button 
             onClick={() => window.location.href = '/pricing'}
             className="text-indigo-600 hover:text-indigo-700 ml-1 underline"
           >
-            Upgrade for unlimited access
+            View pricing plans
           </button>
         </p>
       </div>

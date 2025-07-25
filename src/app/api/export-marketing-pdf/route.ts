@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { UserService, UsageService } from '@/lib/database';
+import { createClient } from '@/lib/supabase';
 import { canPerformAction } from '@/lib/subscription-utils';
 import jsPDF from 'jspdf';
 import { MarketingAssets } from '@/lib/marketing-assets-generator';
@@ -13,7 +13,9 @@ interface ExportMarketingPDFRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     // For debugging - log the auth status
     console.log('Marketing PDF Export - Auth status:', { userId });
@@ -36,8 +38,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user data and check permissions
-    const user = await UserService.getUserByClerkId(userId);
-    if (!user) {
+    const dbUser = await UserService.getUserByAuthId(userId);
+    if (!dbUser) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user can export PDF
-    if (!canPerformAction(user.subscription_tier, user.usage_count, 'export_pdf')) {
+    if (!canPerformAction(dbUser.subscription_tier, dbUser.usage_count, 'export_pdf')) {
       return NextResponse.json(
         { 
           success: false, 
@@ -161,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     // Log the export action
     await UsageService.logAction({
-      user_id: user.id,
+      user_id: dbUser.id,
       action: 'export_marketing_pdf',
       metadata: {
         course_title: courseTitle,

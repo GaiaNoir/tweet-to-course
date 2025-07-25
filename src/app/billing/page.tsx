@@ -1,5 +1,5 @@
-import { requireAuth, getUserProfile } from '@/lib/auth';
-import { Navigation } from '@/components/ui/navigation';
+import { requireAuth, getUserProfile } from '@/lib/auth-supabase';
+import { Navigation } from '@/components/ui/navigation-supabase';
 import { SubscriptionManagement } from '@/components/ui/subscription-management';
 import { CreditCard, Calendar, DollarSign, FileText } from 'lucide-react';
 import Link from 'next/link';
@@ -8,8 +8,8 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export default async function BillingPage() {
-  const userId = await requireAuth();
-  const userProfile = await getUserProfile(userId);
+  const user = await requireAuth();
+  const userProfile = await getUserProfile(user.id);
   
   if (!userProfile) {
     return (

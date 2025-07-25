@@ -1,12 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { signOut } from '@/lib/auth';
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, isSignedIn } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
@@ -32,16 +39,43 @@ export function Navigation() {
         >
           Demo
         </Link>
-        <SignedOut>
-          <SignInButton>
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-              Sign In
-            </button>
-          </SignInButton>
-        </SignedOut>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
+        {!isSignedIn ? (
+          <Link 
+            href="/auth/sign-in"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Sign In
+          </Link>
+        ) : (
+          <>
+            <Link 
+              href="/dashboard" 
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Dashboard
+            </Link>
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <User className="w-5 h-5" />
+                <span>{user?.email?.split('@')[0] || 'User'}</span>
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Mobile Menu Button */}
@@ -76,21 +110,35 @@ export function Navigation() {
             >
               Demo
             </Link>
-            <SignedOut>
-              <SignInButton>
-                <button 
-                  className="w-full text-left bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            {!isSignedIn ? (
+              <Link 
+                href="/auth/sign-in"
+                className="block w-full text-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sign In
+              </Link>
+            ) : (
+              <>
+                <Link 
+                  href="/dashboard" 
+                  className="block text-gray-600 hover:text-gray-900 transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Sign In
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
                 </button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <div className="pt-2">
-                <UserButton />
-              </div>
-            </SignedIn>
+              </>
+            )}
           </div>
         </div>
       )}

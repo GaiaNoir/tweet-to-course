@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase';
+import { createAdminClient } from './supabase';
 import { UserService } from './database';
 
 /**
@@ -7,7 +7,8 @@ import { UserService } from './database';
 export async function initializeDatabase(): Promise<boolean> {
   try {
     // Test basic connection
-    const { error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { error } = await adminClient
       .from('users')
       .select('id')
       .limit(1);
@@ -50,7 +51,8 @@ export async function cleanupOldUsageLogs(daysToKeep = 90): Promise<void> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-    const { error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { error } = await adminClient
       .from('usage_logs')
       .delete()
       .lt('created_at', cutoffDate.toISOString());
@@ -82,7 +84,8 @@ export async function getDatabaseHealth(): Promise<{
 }> {
   try {
     // Check basic connectivity
-    const { error: connectionError } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { error: connectionError } = await adminClient
       .from('users')
       .select('id')
       .limit(1);
@@ -99,10 +102,10 @@ export async function getDatabaseHealth(): Promise<{
     yesterday.setDate(yesterday.getDate() - 1);
 
     const [usersResult, coursesResult, logsResult, recentCoursesResult] = await Promise.all([
-      supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('courses').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('usage_logs').select('*', { count: 'exact', head: true }),
-      supabaseAdmin
+      adminClient.from('users').select('*', { count: 'exact', head: true }),
+      adminClient.from('courses').select('*', { count: 'exact', head: true }),
+      adminClient.from('usage_logs').select('*', { count: 'exact', head: true }),
+      adminClient
         .from('courses')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', yesterday.toISOString()),

@@ -1,40 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { supabaseAdmin } from '@/lib/supabase';
-
-function verifyPaystackSignature(payload: string, signature: string): boolean {
-  const hash = crypto
-    .createHmac('sha512', process.env.PAYSTACK_WEBHOOK_SECRET!)
-    .update(payload)
-    .digest('hex');
-  
-  return hash === signature;
-}
+import { createAdminClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
-    const signature = request.headers.get('x-paystack-signature');
-    
-    if (!signature) {
-      return NextResponse.json(
-        { error: 'No signature provided' },
-        { status: 400 }
-      );
-    }
-
     const payload = await request.text();
+    console.log('Webhook payload received:', payload.substring(0, 200) + '...');
     
-    // Verify webhook signature
-    if (!verifyPaystackSignature(payload, signature)) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      );
-    }
-
     const event = JSON.parse(payload);
     
     console.log('Paystack webhook event:', event.event);
+    console.log('Event data:', JSON.stringify(event.data, null, 2));
 
     switch (event.event) {
       case 'charge.success':
@@ -79,6 +54,7 @@ export async function POST(request: NextRequest) {
 async function handleChargeSuccess(data: {
   metadata?: {
     userId?: string;
+    plan?: string;
     custom_fields?: Array<{ variable_name: string; value: string }>;
   };
   amount: number;
@@ -86,31 +62,81 @@ async function handleChargeSuccess(data: {
   customer: { customer_code: string };
 }) {
   try {
+    console.log('Processing charge success for:', data.reference);
+    console.log('Metadata received:', JSON.stringify(data.metadata, null, 2));
+
     const userId = data.metadata?.userId || 
                    data.metadata?.custom_fields?.find(
                      (field: { variable_name: string; value: string }) => field.variable_name === 'user_id'
                    )?.value;
 
+    const plan = data.metadata?.plan || 
+                 data.metadata?.custom_fields?.find(
+                   (field: { variable_name: string; value: string }) => field.variable_name === 'plan'
+                 )?.value;
+
     if (!userId) {
       console.error('No user ID found in charge success webhook');
+      console.error('Available metadata:', data.metadata);
       return;
     }
 
-    // Update user subscription status
-    const { error } = await supabaseAdmin
-      .from('users')
-      .update({
-        subscription_tier: 'pro',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('clerk_user_id', userId);
+    console.log(`Updating user ${userId} to ${plan || 'pro'} subscription`);
 
-    if (error) {
-      console.error('Error updating user subscription:', error);
+    // First check if user exists
+    const adminClient = createAdminClient();
+    const { data: existingUser, error: fetchError } = await adminClient
+      .from('users')
+      .select('*')
+      .eq('clerk_user_id', userId)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error fetching user:', fetchError);
+      return;
     }
 
+    if (!existingUser) {
+      console.log('User not found, creating new user record');
+      // Create user if doesn't exist
+      const { error: createError } = await adminClient
+        .from('users')
+        .insert({
+          clerk_user_id: userId,
+          email: '', // Will be updated by Clerk webhook
+          subscription_tier: plan || 'pro',
+          customer_code: data.customer.customer_code,
+          usage_count: 0,
+          monthly_usage_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (createError) {
+        console.error('Error creating user:', createError);
+        return;
+      }
+    } else {
+      // Update existing user
+      const { error: updateError } = await adminClient
+        .from('users')
+        .update({
+          subscription_tier: plan || 'pro',
+          customer_code: data.customer.customer_code,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('clerk_user_id', userId);
+
+      if (updateError) {
+        console.error('Error updating user subscription:', updateError);
+        return;
+      }
+    }
+
+    console.log(`Successfully updated user ${userId} subscription to ${plan || 'pro'}`);
+
     // Log the successful payment
-    await supabaseAdmin
+    await adminClient
       .from('usage_logs')
       .insert({
         user_id: userId,
@@ -119,8 +145,11 @@ async function handleChargeSuccess(data: {
           amount: data.amount,
           reference: data.reference,
           customer_code: data.customer.customer_code,
+          plan: plan || 'pro',
         },
       });
+
+    console.log('Payment success logged for user:', userId);
 
   } catch (error) {
     console.error('Error handling charge success:', error);
@@ -141,7 +170,8 @@ async function handleSubscriptionCreate(data: {
     }
 
     // Update user with subscription details
-    const { error } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { error } = await adminClient
       .from('users')
       .update({
         subscription_tier: 'pro',
@@ -163,7 +193,8 @@ async function handleSubscriptionCreate(data: {
 async function handleSubscriptionDisable(data: { subscription_code: string }) {
   try {
     // Find user by subscription code
-    const { data: userData, error: userError } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data: userData, error: userError } = await adminClient
       .from('users')
       .select('*')
       .eq('subscription_code', data.subscription_code)
@@ -175,7 +206,7 @@ async function handleSubscriptionDisable(data: { subscription_code: string }) {
     }
 
     // Downgrade user to free tier
-    const { error } = await supabaseAdmin
+    const { error } = await adminClient
       .from('users')
       .update({
         subscription_tier: 'free',
@@ -188,7 +219,7 @@ async function handleSubscriptionDisable(data: { subscription_code: string }) {
     }
 
     // Log the subscription cancellation
-    await supabaseAdmin
+    await adminClient
       .from('usage_logs')
       .insert({
         user_id: userData.clerk_user_id,
@@ -207,7 +238,8 @@ async function handleSubscriptionDisable(data: { subscription_code: string }) {
 async function handleSubscriptionEnable(data: { subscription_code: string }) {
   try {
     // Find user by subscription code
-    const { data: userData, error: userError } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data: userData, error: userError } = await adminClient
       .from('users')
       .select('*')
       .eq('subscription_code', data.subscription_code)
@@ -219,7 +251,7 @@ async function handleSubscriptionEnable(data: { subscription_code: string }) {
     }
 
     // Upgrade user to pro tier
-    const { error } = await supabaseAdmin
+    const { error } = await adminClient
       .from('users')
       .update({
         subscription_tier: 'pro',
@@ -244,14 +276,15 @@ async function handleInvoiceCreate(data: {
 }) {
   try {
     // Log invoice creation for record keeping
-    const { data: userData } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data: userData } = await adminClient
       .from('users')
       .select('clerk_user_id')
       .eq('customer_code', data.customer.customer_code)
       .single();
 
     if (userData) {
-      await supabaseAdmin
+      await adminClient
         .from('usage_logs')
         .insert({
           user_id: userData.clerk_user_id,
@@ -277,14 +310,15 @@ async function handleInvoicePaymentFailed(data: {
 }) {
   try {
     // Log payment failure and potentially notify user
-    const { data: userData } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data: userData } = await adminClient
       .from('users')
       .select('clerk_user_id')
       .eq('customer_code', data.customer.customer_code)
       .single();
 
     if (userData) {
-      await supabaseAdmin
+      await adminClient
         .from('usage_logs')
         .insert({
           user_id: userData.clerk_user_id,

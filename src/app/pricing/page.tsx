@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Navigation } from '@/components/ui/navigation';
 import { Check, X, Zap, Gift } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 
 interface PricingTier {
@@ -20,7 +20,7 @@ interface PricingTier {
 }
 
 export default function PricingPage() {
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<string | null>(null);
 

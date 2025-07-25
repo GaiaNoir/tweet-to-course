@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/use-auth';
 import { CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface SubscriptionManagementProps {
@@ -15,7 +15,7 @@ export function SubscriptionManagement({
   customerCode, 
   subscriptionCode 
 }: SubscriptionManagementProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 

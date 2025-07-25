@@ -1,6 +1,6 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { createClient } from './supabase';
+import { User } from '@supabase/supabase-js';
 
 export interface UserProfile {
   id: string;
@@ -16,10 +16,11 @@ export interface UserProfile {
 }
 
 /**
- * Get the current authenticated user from Clerk
+ * Get the current authenticated user from Supabase
  */
-export async function getCurrentUser() {
-  const user = await currentUser();
+export async function getCurrentUser(): Promise<User | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   return user;
 }
 
@@ -27,17 +28,19 @@ export async function getCurrentUser() {
  * Get the current user's authentication status
  */
 export async function getAuth() {
-  return auth();
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return { userId: user?.id || null };
 }
 
 /**
  * Require authentication - redirect to sign-in if not authenticated
  */
-export async function requireAuth() {
-  const { userId } = auth();
+export async function requireAuth(): Promise<string> {
+  const { userId } = await getAuth();
   
   if (!userId) {
-    redirect('/sign-in');
+    redirect('/auth/sign-in');
   }
   
   return userId;
@@ -46,14 +49,22 @@ export async function requireAuth() {
 /**
  * Get or create user profile in Supabase
  */
-export async function getUserProfile(clerkUserId: string): Promise<UserProfile | null> {
+export async function getUserProfile(authUserId?: string): Promise<UserProfile | null> {
   const supabase = createClient();
+  
+  // If no authUserId provided, get current user
+  let userId = authUserId;
+  if (!userId) {
+    const user = await getCurrentUser();
+    if (!user) return null;
+    userId = user.id;
+  }
   
   // First, try to get existing user
   const { data: existingUser, error: fetchError } = await supabase
     .from('users')
     .select('*')
-    .eq('clerk_user_id', clerkUserId)
+    .eq('auth_user_id', userId)
     .single();
   
   if (existingUser && !fetchError) {
@@ -71,25 +82,39 @@ export async function getUserProfile(clerkUserId: string): Promise<UserProfile |
     };
   }
   
-  // If user doesn't exist, create them
-  const clerkUser = await getCurrentUser();
-  if (!clerkUser) return null;
+  // If user doesn't exist, the trigger should have created them
+  // But let's handle the case where it didn't
+  console.log('🔄 User profile not found, checking auth user:', userId);
+  const authUser = await getCurrentUser();
+  if (!authUser) {
+    console.error('❌ Could not get auth user data');
+    return null;
+  }
   
   const { data: newUser, error: createError } = await supabase
     .from('users')
     .insert({
-      clerk_user_id: clerkUserId,
-      email: clerkUser.emailAddresses[0]?.emailAddress || '',
+      auth_user_id: userId,
+      email: authUser.email || '',
       subscription_tier: 'free',
       usage_count: 0,
+      monthly_usage_count: 0,
+      monthly_usage_reset_date: new Date().toISOString(),
     })
     .select()
     .single();
   
-  if (createError || !newUser) {
-    console.error('Error creating user profile:', createError);
+  if (createError) {
+    console.error('❌ Error creating user profile:', createError);
     return null;
   }
+  
+  if (!newUser) {
+    console.error('❌ No user data returned after creation');
+    return null;
+  }
+  
+  console.log('✅ Successfully created user profile:', newUser.id);
   
   return {
     id: newUser.id,
@@ -106,17 +131,33 @@ export async function getUserProfile(clerkUserId: string): Promise<UserProfile |
 /**
  * Update user's last active timestamp
  */
-export async function updateUserActivity(clerkUserId: string) {
+export async function updateUserActivity(authUserId?: string) {
   const supabase = createClient();
+  
+  let userId = authUserId;
+  if (!userId) {
+    const user = await getCurrentUser();
+    if (!user) return;
+    userId = user.id;
+  }
   
   const { error } = await supabase
     .from('users')
     .update({ updated_at: new Date().toISOString() })
-    .eq('clerk_user_id', clerkUserId);
+    .eq('auth_user_id', userId);
   
   if (error) {
     console.error('Error updating user activity:', error);
   }
+}
+
+/**
+ * Sign out the current user
+ */
+export async function signOut() {
+  const supabase = createClient();
+  await supabase.auth.signOut();
+  redirect('/');
 }
 
 /**

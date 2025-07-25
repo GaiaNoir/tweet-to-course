@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import SlideGenerator, { SlideOptions, SlideTheme } from '@/lib/slide-generator';
+import { createClient } from '@/lib/supabase';
 import { database } from '@/lib/database';
 import { Course } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json(

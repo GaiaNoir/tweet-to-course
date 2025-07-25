@@ -1,21 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { checkMonthlyUsage, incrementMonthlyUsage, MONTHLY_LIMITS } from '@/lib/usage-limits';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase';
 
 // Mock user ID for testing
 const TEST_USER_ID = 'test-user-monthly-usage';
 
 describe('Monthly Usage System', () => {
   beforeEach(async () => {
+    const adminClient = createAdminClient();
     
     // Clean up any existing test user
-    await supabaseAdmin
+    await adminClient
       .from('users')
       .delete()
       .eq('clerk_user_id', TEST_USER_ID);
     
     // Create a test user
-    await supabaseAdmin
+    await adminClient
       .from('users')
       .insert({
         clerk_user_id: TEST_USER_ID,
@@ -28,7 +29,8 @@ describe('Monthly Usage System', () => {
 
   afterEach(async () => {
     // Clean up test user
-    await supabaseAdmin
+    const adminClient = createAdminClient();
+    await adminClient
       .from('users')
       .delete()
       .eq('clerk_user_id', TEST_USER_ID);
@@ -107,7 +109,8 @@ describe('Monthly Usage System', () => {
   describe('Pro user usage', () => {
     beforeEach(async () => {
       // Update test user to pro tier
-      await supabaseAdmin
+      const adminClient = createAdminClient();
+      await adminClient
         .from('users')
         .update({ subscription_tier: 'pro' })
         .eq('clerk_user_id', TEST_USER_ID);

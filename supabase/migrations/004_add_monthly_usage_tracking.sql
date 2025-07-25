@@ -78,3 +78,4 @@ WHERE monthly_usage_reset_date IS NULL;
 COMMENT ON COLUMN users.monthly_usage_count IS 'Number of courses generated in current month (for free tier limits)';
 COMMENT ON COLUMN users.monthly_usage_reset_date IS 'Date when monthly usage count resets';
 COMMENT ON COLUMN usage_logs.usage_month IS 'Month when the usage occurred (for monthly analytics)';
+

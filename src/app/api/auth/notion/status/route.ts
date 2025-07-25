@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json(
@@ -14,10 +16,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user from database
-    const { data: userData, error: userError } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data: userData, error: userError } = await adminClient
       .from('users')
       .select('id')
-      .eq('clerk_user_id', userId)
+      .eq('auth_user_id', userId)
       .single();
 
     if (userError || !userData) {
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check for Notion integration
-    const { data: integration, error: integrationError } = await supabaseAdmin
+    const { data: integration, error: integrationError } = await adminClient
       .from('user_integrations')
       .select('workspace_name, created_at')
       .eq('user_id', userData.id)
@@ -61,7 +64,9 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json(
@@ -71,10 +76,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get user from database
-    const { data: userData, error: userError } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data: userData, error: userError } = await adminClient
       .from('users')
       .select('id')
-      .eq('clerk_user_id', userId)
+      .eq('auth_user_id', userId)
       .single();
 
     if (userError || !userData) {
@@ -85,7 +91,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Remove Notion integration
-    const { error: deleteError } = await supabaseAdmin
+    const { error: deleteError } = await adminClient
       .from('user_integrations')
       .delete()
       .eq('user_id', userData.id)

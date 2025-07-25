@@ -1,67 +1,57 @@
-import { requireAuth, getUserProfile } from '@/lib/auth';
+import { requireAuth, getUserProfile } from '@/lib/auth-supabase';
 import { getSubscriptionLimits } from '@/lib/subscription-utils';
-import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { NotionConnection } from '@/components/ui/notion-connection';
+import { Navigation } from '@/components/ui/navigation-supabase';
+import { RetryButton } from '@/components/ui/retry-button';
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const userId = await requireAuth();
-  const userProfile = await getUserProfile(userId);
-  
-  if (!userProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Error loading profile
-          </h1>
-          <p className="text-gray-600 mb-4">
-            We couldn't load your user profile. Please try again.
-          </p>
-          <Link 
-            href="/"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-          >
-            Go Home
-          </Link>
+  try {
+    const user = await requireAuth();
+    const userProfile = await getUserProfile(user.id);
+    
+    if (!userProfile) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Account Migration Required
+            </h1>
+            <p className="text-gray-600 mb-4">
+              We've upgraded our authentication system. Please sign in again to continue.
+            </p>
+            <div className="flex flex-col space-y-4">
+              <Link 
+                href="/auth/migration-notice"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Learn More & Sign In
+              </Link>
+              <Link 
+                href="/"
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Go to Home
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  const limits = getSubscriptionLimits(userProfile.subscriptionTier);
+    const limits = getSubscriptionLimits(userProfile.subscriptionTier);
   const usagePercentage = limits.monthlyGenerations === -1 
     ? 0 
     : (userProfile.monthlyUsageCount / limits.monthlyGenerations) * 100;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-gray-900">
-                TweetToCourse
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link 
-                href="/"
-                className="text-gray-600 hover:text-gray-900"
-              >
-                Generate Course
-              </Link>
-              <UserButton afterSignOutUrl="/" />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
+    <>
+      <Navigation />
+      <div className="min-h-screen bg-gray-50">
+        {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-8">
@@ -271,6 +261,33 @@ export default async function DashboardPage() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
+  } catch (error) {
+    console.error('Dashboard error:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            Something went wrong
+          </h1>
+          <p className="text-gray-600 mb-4">
+            We encountered an error loading your dashboard. Please try again.
+          </p>
+          <div className="flex flex-col space-y-4">
+            <Link 
+              href="/"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Go to Home
+            </Link>
+            <RetryButton className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+              Retry
+            </RetryButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }

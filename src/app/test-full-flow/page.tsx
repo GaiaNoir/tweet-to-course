@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function TestFullFlowPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useAuth();
   const [testResults, setTestResults] = useState<string[]>([]);
 
   const addResult = (message: string) => {
@@ -226,7 +226,7 @@ export default function TestFullFlowPage() {
           {user ? (
             <div>
               <p><strong>User ID:</strong> {user.id}</p>
-              <p><strong>Email:</strong> {user.emailAddresses[0]?.emailAddress}</p>
+              <p><strong>Email:</strong> {user.email}</p>
               <p><strong>Status:</strong> <span className="text-green-600">Authenticated</span></p>
             </div>
           ) : (

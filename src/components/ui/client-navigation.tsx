@@ -15,7 +15,7 @@ const Navigation = dynamic(() => import('./navigation').then(mod => ({ default: 
         </div>
         <span className="text-xl font-bold text-gray-900">TweetToCourse</span>
       </div>
-      
+
       {/* Placeholder for auth buttons */}
       <div className="hidden md:flex items-center space-x-8">
         <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
@@ -44,7 +44,7 @@ export function ClientNavigation() {
           </div>
           <span className="text-xl font-bold text-gray-900">TweetToCourse</span>
         </div>
-        
+
         {/* Placeholder for auth buttons */}
         <div className="hidden md:flex items-center space-x-8">
           <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>

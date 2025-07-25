@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
     }
 
     // First, ensure user exists in database
-    const { data: existingUser, error: fetchError } = await supabaseAdmin
+    const adminClient = createAdminClient();
+    const { data: existingUser, error: fetchError } = await adminClient
       .from('users')
       .select('*')
       .eq('clerk_user_id', userId)
@@ -44,13 +45,13 @@ export async function POST(request: NextRequest) {
     let result;
     if (existingUser) {
       // Update existing user
-      result = await supabaseAdmin
+      result = await adminClient
         .from('users')
         .update(updateData)
         .eq('clerk_user_id', userId);
     } else {
       // Create new user record
-      result = await supabaseAdmin
+      result = await adminClient
         .from('users')
         .insert({
           clerk_user_id: userId,
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the subscription update
-    await supabaseAdmin
+    await adminClient
       .from('usage_logs')
       .insert({
         user_id: userId,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { database } from '@/lib/database';
+import { createClient } from '@/lib/supabase';
 import { contentProcessor } from '@/lib/content-processor';
 import { openai } from '@/lib/openai';
 import { exportSystem, ExportOptions } from '@/lib/export-system';
@@ -8,7 +8,9 @@ import { Course } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json(

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import SlideGenerator, { SlideOptions, SlideTheme } from '@/lib/slide-generator';
+import { createClient } from '@/lib/supabase';
 import { UserService, CourseService, UsageService } from '@/lib/database';
 import { Course } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
     
     if (!userId) {
       return NextResponse.json(
@@ -42,15 +44,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user subscription to check permissions
-    const user = await UserService.getUserByClerkId(userId);
-    if (!user) {
+    const dbUser = await UserService.getUserByAuthId(userId);
+    if (!dbUser) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
       );
     }
 
-    const isPaidUser = user.subscription_tier === 'pro' || user.subscription_tier === 'lifetime';
+    const isPaidUser = dbUser.subscription_tier === 'pro' || dbUser.subscription_tier === 'lifetime';
 
     // Get course data from database
     const course = await CourseService.getCourseById(courseId);
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user owns the course
-    const userCourses = await CourseService.getUserCourses(user.id);
+    const userCourses = await CourseService.getUserCourses(dbUser.id);
     const userOwnsCourse = userCourses.some(c => c.id === courseId);
     
     if (!userOwnsCourse) {
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
       
       // Log usage
       await UsageService.logAction({
-        user_id: user.id,
+        user_id: dbUser.id,
         action: 'export_slides_pdf',
         metadata: {
           courseId,
@@ -132,7 +134,7 @@ export async function POST(request: NextRequest) {
       
       // Log usage
       await UsageService.logAction({
-        user_id: user.id,
+        user_id: dbUser.id,
         action: 'export_slides_ppt',
         metadata: {
           courseId,
