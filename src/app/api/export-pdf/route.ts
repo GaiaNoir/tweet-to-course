@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user data and check permissions (create user if doesn't exist)
-    const user = await UserService.ensureUserExists(userId);
+    const userData = await UserService.ensureUserExists(userId);
 
     // Check if user can export PDF
-    if (!canPerformAction(user.subscription_tier, user.usage_count, 'export_pdf')) {
+    if (!canPerformAction(userData.subscription_tier, userData.usage_count, 'export_pdf')) {
       return NextResponse.json(
         { 
           success: false, 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if user owns the course
-      const userCourses = await CourseService.getUserCourses(user.id);
+      const userCourses = await CourseService.getUserCourses(userData.id);
       const userOwnsCourse = userCourses.some(c => c.id === courseId);
       
       if (!userOwnsCourse) {
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Add watermark for free users
-    const shouldAddWatermark = !canPerformAction(user.subscription_tier, user.usage_count, 'remove_watermark');
+    const shouldAddWatermark = !canPerformAction(userData.subscription_tier, userData.usage_count, 'remove_watermark');
     
     if (shouldAddWatermark) {
       // Add watermark to each page
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
 
     // Log the export action
     await UsageService.logAction({
-      user_id: user.id,
+      user_id: userData.id,
       action: 'export_pdf',
       metadata: {
         course_id: courseId || 'temporary',

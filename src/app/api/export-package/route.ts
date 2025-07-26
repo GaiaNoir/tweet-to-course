@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user's subscription for export features
-    const user = await database.getUser(userId);
-    if (!user) {
+    const userData = await database.getUser(userId);
+    if (!userData) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
@@ -47,9 +47,9 @@ export async function POST(request: NextRequest) {
     // Free users get basic exports with watermarks
     const options: ExportOptions = {
       includeSlides: true,
-      includeCoverArt: user.subscription_tier !== 'free', // Cover art for paid users only
-      includeSalesPage: user.subscription_tier !== 'free', // Sales page for paid users only
-      includeMarketing: user.subscription_tier !== 'free', // Marketing for paid users only
+      includeCoverArt: userData.subscription_tier !== 'free', // Cover art for paid users only
+      includeSalesPage: userData.subscription_tier !== 'free', // Sales page for paid users only
+      includeMarketing: userData.subscription_tier !== 'free', // Marketing for paid users only
       slideTheme: exportOptions?.slideTheme || 'professional',
       coverArtStyles: exportOptions?.coverArtStyles || ['professional', 'creative', 'minimal'],
       format: 'zip',
@@ -130,8 +130,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check user's subscription
-    const user = await database.getUser(userId);
-    if (!user) {
+    const userData = await database.getUser(userId);
+    if (!userData) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
@@ -141,12 +141,12 @@ export async function GET(request: NextRequest) {
     // Return available export options based on subscription
     const availableOptions = {
       slides: true,
-      coverArt: user.subscription_tier !== 'free',
-      salesPage: user.subscription_tier !== 'free',
-      marketing: user.subscription_tier !== 'free',
+      coverArt: userData.subscription_tier !== 'free',
+      salesPage: userData.subscription_tier !== 'free',
+      marketing: userData.subscription_tier !== 'free',
       themes: Object.keys(exportSystem.getDefaultExportOptions()),
-      subscriptionTier: user.subscription_tier,
-      upgradeRequired: user.subscription_tier === 'free'
+      subscriptionTier: userData.subscription_tier,
+      upgradeRequired: userData.subscription_tier === 'free'
     };
 
     return NextResponse.json({

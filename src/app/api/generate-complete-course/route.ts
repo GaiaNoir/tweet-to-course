@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user's subscription and usage limits
-    const user = await database.getUser(userId);
-    if (!user) {
+    const userData = await database.getUser(userId);
+    if (!userData) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // For free users, limit to 1 generation
-    if (user.subscription_tier === 'free' && user.usage_count >= 1) {
+    if (userData.subscription_tier === 'free' && userData.usage_count >= 1) {
       return NextResponse.json(
         { 
           success: false, 
@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
       course: courseResult.course,
       courseId: savedCourse.id,
       exportPackage,
-      usageCount: user.usage_count + 1,
-      subscriptionTier: user.subscription_tier
+      usageCount: userData.usage_count + 1,
+      subscriptionTier: userData.subscription_tier
     });
 
   } catch (error) {
