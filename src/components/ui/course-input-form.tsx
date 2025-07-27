@@ -144,7 +144,7 @@ export function CourseInputForm({
               }
             })}
             placeholder={getPlaceholder()}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-colors ${errors.content
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-colors text-gray-900 placeholder:text-gray-500 ${errors.content
               ? 'border-red-300 bg-red-50'
               : 'border-gray-300 hover:border-gray-400'
               }`}

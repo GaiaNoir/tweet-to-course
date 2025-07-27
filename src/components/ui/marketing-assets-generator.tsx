@@ -142,7 +142,7 @@ export function MarketingAssetsGenerator({
               value={targetAudience}
               onChange={(e) => setTargetAudience(e.target.value)}
               placeholder="e.g., SaaS founders, e-commerce entrepreneurs, content creators"
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500"
             />
           </div>
           

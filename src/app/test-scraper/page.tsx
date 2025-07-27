@@ -60,7 +60,7 @@ export default function TestScraperPage() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://twitter.com/username/status/123456789"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500"
               />
             </div>
 
