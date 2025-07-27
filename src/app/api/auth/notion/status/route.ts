@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase';
-import { createClient } from '@/lib/supabase';
+import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     
@@ -64,7 +63,7 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     

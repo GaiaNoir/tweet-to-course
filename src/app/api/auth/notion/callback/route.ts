@@ -3,17 +3,23 @@ import { createAdminClient, createServerSupabaseClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('Notion callback endpoint called');
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     
+    console.log('User ID from callback:', userId);
+    
     if (!userId) {
+      console.log('No user ID, redirecting to sign-in');
       return NextResponse.redirect(new URL('/auth/sign-in', request.url));
     }
 
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const error = searchParams.get('error');
+    
+    console.log('OAuth callback params:', { code: code ? 'present' : 'missing', error });
 
     if (error) {
       console.error('Notion OAuth error:', error);
@@ -55,6 +61,12 @@ export async function GET(request: NextRequest) {
 
     const tokenData = await tokenResponse.json();
     const { access_token, workspace_name, workspace_id } = tokenData;
+    
+    console.log('Token exchange successful:', { 
+      workspace_name, 
+      workspace_id, 
+      access_token: access_token ? 'present' : 'missing' 
+    });
 
     // Get user from database
     const adminClient = createAdminClient();
@@ -64,6 +76,8 @@ export async function GET(request: NextRequest) {
       .eq('auth_user_id', userId)
       .single();
 
+    console.log('User lookup result:', { userData, userError });
+
     if (userError || !userData) {
       console.error('User not found:', userError);
       return NextResponse.redirect(
@@ -72,16 +86,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Store the integration
+    const integrationData = {
+      user_id: userData.id,
+      provider: 'notion',
+      access_token,
+      workspace_id,
+      workspace_name,
+      updated_at: new Date().toISOString(),
+    };
+    
+    console.log('Storing integration:', integrationData);
+    
     const { error: integrationError } = await adminClient
       .from('user_integrations')
-      .upsert({
-        user_id: userData.id,
-        provider: 'notion',
-        access_token,
-        workspace_id,
-        workspace_name,
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(integrationData);
 
     if (integrationError) {
       console.error('Failed to store integration:', integrationError);
@@ -89,6 +107,8 @@ export async function GET(request: NextRequest) {
         new URL('/dashboard?notion_error=storage_failed', request.url)
       );
     }
+    
+    console.log('Integration stored successfully');
 
     // Success - redirect to dashboard
     return NextResponse.redirect(
