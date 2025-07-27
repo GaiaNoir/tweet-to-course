@@ -33,7 +33,10 @@ export default function CoursePage() {
           const response = await fetch('/api/user/profile');
           if (response.ok) {
             const profileData = await response.json();
+            console.log('User profile loaded:', profileData);
             setUserProfile(profileData);
+          } else {
+            console.error('Failed to fetch user profile:', response.status, response.statusText);
           }
         } catch (profileError) {
           console.error('Error loading user profile:', profileError);

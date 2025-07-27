@@ -62,6 +62,11 @@ export function CourseDisplay({
 
   const canExportNotion = userProfile?.subscriptionTier === 'pro' || userProfile?.subscriptionTier === 'lifetime';
   const isFreeTier = !userProfile || userProfile.subscriptionTier === 'free';
+  
+  // Debug logging
+  console.log('CourseDisplay - User Profile:', userProfile);
+  console.log('CourseDisplay - Can Export Notion:', canExportNotion);
+  console.log('CourseDisplay - Is Free Tier:', isFreeTier);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-4xl mx-auto">
