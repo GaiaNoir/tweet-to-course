@@ -74,7 +74,15 @@ export async function middleware(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      // Redirect to sign-in page if not authenticated
+      // For API routes, return JSON error instead of redirect
+      if (request.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { success: false, error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
+      
+      // For page routes, redirect to sign-in page
       const redirectUrl = new URL('/auth/sign-in', request.url);
       redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
       return NextResponse.redirect(redirectUrl);
