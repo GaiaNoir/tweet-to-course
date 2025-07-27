@@ -39,7 +39,10 @@ export function Navigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <span className="text-xl font-bold text-blue-600">TweetToCourse</span>
+              <span className="text-xl font-bold text-blue-600">
+                TweetToCourse
+                <span className="text-sm font-normal text-gray-500 italic ml-2">beta</span>
+              </span>
             </div>
             <div className="flex items-center space-x-4">
               <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
@@ -57,6 +60,7 @@ export function Navigation() {
           <div className="flex items-center">
             <a href="/" className="text-xl font-bold text-blue-600">
               TweetToCourse
+              <span className="text-sm font-normal text-gray-500 italic ml-2">beta</span>
             </a>
           </div>
           
@@ -81,6 +85,24 @@ export function Navigation() {
                 >
                   Pricing
                 </a>
+                <a
+                  href="/demo"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Demo
+                </a>
+                <a
+                  href="/feedback"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Feedback
+                </a>
+                <a
+                  href="/help"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Help
+                </a>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">{user.email}</span>
                   <button
@@ -98,6 +120,18 @@ export function Navigation() {
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Pricing
+                </a>
+                <a
+                  href="/demo"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Demo
+                </a>
+                <a
+                  href="/feedback"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Feedback
                 </a>
                 <a
                   href="/auth/sign-in"

@@ -22,25 +22,34 @@ export function Navigation() {
         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-sm">TC</span>
         </div>
-        <span className="text-xl font-bold text-gray-900">TweetToCourse</span>
+        <span className="text-xl font-bold text-gray-900">
+          TweetToCourse
+          <span className="text-sm font-normal text-gray-500 italic ml-2">beta</span>
+        </span>
       </Link>
-      
+
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-8">
-        <Link 
-          href="/pricing" 
+        <Link
+          href="/pricing"
           className="text-gray-600 hover:text-gray-900 transition-colors"
         >
           Pricing
         </Link>
-        <Link 
-          href="/demo" 
+        <Link
+          href="/demo"
           className="text-gray-600 hover:text-gray-900 transition-colors"
         >
           Demo
         </Link>
+        <Link
+          href="/feedback"
+          className="text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          Feedback
+        </Link>
         {!isSignedIn ? (
-          <Link 
+          <Link
             href="/auth/sign-in"
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
           >
@@ -48,11 +57,17 @@ export function Navigation() {
           </Link>
         ) : (
           <>
-            <Link 
-              href="/dashboard" 
+            <Link
+              href="/dashboard"
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
               Dashboard
+            </Link>
+            <Link
+              href="/help"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Help
             </Link>
             <div className="relative">
               <button
@@ -96,22 +111,29 @@ export function Navigation() {
       {isMobileMenuOpen && (
         <div className="absolute top-20 left-0 right-0 bg-white shadow-lg border-t md:hidden z-50">
           <div className="px-6 py-4 space-y-4">
-            <Link 
-              href="/pricing" 
+            <Link
+              href="/pricing"
               className="block text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Pricing
             </Link>
-            <Link 
-              href="/demo" 
+            <Link
+              href="/demo"
               className="block text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Demo
             </Link>
+            <Link
+              href="/feedback"
+              className="block text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Feedback
+            </Link>
             {!isSignedIn ? (
-              <Link 
+              <Link
                 href="/auth/sign-in"
                 className="block w-full text-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -120,12 +142,19 @@ export function Navigation() {
               </Link>
             ) : (
               <>
-                <Link 
-                  href="/dashboard" 
+                <Link
+                  href="/dashboard"
                   className="block text-gray-600 hover:text-gray-900 transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  href="/help"
+                  className="block text-gray-600 hover:text-gray-900 transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Help
                 </Link>
                 <button
                   onClick={() => {

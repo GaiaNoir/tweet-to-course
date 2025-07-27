@@ -77,11 +77,12 @@ export default function PricingPage() {
     },
     {
       name: 'Pro',
-      price: '$9',
+      price: '$7',
       period: 'per month',
       description: 'For serious content creators and educators',
       features: [
         'Unlimited course generations',
+        'Unlimited marketing assets',
         'Watermark-free PDF exports',
         'Notion export integration',
         'Priority email support',
@@ -230,22 +231,7 @@ export default function PricingPage() {
                 All your previously generated courses remain accessible. However, you&apos;ll be limited to the free tier restrictions for new generations and exports.
               </p>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Do you offer refunds?
-              </h3>
-              <p className="text-gray-600">
-                We offer a 7-day money-back guarantee for new Pro subscriptions. If you&apos;re not satisfied, contact our support team for a full refund.
-              </p>
-            </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Is there a free trial for Pro?
-              </h3>
-              <p className="text-gray-600">
-                Yes! New users get a 7-day free trial of Pro features when they sign up for a Pro subscription. No credit card required upfront.
-              </p>
-            </div>
+
           </div>
         </div>
 

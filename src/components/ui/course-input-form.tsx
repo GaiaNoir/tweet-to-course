@@ -16,15 +16,15 @@ interface FormData {
   content: string;
 }
 
-export function CourseInputForm({ 
-  onSubmit, 
-  isLoading = false, 
+export function CourseInputForm({
+  onSubmit,
+  isLoading = false,
   error = null,
-  onErrorDismiss 
+  onErrorDismiss
 }: CourseInputFormProps) {
   const [inputType, setInputType] = useState<'url' | 'text'>('url');
   const [mounted, setMounted] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
@@ -50,16 +50,16 @@ export function CourseInputForm({
     if (!value || value.trim().length === 0) {
       return 'Please paste your content to generate a course';
     }
-    
+
     const trimmedValue = value.trim();
-    
+
     if (trimmedValue.length < 10) {
       return 'Content must be at least 10 characters long';
     }
     if (trimmedValue.length > 5000) {
       return 'Content must be less than 5000 characters';
     }
-    
+
     return true;
   };
 
@@ -68,7 +68,7 @@ export function CourseInputForm({
     // Always treat input as text content
     const type = 'text';
     setInputType(type);
-    
+
     try {
       await onSubmit({ content: trimmedContent, type });
     } catch (err) {
@@ -115,26 +115,26 @@ export function CourseInputForm({
     <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
       {error && (
         <div className="mb-6">
-          <ErrorDisplay 
-            error={error} 
+          <ErrorDisplay
+            error={error}
             onRetry={handleRetry}
             onDismiss={onErrorDismiss}
             variant="inline"
           />
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
         <div>
-          <label 
-            htmlFor="content-input" 
+          <label
+            htmlFor="content-input"
             className="block text-left text-sm font-medium text-gray-700 mb-2"
           >
             {getInputLabel()}
           </label>
           <textarea
             id="content-input"
-            {...register('content', { 
+            {...register('content', {
               validate: validateInput,
               onChange: (e) => {
                 // Auto-resize textarea based on content
@@ -144,11 +144,10 @@ export function CourseInputForm({
               }
             })}
             placeholder={getPlaceholder()}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-colors ${
-              errors.content 
-                ? 'border-red-300 bg-red-50' 
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-colors ${errors.content
+              ? 'border-red-300 bg-red-50'
+              : 'border-gray-300 hover:border-gray-400'
+              }`}
             rows={3}
             style={{ minHeight: '80px' }}
           />
@@ -158,8 +157,8 @@ export function CourseInputForm({
             </p>
           )}
         </div>
-        
-        <button 
+
+        <button
           type="submit"
           disabled={isLoading}
           className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -167,11 +166,11 @@ export function CourseInputForm({
           {isLoading ? 'Generating...' : 'Generate Course ✨'}
         </button>
       </form>
-      
+
       <div className="mt-4 text-center">
         <p className="text-sm text-gray-500">
-          Need more generations? 
-          <button 
+          Need more generations?
+          <button
             onClick={() => window.location.href = '/pricing'}
             className="text-indigo-600 hover:text-indigo-700 ml-1 underline"
           >
@@ -179,7 +178,7 @@ export function CourseInputForm({
           </button>
         </p>
       </div>
-      
+
       {/* Content length indicator */}
       {contentValue && (
         <div className="mt-3 flex items-center justify-center">
