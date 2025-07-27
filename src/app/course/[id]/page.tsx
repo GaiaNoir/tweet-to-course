@@ -3,30 +3,43 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { CourseDisplay } from '@/components/ui/course-display';
-import { Course } from '@/types';
+import { Course, UserProfile } from '@/types';
 import Link from 'next/link';
 
 export default function CoursePage() {
   const params = useParams();
   const courseId = params.id as string;
   const [course, setCourse] = useState<Course | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadCourse = () => {
+    const loadData = async () => {
       try {
-        // Try to load from localStorage first (for newly generated courses)
+        // Load course from localStorage
         const storedCourse = localStorage.getItem(`course-${courseId}`);
         if (storedCourse) {
           const parsedCourse = JSON.parse(storedCourse);
           setCourse(parsedCourse);
+        } else {
+          setError('Course not found. Please generate a new course.');
           setLoading(false);
           return;
         }
 
-        // If not in localStorage, show error (in future, we'd fetch from database)
-        setError('Course not found. Please generate a new course.');
+        // Fetch user profile
+        try {
+          const response = await fetch('/api/user/profile');
+          if (response.ok) {
+            const profileData = await response.json();
+            setUserProfile(profileData);
+          }
+        } catch (profileError) {
+          console.error('Error loading user profile:', profileError);
+          // Continue without profile - some features may be limited
+        }
+
         setLoading(false);
       } catch (err) {
         console.error('Error loading course:', err);
@@ -36,7 +49,7 @@ export default function CoursePage() {
     };
 
     if (courseId) {
-      loadCourse();
+      loadData();
     }
   }, [courseId]);
 
@@ -268,6 +281,7 @@ export default function CoursePage() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         <CourseDisplay
           course={course}
+          userProfile={userProfile}
           onTitleUpdate={handleTitleUpdate}
           onRegenerate={handleRegenerate}
           onExportPDF={handleExportPDF}

@@ -1,38 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser, getUserProfile } from '@/lib/auth-supabase';
+import { createServerSupabaseClient } from '@/lib/supabase';
+import { getUserProfile } from '@/lib/auth-supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const profile = await getUserProfile(user.id);
+    const userProfile = await getUserProfile(user.id);
     
-    if (!profile) {
+    if (!userProfile) {
       return NextResponse.json(
-        { success: false, error: 'Profile not found' },
+        { error: 'User profile not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      profile,
-    });
+    return NextResponse.json(userProfile);
 
   } catch (error) {
-    console.error('Profile fetch error:', error);
+    console.error('User profile API error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      },
+      { error: 'Failed to fetch user profile' },
       { status: 500 }
     );
   }
