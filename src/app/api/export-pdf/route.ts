@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserService, CourseService, UsageService } from '@/lib/database';
-import { createClient } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { canPerformAction } from '@/lib/subscription-utils';
 import jsPDF from 'jspdf';
 
@@ -12,7 +12,7 @@ interface ExportPDFRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     

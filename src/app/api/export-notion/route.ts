@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserService, CourseService, UsageService } from '@/lib/database';
-import { createClient } from '@/lib/supabase';
+import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
 import { canPerformAction } from '@/lib/subscription-utils';
-import { createAdminClient } from '@/lib/supabase';
 
 interface ExportNotionRequest {
   courseId?: string;
@@ -32,7 +31,7 @@ interface NotionPageResult {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     
