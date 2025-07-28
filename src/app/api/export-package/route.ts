@@ -39,21 +39,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check user's subscription for export features
-    const userData = await database.getUser(userId);
-    if (!userData) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
+    // User is already validated above
 
     // Free users get basic exports with watermarks
     const options: ExportOptions = {
       includeSlides: true,
-      includeCoverArt: userData.subscription_tier !== 'free', // Cover art for paid users only
-      includeSalesPage: userData.subscription_tier !== 'free', // Sales page for paid users only
-      includeMarketing: userData.subscription_tier !== 'free', // Marketing for paid users only
+      includeCoverArt: user.subscriptionTier !== 'free', // Cover art for paid users only
+      includeSalesPage: user.subscriptionTier !== 'free', // Sales page for paid users only
+      includeMarketing: user.subscriptionTier !== 'free', // Marketing for paid users only
       slideTheme: exportOptions?.slideTheme || 'professional',
       coverArtStyles: exportOptions?.coverArtStyles || ['professional', 'creative', 'minimal'],
       format: 'zip',
@@ -103,13 +96,11 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
+    const user = getCurrentUser();
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: 'User not found' },
         { status: 401 }
       );
     }
@@ -133,24 +124,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check user's subscription
-    const userData = await database.getUser(userId);
-    if (!userData) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
+    // User is already validated above
 
     // Return available export options based on subscription
     const availableOptions = {
       slides: true,
-      coverArt: userData.subscription_tier !== 'free',
-      salesPage: userData.subscription_tier !== 'free',
-      marketing: userData.subscription_tier !== 'free',
+      coverArt: user.subscriptionTier !== 'free',
+      salesPage: user.subscriptionTier !== 'free',
+      marketing: user.subscriptionTier !== 'free',
       themes: Object.keys(exportSystem.getDefaultExportOptions()),
-      subscriptionTier: userData.subscription_tier,
-      upgradeRequired: userData.subscription_tier === 'free'
+      subscriptionTier: user.subscriptionTier,
+      upgradeRequired: user.subscriptionTier === 'free'
     };
 
     return NextResponse.json({

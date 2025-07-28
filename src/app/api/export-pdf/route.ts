@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Add watermark for free users
-    const shouldAddWatermark = !canPerformAction(userData.subscription_tier, userData.usage_count, 'remove_watermark');
+    const shouldAddWatermark = !canPerformAction('remove_watermark');
     
     if (shouldAddWatermark) {
       // Add watermark to each page
@@ -125,13 +125,6 @@ export async function POST(request: NextRequest) {
 
     // Log the export action
     incrementUsage();
-      metadata: {
-        course_id: courseId || 'temporary',
-        course_title: course.title,
-        has_watermark: shouldAddWatermark,
-        is_temporary_course: !courseId,
-      },
-    });
 
     // Generate PDF buffer
     const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
