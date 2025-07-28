@@ -176,45 +176,7 @@ export default function CoursePage() {
     }
   };
 
-  const handleExportNotion = async () => {
-    if (!course) return;
 
-    try {
-      const response = await fetch('/api/export-notion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ courseData: course, exportType: 'direct' }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          alert('Please sign in to export courses to Notion.');
-          return;
-        }
-        if (result.upgradeRequired) {
-          alert('Notion export is only available for Pro and Lifetime subscribers.');
-          return;
-        }
-        if (result.requiresConnection) {
-          alert('Please connect your Notion account first. Go to your dashboard to set up Notion integration.');
-          return;
-        }
-        throw new Error(result.error || 'Failed to export to Notion');
-      }
-
-      if (result.success && result.pageUrl) {
-        alert('Course exported to Notion successfully! Opening your Notion page...');
-        window.open(result.pageUrl, '_blank');
-      }
-    } catch (err) {
-      console.error('Notion export error:', err);
-      alert('Failed to export to Notion. Please try again.');
-    }
-  };
 
   const handleExportComplete = async () => {
     if (!course) return;
@@ -317,7 +279,6 @@ export default function CoursePage() {
           onTitleUpdate={handleTitleUpdate}
           onRegenerate={handleRegenerate}
           onExportPDF={handleExportPDF}
-          onExportNotion={handleExportNotion}
           onExportComplete={handleExportComplete}
           isRegenerating={false}
           isExporting={false}

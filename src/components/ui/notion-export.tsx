@@ -49,31 +49,51 @@ export function NotionExport({
       console.log('Notion export response status:', response.status);
       console.log('Notion export response headers:', Object.fromEntries(response.headers.entries()));
 
-      const data = await response.json();
-      console.log('Notion export response data:', data);
+      if (exportType === 'markdown') {
+        // Handle markdown download
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `${courseTitle.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          
+          setExportResult({
+            success: true,
+            message: 'Markdown file downloaded successfully!'
+          });
+        } else {
+          const errorData = await response.json();
+          setExportResult({
+            success: false,
+            message: errorData.error || 'Export failed'
+          });
+        }
+      } else {
+        // Handle direct export (JSON response)
+        const data = await response.json();
+        console.log('Notion export response data:', data);
 
-      if (data.success) {
-        if (exportType === 'direct') {
+        if (data.success) {
           setExportResult({
             success: true,
             message: 'Course exported to Notion successfully!',
             pageUrl: data.pageUrl
           });
         } else {
-          // For markdown export, the file should download automatically
-          setExportResult({
-            success: true,
-            message: 'Markdown file downloaded successfully!'
-          });
-        }
-      } else {
-        if (data.requiresConnection) {
-          onConnectionRequired();
-        } else {
-          setExportResult({
-            success: false,
-            message: data.error || 'Export failed'
-          });
+          if (data.requiresConnection) {
+            onConnectionRequired();
+          } else {
+            setExportResult({
+              success: false,
+              message: data.error || 'Export failed'
+            });
+          }
         }
       }
     } catch (error) {

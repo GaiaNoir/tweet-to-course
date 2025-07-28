@@ -3,6 +3,21 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import { CourseDisplay } from '@/components/ui/course-display';
 import { Course, UserProfile } from '@/types';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { it } from 'node:test';
+import { describe } from 'node:test';
 
 // Mock course data
 const mockCourse: Course = {
@@ -171,7 +186,7 @@ describe('CourseDisplay', () => {
       <CourseDisplay 
         course={mockCourse} 
         userProfile={mockProUser}
-        onExportNotion={mockExportNotion}
+
       />
     );
     

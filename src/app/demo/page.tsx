@@ -254,7 +254,7 @@ export default function DemoPage() {
           onTitleUpdate={handleTitleUpdate}
           onRegenerate={handleRegenerate}
           onExportPDF={handleExportPDF}
-          onExportNotion={handleExportNotion}
+
           isRegenerating={isRegenerating}
           isExporting={isExporting}
           isNotionConnected={isNotionConnected}

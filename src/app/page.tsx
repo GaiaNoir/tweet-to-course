@@ -155,29 +155,7 @@ export default function Home() {
                     console.error('PDF export failed:', error);
                   }
                 }}
-                onExportNotion={async () => {
-                  try {
-                    const response = await fetch('/api/export-notion', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ courseData: generatedCourse }),
-                    });
-                    
-                    if (response.ok) {
-                      const blob = await response.blob();
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `${generatedCourse.title.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;
-                      document.body.appendChild(a);
-                      a.click();
-                      window.URL.revokeObjectURL(url);
-                      document.body.removeChild(a);
-                    }
-                  } catch (error) {
-                    console.error('Notion export failed:', error);
-                  }
-                }}
+
                 isRegenerating={isLoading}
                 isExporting={false}
                 isNotionConnected={false}

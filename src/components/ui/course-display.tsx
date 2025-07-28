@@ -11,7 +11,6 @@ interface CourseDisplayProps {
   onTitleUpdate?: (newTitle: string) => void;
   onRegenerate?: () => void;
   onExportPDF?: () => void;
-  onExportNotion?: () => void;
   onExportComplete?: () => void;
   isRegenerating?: boolean;
   isExporting?: boolean;
@@ -26,7 +25,6 @@ export function CourseDisplay({
   onTitleUpdate,
   onRegenerate,
   onExportPDF,
-  onExportNotion,
   onExportComplete,
   isRegenerating = false,
   isExporting = false,
@@ -175,36 +173,7 @@ export function CourseDisplay({
               )}
             </button>
 
-            {canExportNotion ? (
-              <button
-                onClick={onExportNotion}
-                disabled={isExporting}
-                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
-              >
-                {isExporting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Exporting...
-                  </>
-                ) : (
-                  <>
-                    📝 Export to Notion
-                  </>
-                )}
-              </button>
-            ) : (
-              <div className="relative group">
-                <button
-                  onClick={() => window.location.href = '/pricing'}
-                  className="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-pointer transition-colors font-medium flex items-center justify-center gap-2"
-                >
-                  📝 Export to Notion
-                </button>
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  Upgrade to Pro
-                </div>
-              </div>
-            )}
+
           </div>
         </div>
         
