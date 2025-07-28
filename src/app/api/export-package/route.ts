@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { database } from '@/lib/database';
-import { createClient } from '@/lib/supabase';
+import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
 import { exportSystem, ExportOptions } from '@/lib/export-system';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
+    const user = getCurrentUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 401 }
+      );
+    }
     
     if (!userId) {
       return NextResponse.json(

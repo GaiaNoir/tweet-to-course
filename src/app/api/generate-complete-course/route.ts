@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { database } from '@/lib/database';
-import { createClient } from '@/lib/supabase';
+import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
 import { contentProcessor } from '@/lib/content-processor';
 import { openai } from '@/lib/openai';
 import { exportSystem, ExportOptions } from '@/lib/export-system';

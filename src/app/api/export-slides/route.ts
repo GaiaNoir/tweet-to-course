@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import SlideGenerator, { SlideOptions, SlideTheme } from '@/lib/slide-generator';
-import { createServerSupabaseClient } from '@/lib/supabase';
-import { UserService, CourseService, UsageService } from '@/lib/database';
+import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
 import { Course } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = getCurrentUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 401 }
+      );
+    }
     const userId = user?.id;
     
     if (!userId) {

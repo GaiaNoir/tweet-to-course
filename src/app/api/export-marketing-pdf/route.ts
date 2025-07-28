@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { UserService, UsageService } from '@/lib/database';
-import { createServerSupabaseClient } from '@/lib/supabase';
-import { canPerformAction } from '@/lib/subscription-utils';
+import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
 import jsPDF from 'jspdf';
 import { MarketingAssets } from '@/lib/marketing-assets-generator';
 

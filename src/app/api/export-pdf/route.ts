@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { UserService, CourseService, UsageService } from '@/lib/database';
-import { createServerSupabaseClient } from '@/lib/supabase';
-import { canPerformAction } from '@/lib/subscription-utils';
+import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
 import jsPDF from 'jspdf';
 
 interface ExportPDFRequest {
@@ -12,35 +10,30 @@ interface ExportPDFRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
+    const user = getCurrentUser();
     
-    // For debugging - log the auth status
-    console.log('PDF Export - Auth status:', { userId });
-    
-    if (!userId) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: 'User not found' },
         { status: 401 }
       );
     }
-
+    
+    // For debugging - log the auth status
+    console.log('PDF Export - Auth status:', { userId: user.id });
+    
     const body: ExportPDFRequest = await request.json();
     const { courseId, courseData } = body;
 
-    if (!courseId && !courseData) {
+    if (!courseData) {
       return NextResponse.json(
-        { success: false, error: 'Course ID or course data is required' },
+        { success: false, error: 'Course data is required' },
         { status: 400 }
       );
     }
 
-    // Get user data and check permissions (create user if doesn't exist)
-    const userData = await UserService.ensureUserExists(userId);
-
     // Check if user can export PDF
-    if (!canPerformAction(userData.subscription_tier, userData.usage_count, 'export_pdf')) {
+    if (!canPerformAction('export_pdf')) {
       return NextResponse.json(
         { 
           success: false, 
@@ -51,33 +44,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get course data - either from database or directly from request
-    let course;
-    
-    if (courseData) {
-      // Use course data directly (for temporary/anonymous courses)
-      course = courseData;
-    } else if (courseId) {
-      // Get course from database
-      course = await CourseService.getCourseById(courseId);
-      if (!course) {
-        return NextResponse.json(
-          { success: false, error: 'Course not found' },
-          { status: 404 }
-        );
-      }
-
-      // Check if user owns the course
-      const userCourses = await CourseService.getUserCourses(userData.id);
-      const userOwnsCourse = userCourses.some(c => c.id === courseId);
-      
-      if (!userOwnsCourse) {
-        return NextResponse.json(
-          { success: false, error: 'Access denied' },
-          { status: 403 }
-        );
-      }
-    }
+    // Use course data directly
+    const course = courseData;
 
     // Generate PDF
     const pdf = new jsPDF();
@@ -156,9 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the export action
-    await UsageService.logAction({
-      user_id: userData.id,
-      action: 'export_pdf',
+    incrementUsage();
       metadata: {
         course_id: courseId || 'temporary',
         course_title: course.title,
