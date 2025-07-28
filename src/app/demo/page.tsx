@@ -250,7 +250,6 @@ export default function DemoPage() {
         {/* Course Display */}
         <CourseDisplay
           course={currentCourse}
-          userProfile={currentUser}
           onTitleUpdate={handleTitleUpdate}
           onRegenerate={handleRegenerate}
           onExportPDF={handleExportPDF}

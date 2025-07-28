@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { UserService, CourseService, UsageService } from '@/lib/database';
 import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
-import { canPerformAction } from '@/lib/subscription-utils';
+import { getUserProfile, incrementUsageCount } from '@/lib/auth-simple';
 
 interface ExportNotionRequest {
   courseId?: string;
@@ -31,17 +30,14 @@ interface NotionPageResult {
 
 export async function POST(request: NextRequest) {
   try {
-    let userId = 'test-user';
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // Try to get real user if possible
-    try {
-      const supabase = await createServerSupabaseClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) {
-        userId = user.id;
-      }
-    } catch (authError) {
-      console.log('Auth check failed, using test user:', authError);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
     const body: ExportNotionRequest = await request.json();
@@ -54,48 +50,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user data and check permissions
-    let dbUser;
-    try {
-      // First try to get the user
-      dbUser = await UserService.getUserByAuthId(userId);
-      
-      // If user doesn't exist in database, try to get user info from Supabase Auth
-      if (!dbUser && userId !== 'test-user') {
-        const supabase = await createServerSupabaseClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user?.email) {
-          console.log('Creating user in database:', user.email);
-          dbUser = await UserService.getOrCreateUser(userId, user.email);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching/creating user:', error);
-    }
+    // Get user profile from auth metadata
+    const userProfile = await getUserProfile();
     
-    // For testing purposes, allow export if no user found (temporary)
-    if (!dbUser) {
-      console.log('No user found, using fallback for testing');
-      // Create a temporary user object for testing
-      dbUser = {
-        id: 'temp-user',
-        subscription_tier: 'pro',
-        usage_count: 0
-      };
+    if (!userProfile) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to load user profile' },
+        { status: 500 }
+      );
     }
     
     console.log('User for export:', { 
-      id: dbUser.id, 
-      subscription_tier: dbUser.subscription_tier, 
-      usage_count: dbUser.usage_count 
+      id: userProfile.id, 
+      subscription_tier: userProfile.subscriptionTier, 
+      usage_count: userProfile.usageCount 
     });
 
     // Check if user can export to Notion (Pro/Lifetime only)
-    const canExport = canPerformAction(dbUser.subscription_tier, dbUser.usage_count, 'export_notion');
+    const canExport = userProfile.subscriptionTier === 'pro' || userProfile.subscriptionTier === 'lifetime';
     console.log('Export permission check:', {
-      subscription_tier: dbUser.subscription_tier,
-      usage_count: dbUser.usage_count,
+      subscription_tier: userProfile.subscriptionTier,
+      usage_count: userProfile.usageCount,
       canExport,
       exportType
     });
@@ -108,38 +83,24 @@ export async function POST(request: NextRequest) {
           error: 'Notion export is only available for Pro and Lifetime subscribers',
           upgradeRequired: true,
           availablePlans: ['pro', 'lifetime'],
-          currentTier: dbUser.subscription_tier
+          currentTier: userProfile.subscriptionTier
         },
         { status: 403 }
       );
     }
 
-    // Get course data - either from database or directly from request
+    // Get course data - for now we'll use courseData directly
+    // TODO: If you want to support saved courses, you'll need to implement course storage
     let course;
     
     if (courseData) {
       // Use course data directly (for temporary/anonymous courses)
       course = courseData;
-    } else if (courseId) {
-      // Get course from database
-      course = await CourseService.getCourseById(courseId);
-      if (!course) {
-        return NextResponse.json(
-          { success: false, error: 'Course not found' },
-          { status: 404 }
-        );
-      }
-
-      // Check if user owns the course
-      const userCourses = await CourseService.getUserCourses(dbUser.id);
-      const userOwnsCourse = userCourses.some(c => c.id === courseId);
-      
-      if (!userOwnsCourse) {
-        return NextResponse.json(
-          { success: false, error: 'Access denied' },
-          { status: 403 }
-        );
-      }
+    } else {
+      return NextResponse.json(
+        { success: false, error: 'Course data is required' },
+        { status: 400 }
+      );
     }
 
     if (exportType === 'direct') {
@@ -148,7 +109,7 @@ export async function POST(request: NextRequest) {
       const { data: integration, error: integrationError } = await adminClient
         .from('user_integrations')
         .select('access_token')
-        .eq('user_id', dbUser.id)
+        .eq('user_id', userProfile.id)
         .eq('provider', 'notion')
         .single();
 
@@ -180,23 +141,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Log the export action (only if we have a real user)
-      if (dbUser.id !== 'temp-user') {
-        try {
-          await UsageService.logAction({
-            user_id: dbUser.id,
-            action: 'export_notion',
-            metadata: {
-              course_id: courseId || 'temporary',
-              course_title: course.title,
-              notion_page_id: notionResult.pageId,
-              export_type: 'direct',
-              is_temporary_course: !courseId,
-            },
-          });
-        } catch (logError) {
-          console.error('Failed to log usage:', logError);
-        }
+      // Increment usage count
+      try {
+        await incrementUsageCount(userProfile.id);
+      } catch (logError) {
+        console.error('Failed to update usage count:', logError);
       }
 
       return NextResponse.json({
@@ -210,22 +159,11 @@ export async function POST(request: NextRequest) {
       // Generate markdown for manual import
       const notionExport = generateNotionContent(course);
 
-      // Log the export action (only if we have a real user)
-      if (dbUser.id !== 'temp-user') {
-        try {
-          await UsageService.logAction({
-            user_id: dbUser.id,
-            action: 'export_notion',
-            metadata: {
-              course_id: courseId || 'temporary',
-              course_title: course.title,
-              export_type: 'markdown',
-              is_temporary_course: !courseId,
-            },
-          });
-        } catch (logError) {
-          console.error('Failed to log usage:', logError);
-        }
+      // Increment usage count
+      try {
+        await incrementUsageCount(userProfile.id);
+      } catch (logError) {
+        console.error('Failed to update usage count:', logError);
       }
 
       const filename = `${course.title.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;

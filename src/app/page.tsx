@@ -119,7 +119,6 @@ export default function Home() {
             <div className="mt-16">
               <CourseDisplay
                 course={generatedCourse}
-                userProfile={null} // Will be populated when user is authenticated
                 onTitleUpdate={(newTitle) => {
                   setGeneratedCourse(prev => prev ? { ...prev, title: newTitle } : null);
                 }}

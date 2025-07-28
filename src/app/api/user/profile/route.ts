@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { UserService } from '@/lib/database';
+import { getUserProfile, updateUserSubscription, initializeUserMetadata } from '@/lib/auth-simple';
 import { createServerSupabaseClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
@@ -16,44 +16,37 @@ export async function GET(request: NextRequest) {
 
     console.log('Profile API - Auth user:', { id: user.id, email: user.email });
 
-    // Get or create user in database
-    let dbUser;
+    // Initialize user metadata if this is their first time
     try {
-      dbUser = await UserService.getUserByAuthId(user.id);
-      
-      // If user doesn't exist, create them
-      if (!dbUser && user.email) {
-        console.log('Creating new user in database');
-        dbUser = await UserService.getOrCreateUser(user.id, user.email);
-      }
+      await initializeUserMetadata(user.id);
     } catch (error) {
-      console.error('Error fetching/creating user:', error);
+      console.error('Error initializing user metadata:', error);
+      // Continue anyway, getUserProfile will handle defaults
+    }
+
+    // Get user profile from auth metadata
+    const profile = await getUserProfile();
+    
+    if (!profile) {
       return NextResponse.json(
         { success: false, error: 'Failed to load user profile' },
         { status: 500 }
       );
     }
 
-    if (!dbUser) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
+    console.log('Profile API - User profile:', profile);
 
-    console.log('Profile API - DB user:', dbUser);
-
-    // Return user profile
+    // Return user profile (matching the expected format)
     return NextResponse.json({
       success: true,
-      id: dbUser.id,
-      email: dbUser.email,
-      subscriptionTier: dbUser.subscription_tier,
-      usageCount: dbUser.usage_count,
-      monthlyUsageCount: dbUser.monthly_usage_count || 0,
-      monthlyUsageResetDate: dbUser.monthly_usage_reset_date || new Date().toISOString(),
-      createdAt: dbUser.created_at,
-      lastActive: dbUser.last_active,
+      id: profile.id,
+      email: profile.email,
+      subscriptionTier: profile.subscriptionTier,
+      usageCount: profile.usageCount,
+      monthlyUsageCount: profile.monthlyUsageCount,
+      monthlyUsageResetDate: profile.monthlyUsageResetDate,
+      createdAt: profile.createdAt,
+      lastActive: new Date().toISOString(), // We don't track this in metadata
     });
 
   } catch (error) {
@@ -84,12 +77,22 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { subscriptionTier } = body;
 
-    // Update user subscription tier
-    const updatedUser = await UserService.updateUserSubscription(user.id, subscriptionTier);
+    if (!['free', 'pro', 'lifetime'].includes(subscriptionTier)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid subscription tier' },
+        { status: 400 }
+      );
+    }
+
+    // Update user subscription tier in auth metadata
+    await updateUserSubscription(user.id, subscriptionTier);
+
+    // Get updated profile
+    const updatedProfile = await getUserProfile();
 
     return NextResponse.json({
       success: true,
-      user: updatedUser
+      user: updatedProfile
     });
 
   } catch (error) {

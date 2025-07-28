@@ -10,7 +10,7 @@ export default function CoursePage() {
   const params = useParams();
   const courseId = params.id as string;
   const [course, setCourse] = useState<Course | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,49 +28,7 @@ export default function CoursePage() {
           return;
         }
 
-        // Fetch user profile
-        try {
-          console.log('Fetching user profile...');
-          const response = await fetch('/api/user/profile');
-          console.log('User profile response status:', response.status);
-          
-          if (response.ok) {
-            const profileData = await response.json();
-            console.log('User profile loaded:', profileData);
-            setUserProfile(profileData);
-          } else {
-            const errorData = await response.text();
-            console.error('Failed to fetch user profile:', response.status, response.statusText, errorData);
-            
-            // Fallback: If user can generate courses, assume they're Pro
-            // This is a temporary workaround for the profile API issue
-            console.log('Using fallback Pro user profile');
-            setUserProfile({
-              id: 'temp-id',
-              email: 'user@example.com',
-              subscriptionTier: 'pro',
-              usageCount: 0,
-              monthlyUsageCount: 0,
-              monthlyUsageResetDate: new Date().toISOString(),
-              createdAt: new Date().toISOString(),
-              lastActive: new Date().toISOString(),
-            });
-          }
-        } catch (profileError) {
-          console.error('Error loading user profile:', profileError);
-          // Fallback for Pro user
-          console.log('Using fallback Pro user profile due to error');
-          setUserProfile({
-            id: 'temp-id',
-            email: 'user@example.com',
-            subscriptionTier: 'pro',
-            usageCount: 0,
-            monthlyUsageCount: 0,
-            monthlyUsageResetDate: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            lastActive: new Date().toISOString(),
-          });
-        }
+
 
         setLoading(false);
       } catch (err) {
@@ -275,7 +233,6 @@ export default function CoursePage() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         <CourseDisplay
           course={course}
-          userProfile={userProfile}
           onTitleUpdate={handleTitleUpdate}
           onRegenerate={handleRegenerate}
           onExportPDF={handleExportPDF}

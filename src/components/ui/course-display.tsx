@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { Course, UserProfile } from '@/types';
 import { NotionExport } from './notion-export';
 import { MarketingAssetsGenerator } from './marketing-assets-generator';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface CourseDisplayProps {
   course: Course;
-  userProfile?: UserProfile;
   onTitleUpdate?: (newTitle: string) => void;
   onRegenerate?: () => void;
   onExportPDF?: () => void;
@@ -21,7 +21,6 @@ interface CourseDisplayProps {
 
 export function CourseDisplay({
   course,
-  userProfile,
   onTitleUpdate,
   onRegenerate,
   onExportPDF,
@@ -35,6 +34,9 @@ export function CourseDisplay({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(course.title);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+
+  // Use the hook to get user profile and permissions
+  const { profile: userProfile, loading, canExportNotion, isFreeTier } = useUserProfile();
 
   const handleTitleSave = () => {
     if (editedTitle.trim() && editedTitle !== course.title) {
@@ -57,15 +59,27 @@ export function CourseDisplay({
     }
     setExpandedModules(newExpanded);
   };
-
-  // Check user subscription for export permissions
-  const canExportNotion = userProfile?.subscriptionTier === 'pro' || userProfile?.subscriptionTier === 'lifetime';
-  const isFreeTier = userProfile?.subscriptionTier === 'free' || !userProfile?.subscriptionTier;
   
   // Debug logging
   console.log('CourseDisplay - User Profile:', userProfile);
   console.log('CourseDisplay - Can Export Notion:', canExportNotion);
   console.log('CourseDisplay - Is Free Tier:', isFreeTier);
+
+  // Show loading state while checking user permissions
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-4xl mx-auto">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="space-y-4">
+            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-4xl mx-auto">
@@ -182,6 +196,11 @@ export function CourseDisplay({
           <span>📅 Generated {new Date(course.metadata.generatedAt).toLocaleDateString()}</span>
           <span>📚 {course.modules.length} modules</span>
           <span>🔗 Source: {course.metadata.sourceType}</span>
+          {userProfile && (
+            <span className={`font-medium ${isFreeTier ? 'text-orange-600' : 'text-green-600'}`}>
+              {userProfile.subscriptionTier.toUpperCase()} Plan
+            </span>
+          )}
           {isFreeTier && (
             <span className="text-orange-600 font-medium">⚠️ Free tier - PDF includes watermark</span>
           )}
