@@ -4,6 +4,7 @@ import { contentProcessor } from '@/lib/content-processor';
 import { openai } from '@/lib/openai';
 import { exportSystem, ExportOptions } from '@/lib/export-system';
 import { Course } from '@/types';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {

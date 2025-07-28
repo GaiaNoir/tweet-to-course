@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
 import jsPDF from 'jspdf';
 import { MarketingAssets } from '@/lib/marketing-assets-generator';
+import { UsageService } from '@/lib/database';
+import { UserService } from '@/lib/database';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 interface ExportMarketingPDFRequest {
   marketingAssets: MarketingAssets;
