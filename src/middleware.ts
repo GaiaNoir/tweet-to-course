@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
   // Check if user is authenticated for protected routes
   const protectedRoutes = [
     '/dashboard',
-    '/api/generate-course',
+    // '/api/generate-course', // Temporarily removed for testing
     '/api/export-pdf',
     '/api/export-marketing-pdf',
     '/api/export-notion',
