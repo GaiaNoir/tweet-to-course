@@ -24,77 +24,58 @@ export function NotionExport({
     pageUrl?: string;
   } | null>(null);
 
-  const exportToNotion = async (exportType: 'direct' | 'markdown') => {
-    if (exportType === 'direct' && !isNotionConnected) {
-      onConnectionRequired();
-      return;
-    }
-
+  const exportToNotion = async () => {
     setExporting(true);
     setExportResult(null);
 
     try {
-      console.log('Starting Notion export...', { exportType, courseId });
+      console.log('Starting Notion export...');
+      
+      // Get course data from localStorage (simple approach)
+      const courseData = {
+        title: courseTitle,
+        modules: [], // This would need to be passed in or retrieved
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          sourceType: 'tweet'
+        }
+      };
+
       const response = await fetch('/api/export-notion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          courseId,
-          exportType
+          courseData,
+          exportType: 'markdown'
         }),
       });
 
       console.log('Notion export response status:', response.status);
-      console.log('Notion export response headers:', Object.fromEntries(response.headers.entries()));
 
-      if (exportType === 'markdown') {
-        // Handle markdown download
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = `${courseTitle.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-          
-          setExportResult({
-            success: true,
-            message: 'Markdown file downloaded successfully!'
-          });
-        } else {
-          const errorData = await response.json();
-          setExportResult({
-            success: false,
-            message: errorData.error || 'Export failed'
-          });
-        }
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${courseTitle.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        setExportResult({
+          success: true,
+          message: 'Markdown file downloaded successfully!'
+        });
       } else {
-        // Handle direct export (JSON response)
-        const data = await response.json();
-        console.log('Notion export response data:', data);
-
-        if (data.success) {
-          setExportResult({
-            success: true,
-            message: 'Course exported to Notion successfully!',
-            pageUrl: data.pageUrl
-          });
-        } else {
-          if (data.requiresConnection) {
-            onConnectionRequired();
-          } else {
-            setExportResult({
-              success: false,
-              message: data.error || 'Export failed'
-            });
-          }
-        }
+        const errorData = await response.json();
+        setExportResult({
+          success: false,
+          message: errorData.error || 'Export failed'
+        });
       }
     } catch (error) {
       console.error('Export error:', error);
@@ -119,25 +100,11 @@ export function NotionExport({
 
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
-            onClick={() => exportToNotion('direct')}
+            onClick={exportToNotion}
             disabled={exporting}
             className="flex-1"
           >
-            {exporting ? 'Exporting...' : 'Export Directly'}
-            {isNotionConnected && (
-              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                Connected
-              </span>
-            )}
-          </Button>
-          
-          <Button
-            variant="outline"
-            onClick={() => exportToNotion('markdown')}
-            disabled={exporting}
-            className="flex-1"
-          >
-            Download Markdown
+            {exporting ? 'Exporting...' : 'Download Notion Markdown'}
           </Button>
         </div>
 
@@ -172,8 +139,7 @@ export function NotionExport({
         )}
 
         <div className="text-xs text-gray-500">
-          <p><strong>Direct Export:</strong> Creates a new page in your Notion workspace</p>
-          <p><strong>Markdown:</strong> Downloads a file you can manually import</p>
+          <p><strong>Markdown Export:</strong> Downloads a file you can manually import into Notion</p>
         </div>
       </div>
     </Card>

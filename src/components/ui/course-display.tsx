@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Course, UserProfile } from '@/types';
 import { NotionExport } from './notion-export';
 import { MarketingAssetsGenerator } from './marketing-assets-generator';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CourseDisplayProps {
   course: Course;
@@ -36,7 +36,7 @@ export function CourseDisplay({
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
   // Use the hook to get user profile and permissions
-  const { profile: userProfile, loading, canExportNotion, isFreeTier } = useUserProfile();
+  const { user: userProfile, loading, canExportNotion, isFreeTier } = useAuth();
 
   const handleTitleSave = () => {
     if (editedTitle.trim() && editedTitle !== course.title) {

@@ -1,188 +1,134 @@
-import { redirect } from 'next/navigation';
-import { createClient } from './supabase';
-import { User } from '@supabase/supabase-js';
+/**
+ * Super Simple Auth System
+ * No database, no complex metadata - just localStorage for testing
+ */
 
-export interface UserProfile {
+export type SubscriptionTier = 'free' | 'pro' | 'lifetime';
+
+export interface User {
   id: string;
   email: string;
-  subscriptionTier: 'free' | 'pro' | 'lifetime';
+  subscriptionTier: SubscriptionTier;
   usageCount: number;
   monthlyUsageCount: number;
-  monthlyUsageResetDate: string;
-  createdAt: string;
-  lastActive: string;
-  customerCode?: string;
-  subscriptionCode?: string;
 }
 
+// Simple in-memory user for testing
+let currentUser: User | null = null;
+
 /**
- * Get the current authenticated user from Supabase
+ * Initialize a test user
  */
-export async function getCurrentUser(): Promise<User | null> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export function initTestUser(): User {
+  const user: User = {
+    id: 'test-user-123',
+    email: 'test@example.com',
+    subscriptionTier: 'pro', // Default to pro for testing
+    usageCount: 0,
+    monthlyUsageCount: 0,
+  };
+  
+  currentUser = user;
+  
+  // Also store in localStorage for persistence
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('tweet-to-course-user', JSON.stringify(user));
+  }
+  
   return user;
 }
 
 /**
- * Get the current user's authentication status
+ * Get current user
  */
-export async function getAuth() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return { userId: user?.id || null };
+export function getCurrentUser(): User | null {
+  // First check memory
+  if (currentUser) {
+    return currentUser;
+  }
+  
+  // Then check localStorage
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('tweet-to-course-user');
+    if (stored) {
+      try {
+        currentUser = JSON.parse(stored);
+        return currentUser;
+      } catch (e) {
+        console.error('Failed to parse stored user:', e);
+      }
+    }
+  }
+  
+  // If no user found, create a test user
+  return initTestUser();
 }
 
 /**
- * Require authentication - redirect to sign-in if not authenticated
+ * Update user subscription
  */
-export async function requireAuth(): Promise<string> {
-  const { userId } = await getAuth();
-  
-  if (!userId) {
-    redirect('/auth/sign-in');
+export function updateUserSubscription(tier: SubscriptionTier): User {
+  const user = getCurrentUser();
+  if (user) {
+    user.subscriptionTier = tier;
+    currentUser = user;
+    
+    // Update localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tweet-to-course-user', JSON.stringify(user));
+    }
   }
-  
-  return userId;
+  return user!;
 }
 
 /**
- * Get or create user profile in Supabase
+ * Increment usage count
  */
-export async function getUserProfile(authUserId?: string): Promise<UserProfile | null> {
-  const supabase = createClient();
-  
-  // If no authUserId provided, get current user
-  let userId = authUserId;
-  if (!userId) {
-    const user = await getCurrentUser();
-    if (!user) return null;
-    userId = user.id;
+export function incrementUsage(): User {
+  const user = getCurrentUser();
+  if (user) {
+    user.usageCount++;
+    user.monthlyUsageCount++;
+    currentUser = user;
+    
+    // Update localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tweet-to-course-user', JSON.stringify(user));
+    }
   }
-  
-  // First, try to get existing user
-  const { data: existingUser, error: fetchError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('auth_user_id', userId)
-    .single();
-  
-  if (existingUser && !fetchError) {
-    return {
-      id: existingUser.id,
-      email: existingUser.email,
-      subscriptionTier: existingUser.subscription_tier,
-      usageCount: existingUser.usage_count,
-      monthlyUsageCount: existingUser.monthly_usage_count || 0,
-      monthlyUsageResetDate: existingUser.monthly_usage_reset_date,
-      createdAt: existingUser.created_at,
-      lastActive: existingUser.updated_at,
-      customerCode: existingUser.customer_code,
-      subscriptionCode: existingUser.subscription_code,
-    };
-  }
-  
-  // If user doesn't exist, the trigger should have created them
-  // But let's handle the case where it didn't
-  console.log('🔄 User profile not found, checking auth user:', userId);
-  const authUser = await getCurrentUser();
-  if (!authUser) {
-    console.error('❌ Could not get auth user data');
-    return null;
-  }
-  
-  const { data: newUser, error: createError } = await supabase
-    .from('users')
-    .insert({
-      auth_user_id: userId,
-      email: authUser.email || '',
-      subscription_tier: 'free',
-      usage_count: 0,
-      monthly_usage_count: 0,
-      monthly_usage_reset_date: new Date().toISOString(),
-    })
-    .select()
-    .single();
-  
-  if (createError) {
-    console.error('❌ Error creating user profile:', createError);
-    return null;
-  }
-  
-  if (!newUser) {
-    console.error('❌ No user data returned after creation');
-    return null;
-  }
-  
-  console.log('✅ Successfully created user profile:', newUser.id);
-  
-  return {
-    id: newUser.id,
-    email: newUser.email,
-    subscriptionTier: newUser.subscription_tier,
-    usageCount: newUser.usage_count,
-    monthlyUsageCount: newUser.monthly_usage_count || 0,
-    monthlyUsageResetDate: newUser.monthly_usage_reset_date,
-    createdAt: newUser.created_at,
-    lastActive: newUser.updated_at,
-  };
+  return user!;
 }
 
 /**
- * Update user's last active timestamp
+ * Check if user can perform action
  */
-export async function updateUserActivity(authUserId?: string) {
-  const supabase = createClient();
-  
-  let userId = authUserId;
-  if (!userId) {
-    const user = await getCurrentUser();
-    if (!user) return;
-    userId = user.id;
-  }
-  
-  const { error } = await supabase
-    .from('users')
-    .update({ updated_at: new Date().toISOString() })
-    .eq('auth_user_id', userId);
-  
-  if (error) {
-    console.error('Error updating user activity:', error);
-  }
-}
+export function canPerformAction(action: 'generate' | 'export_pdf' | 'export_notion'): boolean {
+  const user = getCurrentUser();
+  if (!user) return false;
 
-/**
- * Sign out the current user
- */
-export async function signOut() {
-  const supabase = createClient();
-  await supabase.auth.signOut();
-  redirect('/');
-}
-
-/**
- * Check if user can perform an action based on their subscription tier
- */
-export function canPerformAction(
-  userProfile: UserProfile,
-  action: 'generate' | 'export_pdf' | 'export_notion' | 'remove_watermark'
-): boolean {
   switch (action) {
     case 'generate':
-      return userProfile.subscriptionTier === 'free' 
-        ? userProfile.monthlyUsageCount < 1 
+      return user.subscriptionTier === 'free' 
+        ? user.monthlyUsageCount < 1 
         : true;
     
     case 'export_pdf':
       return true; // All users can export PDF
     
     case 'export_notion':
-      return userProfile.subscriptionTier === 'pro' || userProfile.subscriptionTier === 'lifetime';
-    
-    case 'remove_watermark':
-      return userProfile.subscriptionTier === 'pro' || userProfile.subscriptionTier === 'lifetime';
+      return user.subscriptionTier === 'pro' || user.subscriptionTier === 'lifetime';
     
     default:
       return false;
+  }
+}
+
+/**
+ * Reset user data (for testing)
+ */
+export function resetUser(): void {
+  currentUser = null;
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('tweet-to-course-user');
   }
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase';
-import { getUserProfile, incrementUsageCount } from '@/lib/auth-simple';
+import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
 
 interface ExportNotionRequest {
   courseId?: string;
@@ -30,47 +29,37 @@ interface NotionPageResult {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const body: ExportNotionRequest = await request.json();
-    const { courseId, courseData, parentPageId, exportType = 'direct' } = body;
+    const { courseId, courseData, parentPageId, exportType = 'markdown' } = body;
 
-    if (!courseId && !courseData) {
+    if (!courseData) {
       return NextResponse.json(
-        { success: false, error: 'Course ID or course data is required' },
+        { success: false, error: 'Course data is required' },
         { status: 400 }
       );
     }
 
-    // Get user profile from auth metadata
-    const userProfile = await getUserProfile();
+    // Get current user
+    const user = getCurrentUser();
     
-    if (!userProfile) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Failed to load user profile' },
-        { status: 500 }
+        { success: false, error: 'User not found' },
+        { status: 401 }
       );
     }
     
     console.log('User for export:', { 
-      id: userProfile.id, 
-      subscription_tier: userProfile.subscriptionTier, 
-      usage_count: userProfile.usageCount 
+      id: user.id, 
+      subscription_tier: user.subscriptionTier, 
+      usage_count: user.usageCount 
     });
 
     // Check if user can export to Notion (Pro/Lifetime only)
-    const canExport = userProfile.subscriptionTier === 'pro' || userProfile.subscriptionTier === 'lifetime';
+    const canExport = canPerformAction('export_notion');
     console.log('Export permission check:', {
-      subscription_tier: userProfile.subscriptionTier,
-      usage_count: userProfile.usageCount,
+      subscription_tier: user.subscriptionTier,
+      usage_count: user.usageCount,
       canExport,
       exportType
     });
@@ -83,98 +72,34 @@ export async function POST(request: NextRequest) {
           error: 'Notion export is only available for Pro and Lifetime subscribers',
           upgradeRequired: true,
           availablePlans: ['pro', 'lifetime'],
-          currentTier: userProfile.subscriptionTier
+          currentTier: user.subscriptionTier
         },
         { status: 403 }
       );
     }
 
-    // Get course data - for now we'll use courseData directly
-    // TODO: If you want to support saved courses, you'll need to implement course storage
-    let course;
+    // Use course data directly
+    const course = courseData;
+
+    // For now, we'll only support markdown export (no direct Notion integration)
+    // Generate markdown for manual import
+    const notionExport = generateNotionContent(course);
+
+    // Increment usage count
+    try {
+      incrementUsage();
+    } catch (logError) {
+      console.error('Failed to update usage count:', logError);
+    }
+
+    const filename = `${course.title.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;
     
-    if (courseData) {
-      // Use course data directly (for temporary/anonymous courses)
-      course = courseData;
-    } else {
-      return NextResponse.json(
-        { success: false, error: 'Course data is required' },
-        { status: 400 }
-      );
-    }
-
-    if (exportType === 'direct') {
-      // Check if user has Notion connected
-      const adminClient = createAdminClient();
-      const { data: integration, error: integrationError } = await adminClient
-        .from('user_integrations')
-        .select('access_token')
-        .eq('user_id', userProfile.id)
-        .eq('provider', 'notion')
-        .single();
-
-      if (integrationError || !integration) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Notion account not connected. Please connect your Notion account first.',
-            requiresConnection: true
-          },
-          { status: 400 }
-        );
-      }
-
-      // Create page directly in Notion
-      const notionResult = await createNotionPage(
-        integration.access_token,
-        course,
-        parentPageId
-      );
-
-      if (!notionResult.success) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: notionResult.error || 'Failed to create Notion page'
-          },
-          { status: 500 }
-        );
-      }
-
-      // Increment usage count
-      try {
-        await incrementUsageCount(userProfile.id);
-      } catch (logError) {
-        console.error('Failed to update usage count:', logError);
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'Course exported to Notion successfully!',
-        pageUrl: notionResult.pageUrl,
-        pageId: notionResult.pageId
-      });
-
-    } else {
-      // Generate markdown for manual import
-      const notionExport = generateNotionContent(course);
-
-      // Increment usage count
-      try {
-        await incrementUsageCount(userProfile.id);
-      } catch (logError) {
-        console.error('Failed to update usage count:', logError);
-      }
-
-      const filename = `${course.title.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;
-      
-      return new NextResponse(notionExport.markdown, {
-        headers: {
-          'Content-Type': 'text/markdown',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-        },
-      });
-    }
+    return new NextResponse(notionExport.markdown, {
+      headers: {
+        'Content-Type': 'text/markdown',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      },
+    });
 
   } catch (error) {
     console.error('Notion export error:', error);
