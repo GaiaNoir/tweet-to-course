@@ -232,6 +232,25 @@ export class UserService {
 
     return user;
   }
+
+  /**
+   * Update user subscription tier
+   */
+  static async updateUserSubscription(authUserId: string, subscriptionTier: 'free' | 'pro' | 'lifetime'): Promise<DbUser> {
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
+      .from('users')
+      .update({ 
+        subscription_tier: subscriptionTier,
+        updated_at: new Date().toISOString()
+      })
+      .eq('auth_user_id', authUserId)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return data;
+  }
 }
 
 // Course operations

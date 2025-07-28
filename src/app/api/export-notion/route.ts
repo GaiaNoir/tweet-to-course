@@ -57,14 +57,26 @@ export async function POST(request: NextRequest) {
     // Get user data and check permissions
     let dbUser;
     try {
+      // First try to get the user
       dbUser = await UserService.getUserByAuthId(userId);
+      
+      // If user doesn't exist in database, try to get user info from Supabase Auth
+      if (!dbUser && userId !== 'test-user') {
+        const supabase = await createServerSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user?.email) {
+          console.log('Creating user in database:', user.email);
+          dbUser = await UserService.getOrCreateUser(userId, user.email);
+        }
+      }
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error fetching/creating user:', error);
     }
     
     // For testing purposes, allow export if no user found (temporary)
     if (!dbUser) {
-      console.log('No user found, allowing export for testing');
+      console.log('No user found, using fallback for testing');
       // Create a temporary user object for testing
       dbUser = {
         id: 'temp-user',
@@ -72,15 +84,31 @@ export async function POST(request: NextRequest) {
         usage_count: 0
       };
     }
+    
+    console.log('User for export:', { 
+      id: dbUser.id, 
+      subscription_tier: dbUser.subscription_tier, 
+      usage_count: dbUser.usage_count 
+    });
 
     // Check if user can export to Notion (Pro/Lifetime only)
-    if (!canPerformAction(dbUser.subscription_tier, dbUser.usage_count, 'export_notion')) {
+    const canExport = canPerformAction(dbUser.subscription_tier, dbUser.usage_count, 'export_notion');
+    console.log('Export permission check:', {
+      subscription_tier: dbUser.subscription_tier,
+      usage_count: dbUser.usage_count,
+      canExport,
+      exportType
+    });
+    
+    if (!canExport) {
+      console.log('Export denied - user needs upgrade');
       return NextResponse.json(
         { 
           success: false, 
           error: 'Notion export is only available for Pro and Lifetime subscribers',
           upgradeRequired: true,
-          availablePlans: ['pro', 'lifetime']
+          availablePlans: ['pro', 'lifetime'],
+          currentTier: dbUser.subscription_tier
         },
         { status: 403 }
       );
