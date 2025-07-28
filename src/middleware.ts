@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
     // '/api/generate-course', // Temporarily removed for testing
     '/api/export-pdf',
     '/api/export-marketing-pdf',
-    '/api/export-notion',
+    // '/api/export-notion', // Temporarily removed for testing
     '/api/export-slides',
     '/api/export-package',
     '/api/user',
