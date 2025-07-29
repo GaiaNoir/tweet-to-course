@@ -140,171 +140,169 @@ export default function Home() {
           </div>
         </div>
 
-          {/* Course Input Form - Only show when user is logged in */}
-          {!loading && isSignedIn && (
-            <div className="max-w-7xl mx-auto container-padding mt-20">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                  Create Your Course
-                </h2>
-                <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                  Paste your Twitter thread or any educational content below to get started
-                </p>
-              </div>
-              <CourseInputForm
-                onSubmit={handleCourseGeneration}
-                isLoading={isLoading}
-                error={error}
-                onErrorDismiss={handleErrorDismiss}
-              />
-            </div>
-          )}
-
-
-
-          {/* Generated Course Display */}
-          {generatedCourse && (
-            <div className="max-w-7xl mx-auto container-padding mt-20">
-              <CourseDisplay
-                course={generatedCourse}
-                onTitleUpdate={(newTitle) => {
-                  setGeneratedCourse(prev => prev ? { ...prev, title: newTitle } : null);
-                }}
-                onRegenerate={async () => {
-                  // Re-generate with same content
-                  if (generatedCourse?.metadata?.sourceUrl || generatedCourse?.metadata?.sourceContent) {
-                    await handleCourseGeneration({
-                      content: generatedCourse.metadata.sourceUrl || generatedCourse.metadata.sourceContent || '',
-                      type: generatedCourse.metadata.sourceUrl ? 'url' : 'text'
-                    });
-                  }
-                }}
-                onExportPDF={async () => {
-                  try {
-                    const response = await fetch('/api/export-pdf', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ courseData: generatedCourse }),
-                    });
-                    
-                    if (response.ok) {
-                      const blob = await response.blob();
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `${generatedCourse.title.replace(/[^a-zA-Z0-9]/g, '_')}_course.pdf`;
-                      document.body.appendChild(a);
-                      a.click();
-                      window.URL.revokeObjectURL(url);
-                      document.body.removeChild(a);
-                    }
-                  } catch (error) {
-                    console.error('PDF export failed:', error);
-                  }
-                }}
-
-                isRegenerating={isLoading}
-                isExporting={false}
-                isNotionConnected={false}
-                onNotionConnectionRequired={() => {
-                  alert('Please sign up for a Pro account to connect Notion');
-                }}
-              />
-            </div>
-          )}
-
-          {/* Feature Overview */}
-          <div className="max-w-7xl mx-auto container-padding mt-32">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl font-bold text-slate-900 mb-6 text-balance">
-                How It Works
+        {/* Course Input Form - Only show when user is logged in */}
+        {!loading && isSignedIn && (
+          <div className="max-w-7xl mx-auto container-padding mt-20">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                Create Your Course
               </h2>
-              <p className="text-xl text-slate-600 max-w-3xl mx-auto text-balance">
-                Transform your content in three simple steps and start monetizing your knowledge today
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                Paste your Twitter thread or any educational content below to get started
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-8 lg:gap-12 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="card card-hover group relative p-8 text-center">
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                  <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    1
-                  </div>
-                </div>
-                <div className="text-6xl mb-8 animate-float">🧵</div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">
-                  Paste Your Content
-                </h3>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Simply paste your Twitter thread or any educational content. Our AI works with any knowledge you've shared.
-                </p>
-                <div className="mt-6 flex justify-center">
-                  <div className="status-indicator status-info">
-                    <span className="w-2 h-2 bg-current rounded-full"></span>
-                    Supports all formats
-                  </div>
+            <CourseInputForm
+              onSubmit={handleCourseGeneration}
+              isLoading={isLoading}
+              error={error}
+              onErrorDismiss={handleErrorDismiss}
+            />
+          </div>
+        )}
+
+        {/* Generated Course Display */}
+        {generatedCourse && (
+          <div className="max-w-7xl mx-auto container-padding mt-20">
+            <CourseDisplay
+              course={generatedCourse}
+              onTitleUpdate={(newTitle) => {
+                setGeneratedCourse(prev => prev ? { ...prev, title: newTitle } : null);
+              }}
+              onRegenerate={async () => {
+                // Re-generate with same content
+                if (generatedCourse?.metadata?.sourceUrl || generatedCourse?.metadata?.sourceContent) {
+                  await handleCourseGeneration({
+                    content: generatedCourse.metadata.sourceUrl || generatedCourse.metadata.sourceContent || '',
+                    type: generatedCourse.metadata.sourceUrl ? 'url' : 'text'
+                  });
+                }
+              }}
+              onExportPDF={async () => {
+                try {
+                  const response = await fetch('/api/export-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ courseData: generatedCourse }),
+                  });
+                  
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${generatedCourse.title.replace(/[^a-zA-Z0-9]/g, '_')}_course.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                  }
+                } catch (error) {
+                  console.error('PDF export failed:', error);
+                }
+              }}
+
+              isRegenerating={isLoading}
+              isExporting={false}
+              isNotionConnected={false}
+              onNotionConnectionRequired={() => {
+                alert('Please sign up for a Pro account to connect Notion');
+              }}
+            />
+          </div>
+        )}
+
+        {/* Feature Overview */}
+        <div className="max-w-7xl mx-auto container-padding mt-32">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-slate-900 mb-6 text-balance">
+              How It Works
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto text-balance">
+              Transform your content in three simple steps and start monetizing your knowledge today
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-8 lg:gap-12 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="card card-hover group relative p-8 text-center">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  1
                 </div>
               </div>
-
-              <div className="card card-hover group relative p-8 text-center">
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                  <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    2
-                  </div>
-                </div>
-                <div className="text-6xl mb-8 animate-float" style={{animationDelay: '0.5s'}}>🤖</div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">
-                  AI Magic
-                </h3>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Our advanced AI analyzes your content and structures it into professional educational modules with clear learning objectives.
-                </p>
-                <div className="mt-6 flex justify-center">
-                  <div className="status-indicator status-success">
-                    <span className="w-2 h-2 bg-current rounded-full animate-pulse"></span>
-                    AI-Powered
-                  </div>
-                </div>
-              </div>
-
-              <div className="card card-hover group relative p-8 text-center sm:col-span-2 lg:col-span-1">
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                  <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    3
-                  </div>
-                </div>
-                <div className="text-6xl mb-8 animate-float" style={{animationDelay: '1s'}}>📚</div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">
-                  Export & Monetize
-                </h3>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                  Export as beautiful PDFs, Notion pages, or presentation slides. Ready to sell to your audience immediately.
-                </p>
-                <div className="mt-6 flex justify-center">
-                  <div className="status-indicator status-warning">
-                    <span className="w-2 h-2 bg-current rounded-full"></span>
-                    Multiple formats
-                  </div>
+              <div className="text-6xl mb-8 animate-float">🧵</div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                Paste Your Content
+              </h3>
+              <p className="text-slate-600 leading-relaxed text-lg">
+                Simply paste your Twitter thread or any educational content. Our AI works with any knowledge you've shared.
+              </p>
+              <div className="mt-6 flex justify-center">
+                <div className="status-indicator status-info">
+                  <span className="w-2 h-2 bg-current rounded-full"></span>
+                  Supports all formats
                 </div>
               </div>
             </div>
-            
-            {/* Call to action */}
-            {!loading && !isSignedIn && (
-              <div className="text-center mt-16">
-                <a
-                  href="/auth/sign-up"
-                  className="btn btn-primary btn-lg"
-                >
-                  Start Creating Courses
-                  <span className="ml-2">→</span>
-                </a>
-                <p className="mt-4 text-sm text-slate-500">
-                  No credit card required • Free forever plan available
-                </p>
+
+            <div className="card card-hover group relative p-8 text-center">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  2
+                </div>
               </div>
-            )}
+              <div className="text-6xl mb-8 animate-float" style={{animationDelay: '0.5s'}}>🤖</div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                AI Magic
+              </h3>
+              <p className="text-slate-600 leading-relaxed text-lg">
+                Our advanced AI analyzes your content and structures it into professional educational modules with clear learning objectives.
+              </p>
+              <div className="mt-6 flex justify-center">
+                <div className="status-indicator status-success">
+                  <span className="w-2 h-2 bg-current rounded-full animate-pulse"></span>
+                  AI-Powered
+                </div>
+              </div>
+            </div>
+
+            <div className="card card-hover group relative p-8 text-center sm:col-span-2 lg:col-span-1">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  3
+                </div>
+              </div>
+              <div className="text-6xl mb-8 animate-float" style={{animationDelay: '1s'}}>📚</div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                Export & Monetize
+              </h3>
+              <p className="text-slate-600 leading-relaxed text-lg">
+                Export as beautiful PDFs, Notion pages, or presentation slides. Ready to sell to your audience immediately.
+              </p>
+              <div className="mt-6 flex justify-center">
+                <div className="status-indicator status-warning">
+                  <span className="w-2 h-2 bg-current rounded-full"></span>
+                  Multiple formats
+                </div>
+              </div>
+            </div>
           </div>
+          
+          {/* Call to action */}
+          {!loading && !isSignedIn && (
+            <div className="text-center mt-16">
+              <a
+                href="/auth/sign-up"
+                className="btn btn-primary btn-lg"
+              >
+                Start Creating Courses
+                <span className="ml-2">→</span>
+              </a>
+              <p className="mt-4 text-sm text-slate-500">
+                No credit card required • Free forever plan available
+              </p>
+            </div>
+          )}
         </div>
+      </div>
       </div>
     </>
   );
