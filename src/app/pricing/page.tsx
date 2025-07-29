@@ -67,8 +67,8 @@ export default function PricingPage() {
       ],
       limitations: [
         'Watermarked exports',
-        'No Notion export',
         'No custom branding',
+        'Default styling only',
         'Limited to 1 generation per month',
       ],
       buttonText: isSignedIn ? 'Current Plan' : 'Get Started Free',
@@ -83,9 +83,11 @@ export default function PricingPage() {
       features: [
         'Unlimited course generations',
         'Unlimited marketing assets',
-        'Watermark-free PDF exports',
-        'Notion export integration',
+        'Watermark-free exports',
+        'Custom logo & branding',
+        'Custom colors & styling',
         'Priority email support',
+        'Notion export integration (coming soon)',
         'Cover art generation (coming soon)',
       ],
       limitations: [],
@@ -110,6 +112,42 @@ export default function PricingPage() {
             Choose the plan that fits your content creation needs. 
             Start free and upgrade when you&apos;re ready to scale.
           </p>
+        </div>
+
+        {/* Feature Highlight */}
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              🎨 New: Custom Branding for Pro Users
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Make your courses truly yours with custom logos, colors, and professional branding. 
+              Remove watermarks and create white-label content that represents your brand.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 text-center">
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🖼️</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Custom Logo</h3>
+              <p className="text-sm text-gray-600">Upload your logo and have it appear on all course exports</p>
+            </div>
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🎨</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Brand Colors</h3>
+              <p className="text-sm text-gray-600">Choose your primary and accent colors for consistent branding</p>
+            </div>
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">✨</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">No Watermarks</h3>
+              <p className="text-sm text-gray-600">Clean, professional exports without any platform branding</p>
+            </div>
+          </div>
         </div>
 
         {/* Pricing Cards */}
@@ -229,6 +267,14 @@ export default function PricingPage() {
               </h3>
               <p className="text-gray-600">
                 All your previously generated courses remain accessible. However, you&apos;ll be limited to the free tier restrictions for new generations and exports.
+              </p>
+            </div>
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-2">
+                What does custom branding include?
+              </h3>
+              <p className="text-gray-600">
+                Custom branding allows you to upload your logo, choose your brand colors, add custom footer text, and remove watermarks from all exports. Perfect for agencies, consultants, and businesses who want professional-looking course materials.
               </p>
             </div>
 

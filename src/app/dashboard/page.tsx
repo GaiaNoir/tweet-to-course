@@ -184,16 +184,35 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Integrations Section */}
+          {/* Pro Features Section */}
           {(userProfile.subscriptionTier === 'pro' || userProfile.subscriptionTier === 'lifetime') && (
-            <div className="bg-white shadow rounded-lg p-6 mb-8">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                Integrations
-              </h2>
-              <div className="space-y-4">
-                <NotionConnection />
+            <>
+              {/* Custom Branding Section */}
+              <div className="bg-white shadow rounded-lg p-6 mb-8">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">
+                  Custom Branding
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  Customize your course exports with your own logo, colors, and branding.
+                </p>
+                <Link
+                  href="/dashboard/branding"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors inline-block"
+                >
+                  Manage Branding
+                </Link>
               </div>
-            </div>
+
+              {/* Integrations Section */}
+              <div className="bg-white shadow rounded-lg p-6 mb-8">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">
+                  Integrations
+                </h2>
+                <div className="space-y-4">
+                  <NotionConnection />
+                </div>
+              </div>
+            </>
           )}
 
           {/* Action Buttons */}
