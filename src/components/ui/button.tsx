@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'outline' | 'ghost' | 'destructive'
+  variant?: 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'success'
   size?: 'default' | 'sm' | 'lg'
 }
 
@@ -12,17 +12,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background",
+          "btn",
           {
-            'bg-primary text-primary-foreground hover:bg-primary/90': variant === 'default',
-            'border border-input hover:bg-accent hover:text-accent-foreground': variant === 'outline',
-            'hover:bg-accent hover:text-accent-foreground': variant === 'ghost',
-            'bg-destructive text-destructive-foreground hover:bg-destructive/90': variant === 'destructive',
+            'btn-primary': variant === 'default',
+            'btn-secondary': variant === 'secondary',
+            'border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300': variant === 'outline',
+            'btn-ghost': variant === 'ghost',
+            'bg-red-500 text-white hover:bg-red-600': variant === 'destructive',
+            'bg-green-500 text-white hover:bg-green-600': variant === 'success',
           },
           {
-            'h-10 py-2 px-4': size === 'default',
-            'h-9 px-3 rounded-md': size === 'sm',
-            'h-11 px-8 rounded-md': size === 'lg',
+            'btn-sm': size === 'sm',
+            'btn-lg': size === 'lg',
           },
           className
         )}

@@ -77,7 +77,7 @@ export default function PricingPage() {
     },
     {
       name: 'Pro',
-      price: '$7',
+      price: '$9',
       period: 'per month',
       description: 'For serious content creators and educators',
       features: [
@@ -99,112 +99,93 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto container-padding py-16 lg:py-24">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Simple, Transparent Pricing
+        <div className="text-center mb-20">
+          <div className="mb-6">
+            <span className="inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200/50 shadow-sm">
+              <span className="mr-2">💎</span>
+              Simple, Transparent Pricing
+            </span>
+          </div>
+          <h1 className="text-5xl font-bold text-slate-900 mb-6 text-balance">
+            Choose Your Perfect Plan
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose the plan that fits your content creation needs. 
-            Start free and upgrade when you&apos;re ready to scale.
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto text-balance">
+            Start free and scale as you grow. No hidden fees, no surprises. 
+            Cancel anytime with just one click.
           </p>
         </div>
 
-        {/* Feature Highlight */}
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              🎨 New: Custom Branding for Pro Users
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Make your courses truly yours with custom logos, colors, and professional branding. 
-              Remove watermarks and create white-label content that represents your brand.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 text-center">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🖼️</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Custom Logo</h3>
-              <p className="text-sm text-gray-600">Upload your logo and have it appear on all course exports</p>
-            </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🎨</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Brand Colors</h3>
-              <p className="text-sm text-gray-600">Choose your primary and accent colors for consistent branding</p>
-            </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">✨</span>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">No Watermarks</h3>
-              <p className="text-sm text-gray-600">Clean, professional exports without any platform branding</p>
-            </div>
-          </div>
-        </div>
+
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {pricingTiers.map((tier, index) => (
             <div
               key={tier.name}
-              className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl ${
+              className={`card card-hover relative ${
                 tier.popular 
-                  ? 'border-indigo-500 scale-105' 
-                  : 'border-gray-200 hover:border-indigo-300'
+                  ? 'ring-2 ring-indigo-500 scale-105' 
+                  : ''
               }`}
             >
               {tier.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                    Most Popular
-                  </span>
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
+                    ⭐ Most Popular
+                  </div>
                 </div>
               )}
 
-              <div className="p-8">
+              <div className="p-8 lg:p-10">
                 {/* Header */}
                 <div className="text-center mb-8">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className={`p-3 rounded-full ${
-                      tier.popular ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
+                  <div className="flex items-center justify-center mb-6">
+                    <div className={`p-4 rounded-2xl ${
+                      tier.popular 
+                        ? 'bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-600' 
+                        : 'bg-slate-100 text-slate-600'
                     }`}>
                       {tier.icon}
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-3xl font-bold text-slate-900 mb-3">
                     {tier.name}
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-slate-600 mb-6 text-lg">
                     {tier.description}
                   </p>
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-4xl font-bold text-gray-900">
+                  <div className="flex items-baseline justify-center mb-2">
+                    <span className="text-5xl font-bold text-slate-900">
                       {tier.price}
                     </span>
-                    <span className="text-gray-600 ml-2">
+                    <span className="text-slate-600 ml-3 text-lg">
                       {tier.period}
                     </span>
                   </div>
+                  {tier.name === 'Pro' && (
+                    <p className="text-sm text-green-600 font-medium">
+                      Save $36 with annual billing
+                    </p>
+                  )}
                 </div>
 
                 {/* Features */}
                 <div className="mb-8">
-                  <h4 className="font-semibold text-gray-900 mb-4">
-                    What's included:
+                  <h4 className="font-bold text-slate-900 mb-6 text-lg">
+                    Everything included:
                   </h4>
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {tier.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start">
-                        <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{feature}</span>
+                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-4 mt-0.5 flex-shrink-0">
+                          <Check className="w-4 h-4 text-green-600" />
+                        </div>
+                        <span className="text-slate-700 leading-relaxed">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -212,15 +193,16 @@ export default function PricingPage() {
 
                 {/* Limitations */}
                 {tier.limitations.length > 0 && (
-                  <div className="mb-8">
-                    <h4 className="font-semibold text-gray-900 mb-4">
-                      Limitations:
+                  <div className="mb-8 p-4 bg-orange-50 rounded-xl border border-orange-200">
+                    <h4 className="font-semibold text-orange-900 mb-3 flex items-center gap-2">
+                      <span>⚠️</span>
+                      Free tier limitations:
                     </h4>
-                    <ul className="space-y-3">
+                    <ul className="space-y-2">
                       {tier.limitations.map((limitation, limitIndex) => (
                         <li key={limitIndex} className="flex items-start">
-                          <X className="w-5 h-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-600">{limitation}</span>
+                          <X className="w-4 h-4 text-orange-500 mr-3 mt-0.5 flex-shrink-0" />
+                          <span className="text-orange-700 text-sm">{limitation}</span>
                         </li>
                       ))}
                     </ul>
@@ -231,71 +213,122 @@ export default function PricingPage() {
                 <button
                   onClick={tier.buttonAction}
                   disabled={isLoading === tier.name.toLowerCase()}
-                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
-                    tier.popular
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200 disabled:bg-gray-50'
-                  } disabled:cursor-not-allowed`}
+                  className={`btn w-full btn-lg ${
+                    tier.popular ? 'btn-primary' : 'btn-secondary'
+                  }`}
                 >
-                  {isLoading === tier.name.toLowerCase() 
-                    ? 'Processing...' 
-                    : tier.buttonText
-                  }
+                  {isLoading === tier.name.toLowerCase() ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {tier.buttonText}
+                      {tier.popular && <span className="ml-2">→</span>}
+                    </>
+                  )}
                 </button>
+                
+                {tier.name === 'Free' && (
+                  <p className="text-center text-sm text-slate-500 mt-4">
+                    No credit card required
+                  </p>
+                )}
               </div>
             </div>
           ))}
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-20">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Frequently Asked Questions
-          </h2>
-          <div className="max-w-3xl mx-auto space-y-8">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">
+        <div className="mt-32">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xl text-slate-600">
+              Everything you need to know about our pricing
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="card p-8">
+              <h3 className="font-bold text-slate-900 mb-3 text-lg flex items-center gap-3">
+                <span className="text-2xl">💳</span>
                 Can I cancel my subscription anytime?
               </h3>
-              <p className="text-gray-600">
-                Yes, you can cancel your Pro subscription at any time. You&apos;ll continue to have access to Pro features until the end of your current billing period.
+              <p className="text-slate-600 leading-relaxed">
+                Absolutely! You can cancel your Pro subscription at any time with just one click. 
+                You'll continue to have access to all Pro features until the end of your current billing period, 
+                and we'll send you a reminder before your access expires.
               </p>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">
+            <div className="card p-8">
+              <h3 className="font-bold text-slate-900 mb-3 text-lg flex items-center gap-3">
+                <span className="text-2xl">📚</span>
                 What happens to my courses if I downgrade?
               </h3>
-              <p className="text-gray-600">
-                All your previously generated courses remain accessible. However, you&apos;ll be limited to the free tier restrictions for new generations and exports.
+              <p className="text-slate-600 leading-relaxed">
+                All your previously generated courses remain accessible forever. However, 
+                you'll be limited to the free tier restrictions for new generations and exports. 
+                Your existing Pro-quality exports will always remain available for download.
               </p>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-2">
+            <div className="card p-8">
+              <h3 className="font-bold text-slate-900 mb-3 text-lg flex items-center gap-3">
+                <span className="text-2xl">🎨</span>
                 What does custom branding include?
               </h3>
-              <p className="text-gray-600">
-                Custom branding allows you to upload your logo, choose your brand colors, add custom footer text, and remove watermarks from all exports. Perfect for agencies, consultants, and businesses who want professional-looking course materials.
+              <p className="text-slate-600 leading-relaxed">
+                Custom branding gives you complete control over your course appearance. Upload your logo, 
+                choose your brand colors, add custom footer text, and remove all watermarks from exports. 
+                Perfect for agencies, consultants, and businesses who want professional-looking course materials 
+                that match their brand identity.
               </p>
             </div>
-
+            <div className="card p-8">
+              <h3 className="font-bold text-slate-900 mb-3 text-lg flex items-center gap-3">
+                <span className="text-2xl">🚀</span>
+                Do you offer refunds?
+              </h3>
+              <p className="text-slate-600 leading-relaxed">
+                Yes! We offer a 30-day money-back guarantee. If you're not completely satisfied with TweetToCourse Pro, 
+                contact us within 30 days of your purchase for a full refund, no questions asked.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Contact Section */}
-        <div className="mt-16 text-center">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">
-            Need a custom solution?
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Contact us for enterprise pricing and custom integrations.
-          </p>
-          <a
-            href="mailto:support@tweettocourse.com"
-            className="inline-flex items-center px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
-          >
-            Contact Sales
-          </a>
+        {/* Final CTA */}
+        <div className="mt-24 text-center">
+          <div className="card max-w-2xl mx-auto p-12">
+            <h3 className="text-3xl font-bold text-slate-900 mb-4">
+              Ready to Start Creating?
+            </h3>
+            <p className="text-xl text-slate-600 mb-8">
+              Join thousands of content creators who are already monetizing their knowledge
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={handleFreeTier}
+                className="btn btn-secondary btn-lg"
+              >
+                Start Free
+              </button>
+              <button
+                onClick={handleProSubscription}
+                className="btn btn-primary btn-lg"
+              >
+                Go Pro Now
+                <span className="ml-2">→</span>
+              </button>
+            </div>
+            <p className="text-sm text-slate-500 mt-6">
+              No credit card required for free plan • Upgrade anytime
+            </p>
+          </div>
         </div>
+
+
       </div>
     </div>
   );

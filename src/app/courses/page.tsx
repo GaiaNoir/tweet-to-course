@@ -11,37 +11,77 @@ export default async function CoursesPage() {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">My Courses</h1>
-              <p className="mt-2 text-gray-600">
-                View and manage your generated courses.
-              </p>
+        <main className="max-w-7xl mx-auto container-padding py-12">
+            <div className="mb-12">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center">
+                  <span className="text-white text-xl font-bold">📚</span>
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold text-slate-900">My Courses</h1>
+                  <p className="text-xl text-slate-600">
+                    View and manage your generated courses
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Coming Soon Message */}
-            <div className="bg-white shadow rounded-lg p-8 text-center">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-2xl">📚</span>
+            <div className="card text-center p-12 max-w-2xl mx-auto">
+              <div className="w-20 h-20 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                <span className="text-4xl">🚧</span>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">
                 Course History Coming Soon
               </h2>
-              <p className="text-gray-600 mb-6">
-                We're working on a feature to save and manage your generated courses. 
-                For now, make sure to download your courses after generation.
+              <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+                We're building an amazing feature to save and manage all your generated courses. 
+                For now, make sure to download your courses immediately after generation.
               </p>
-              <Link
-                href="/"
-                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Generate New Course
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/"
+                  className="btn btn-primary btn-lg"
+                >
+                  <span className="mr-2">✨</span>
+                  Generate New Course
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="btn btn-secondary btn-lg"
+                >
+                  <span className="mr-2">📊</span>
+                  View Dashboard
+                </Link>
+              </div>
+              
+              {/* Feature preview */}
+              <div className="mt-12 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200/50">
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">
+                  Coming Features:
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    Course history & search
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    Bulk export options
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    Course templates
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-500">✓</span>
+                    Collaboration tools
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
         </main>
       </div>
     </>

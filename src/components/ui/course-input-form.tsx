@@ -112,9 +112,9 @@ export function CourseInputForm({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+    <div className="card max-w-3xl mx-auto p-8 lg:p-10">
       {error && (
-        <div className="mb-6">
+        <div className="mb-8">
           <ErrorDisplay
             error={error}
             onRetry={handleRetry}
@@ -124,67 +124,109 @@ export function CourseInputForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
         <div>
           <label
             htmlFor="content-input"
-            className="block text-left text-sm font-medium text-gray-700 mb-2"
+            className="block text-left text-lg font-semibold text-slate-900 mb-3"
           >
             {getInputLabel()}
           </label>
-          <textarea
-            id="content-input"
-            {...register('content', {
-              validate: validateInput,
-              onChange: (e) => {
-                // Auto-resize textarea based on content
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
-              }
-            })}
-            placeholder={getPlaceholder()}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-colors text-gray-900 placeholder:text-gray-500 ${errors.content
-              ? 'border-red-300 bg-red-50'
-              : 'border-gray-300 hover:border-gray-400'
-              }`}
-            rows={3}
-            style={{ minHeight: '80px' }}
-          />
+          <div className="relative">
+            <textarea
+              id="content-input"
+              {...register('content', {
+                validate: validateInput,
+                onChange: (e) => {
+                  // Auto-resize textarea based on content
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = 'auto';
+                  target.style.height = `${Math.min(target.scrollHeight, 300)}px`;
+                }
+              })}
+              placeholder={getPlaceholder()}
+              className={`w-full px-6 py-4 text-lg leading-relaxed resize-none transition-all duration-200 ${errors.content
+                ? 'border-red-300 bg-red-50 focus:border-red-500'
+                : 'border-slate-200 hover:border-slate-300 focus:border-indigo-500'
+                }`}
+              rows={4}
+              style={{ minHeight: '120px' }}
+            />
+            <div className="absolute bottom-4 right-4 text-xs text-slate-400">
+              {contentValue.length}/5000
+            </div>
+          </div>
           {errors.content && (
-            <p className="mt-2 text-sm text-red-600">
-              {errors.content.message}
-            </p>
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700 flex items-center gap-2">
+                <span className="text-red-500">⚠️</span>
+                {errors.content.message}
+              </p>
+            </div>
           )}
         </div>
 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="btn btn-primary w-full btn-lg text-lg"
         >
-          {isLoading ? 'Generating...' : 'Generate Course ✨'}
+          {isLoading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Generating Your Course...
+            </>
+          ) : (
+            <>
+              <span className="mr-2">✨</span>
+              Generate Course
+            </>
+          )}
         </button>
       </form>
 
-      <div className="mt-4 text-center">
-        <p className="text-sm text-gray-500">
-          Need more generations?
+      {/* Features highlight */}
+      <div className="mt-8 pt-6 border-t border-slate-200">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+            <span className="text-green-500">⚡</span>
+            <span>Instant Generation</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+            <span className="text-blue-500">🎯</span>
+            <span>AI-Structured</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+            <span className="text-purple-500">📄</span>
+            <span>Export Ready</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Upgrade prompt */}
+      <div className="mt-6 text-center">
+        <p className="text-sm text-slate-500">
+          Need unlimited generations?
           <button
             onClick={() => window.location.href = '/pricing'}
-            className="text-indigo-600 hover:text-indigo-700 ml-1 underline"
+            className="text-indigo-600 hover:text-indigo-700 ml-1 font-medium underline decoration-2 underline-offset-2"
           >
-            View pricing plans
+            Upgrade to Pro
           </button>
         </p>
       </div>
 
       {/* Content length indicator */}
       {contentValue && (
-        <div className="mt-3 flex items-center justify-center">
-          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
-            📝 {contentValue.length} characters
-          </span>
+        <div className="mt-4 flex items-center justify-center">
+          <div className={`status-indicator ${
+            contentValue.length < 10 ? 'status-error' :
+            contentValue.length > 4000 ? 'status-warning' :
+            'status-success'
+          }`}>
+            <span className="w-2 h-2 bg-current rounded-full"></span>
+            {contentValue.length} characters
+          </div>
         </div>
       )}
     </div>
