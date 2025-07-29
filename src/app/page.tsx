@@ -229,10 +229,10 @@ export default function Home() {
                 </div>
               </div>
               <div className="text-6xl mb-8 animate-float">🧵</div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+              <h3 className="text-2xl font-bold card-title mb-4">
                 Paste Your Content
               </h3>
-              <p className="text-slate-600 leading-relaxed text-lg">
+              <p className="card-description leading-relaxed text-lg">
                 Simply paste your Twitter thread or any educational content. Our AI works with any knowledge you've shared.
               </p>
               <div className="mt-6 flex justify-center">
@@ -250,10 +250,10 @@ export default function Home() {
                 </div>
               </div>
               <div className="text-6xl mb-8 animate-float" style={{animationDelay: '0.5s'}}>🤖</div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+              <h3 className="text-2xl font-bold card-title mb-4">
                 AI Magic
               </h3>
-              <p className="text-slate-600 leading-relaxed text-lg">
+              <p className="card-description leading-relaxed text-lg">
                 Our advanced AI analyzes your content and structures it into professional educational modules with clear learning objectives.
               </p>
               <div className="mt-6 flex justify-center">
@@ -271,10 +271,10 @@ export default function Home() {
                 </div>
               </div>
               <div className="text-6xl mb-8 animate-float" style={{animationDelay: '1s'}}>📚</div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+              <h3 className="text-2xl font-bold card-title mb-4">
                 Export & Monetize
               </h3>
-              <p className="text-slate-600 leading-relaxed text-lg">
+              <p className="card-description leading-relaxed text-lg">
                 Export as beautiful PDFs, Notion pages, or presentation slides. Ready to sell to your audience immediately.
               </p>
               <div className="mt-6 flex justify-center">

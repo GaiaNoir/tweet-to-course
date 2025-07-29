@@ -79,10 +79,10 @@ export default async function DashboardPage() {
                   {userProfile.subscriptionTier === 'free' ? '🆓' : '⭐'}
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                  <h3 className="text-sm font-semibold card-description uppercase tracking-wider">
                     Current Plan
                   </h3>
-                  <p className="text-2xl font-bold text-slate-900 capitalize">
+                  <p className="text-2xl font-bold card-title capitalize">
                     {userProfile.subscriptionTier}
                   </p>
                 </div>

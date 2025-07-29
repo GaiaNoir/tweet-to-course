@@ -245,12 +245,18 @@ input::placeholder, textarea::placeholder {
 /* Modern card system */
 .card {
   background: var(--card);
+  color: var(--card-foreground);
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) * 1.5);
   box-shadow: var(--shadow);
   transition: all 0.3s ease-in-out;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Changed from hidden to prevent content cutoff */
+  min-height: fit-content;
+  padding: 1.5rem; /* Default padding for all cards */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .card::before {
@@ -277,6 +283,23 @@ input::placeholder, textarea::placeholder {
 
 .card-hover:hover::before {
   opacity: 1;
+}
+
+/* Card text colors that adapt to theme */
+.card h1, .card h2, .card h3, .card h4, .card h5, .card h6 {
+  color: var(--card-foreground);
+}
+
+.card p {
+  color: var(--muted-foreground);
+}
+
+.card .card-title {
+  color: var(--card-foreground);
+}
+
+.card .card-description {
+  color: var(--muted-foreground);
 }
 
 /* Enhanced loading animations */
@@ -342,10 +365,26 @@ input::placeholder, textarea::placeholder {
   border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
+@media (prefers-color-scheme: dark) {
+  .status-success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+}
+
 .status-warning {
   background: rgba(245, 158, 11, 0.1);
   color: #d97706;
   border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .status-warning {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+  }
 }
 
 .status-error {
@@ -354,10 +393,26 @@ input::placeholder, textarea::placeholder {
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+@media (prefers-color-scheme: dark) {
+  .status-error {
+    background: rgba(248, 113, 113, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+  }
+}
+
 .status-info {
   background: rgba(99, 102, 241, 0.1);
   color: #4f46e5;
   border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .status-info {
+    background: rgba(129, 140, 248, 0.2);
+    color: #818cf8;
+    border: 1px solid rgba(129, 140, 248, 0.3);
+  }
 }
 
 /* Utility classes */

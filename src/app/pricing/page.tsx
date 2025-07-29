@@ -153,17 +153,17 @@ export default function PricingPage() {
                       {tier.icon}
                     </div>
                   </div>
-                  <h3 className="text-3xl font-bold text-slate-900 mb-3">
+                  <h3 className="text-3xl font-bold card-title mb-3">
                     {tier.name}
                   </h3>
-                  <p className="text-slate-600 mb-6 text-lg">
+                  <p className="card-description mb-6 text-lg">
                     {tier.description}
                   </p>
                   <div className="flex items-baseline justify-center mb-2">
-                    <span className="text-5xl font-bold text-slate-900">
+                    <span className="text-5xl font-bold card-title">
                       {tier.price}
                     </span>
-                    <span className="text-slate-600 ml-3 text-lg">
+                    <span className="card-description ml-3 text-lg">
                       {tier.period}
                     </span>
                   </div>
@@ -176,16 +176,16 @@ export default function PricingPage() {
 
                 {/* Features */}
                 <div className="mb-8">
-                  <h4 className="font-bold text-slate-900 mb-6 text-lg">
+                  <h4 className="font-bold card-title mb-6 text-lg">
                     Everything included:
                   </h4>
                   <ul className="space-y-4">
                     {tier.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start">
-                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-4 mt-0.5 flex-shrink-0">
-                          <Check className="w-4 h-4 text-green-600" />
+                        <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mr-4 mt-0.5 flex-shrink-0">
+                          <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
                         </div>
-                        <span className="text-slate-700 leading-relaxed">{feature}</span>
+                        <span className="card-description leading-relaxed">{feature}</span>
                       </li>
                     ))}
                   </ul>

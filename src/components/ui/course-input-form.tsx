@@ -93,7 +93,7 @@ export function CourseInputForm({
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+      <div className="card max-w-3xl mx-auto">
         <LoadingAnimation />
       </div>
     );
@@ -101,11 +101,11 @@ export function CourseInputForm({
 
   if (!mounted) {
     return (
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+      <div className="card max-w-3xl mx-auto">
         <div className="space-y-4">
-          <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-12 bg-indigo-200 rounded animate-pulse"></div>
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-12 bg-indigo-200 dark:bg-indigo-800 rounded animate-pulse"></div>
         </div>
       </div>
     );
@@ -128,7 +128,7 @@ export function CourseInputForm({
         <div>
           <label
             htmlFor="content-input"
-            className="block text-left text-lg font-semibold text-slate-900 mb-3"
+            className="block text-left text-lg font-semibold card-title mb-3"
           >
             {getInputLabel()}
           </label>
@@ -152,7 +152,7 @@ export function CourseInputForm({
               rows={4}
               style={{ minHeight: '120px' }}
             />
-            <div className="absolute bottom-4 right-4 text-xs text-slate-400">
+            <div className="absolute bottom-4 right-4 text-xs card-description">
               {contentValue.length}/5000
             </div>
           </div>
