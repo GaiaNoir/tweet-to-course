@@ -16,7 +16,7 @@ export async function getUserBranding(userId: string): Promise<BrandingSettings>
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('branding_settings, subscription_status')
+      .select('branding_settings, subscription_tier')
       .eq('id', userId)
       .single();
 
@@ -25,7 +25,7 @@ export async function getUserBranding(userId: string): Promise<BrandingSettings>
     }
 
     // Only return custom branding for Pro users
-    if (data.subscription_status !== 'active') {
+    if (data.subscription_tier !== 'pro' && data.subscription_tier !== 'lifetime') {
       return getDefaultBranding();
     }
 
