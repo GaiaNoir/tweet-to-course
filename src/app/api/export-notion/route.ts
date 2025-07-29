@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
+import { hasNotionConnection, getNotionConnection, createNotionPage } from '@/lib/notion-integration';
 
 interface ExportNotionRequest {
   courseId?: string;
@@ -81,25 +82,85 @@ export async function POST(request: NextRequest) {
     // Use course data directly
     const course = courseData;
 
-    // For now, we'll only support markdown export (no direct Notion integration)
-    // Generate markdown for manual import
-    const notionExport = generateNotionContent(course);
+    if (exportType === 'direct') {
+      // Check if user has Notion connected
+      const userHasNotionConnection = hasNotionConnection();
+      
+      if (!userHasNotionConnection) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Notion account not connected. Please connect your Notion account first.',
+            requiresConnection: true
+          },
+          { status: 400 }
+        );
+      }
 
-    // Increment usage count
-    try {
-      incrementUsage();
-    } catch (logError) {
-      console.error('Failed to update usage count:', logError);
+      // Get user's Notion connection
+      const notionConnection = getNotionConnection();
+      if (!notionConnection) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Notion connection not found. Please reconnect your account.',
+            requiresConnection: true
+          },
+          { status: 400 }
+        );
+      }
+      
+      // Create page directly in Notion
+      const notionResult = await createNotionPage(
+        notionConnection.accessToken,
+        course,
+        parentPageId
+      );
+
+      if (!notionResult.success) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: notionResult.error || 'Failed to create Notion page'
+          },
+          { status: 500 }
+        );
+      }
+
+      // Increment usage count
+      try {
+        incrementUsage();
+      } catch (logError) {
+        console.error('Failed to update usage count:', logError);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Course exported to Notion successfully!',
+        pageUrl: notionResult.pageUrl,
+        pageId: notionResult.pageId
+      });
+
+    } else {
+      // Generate markdown for manual import
+      const notionExport = generateNotionContent(course);
+
+      // Increment usage count
+      try {
+        incrementUsage();
+      } catch (logError) {
+        console.error('Failed to update usage count:', logError);
+      }
+
+      const filename = `${course.title.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;
+      
+      return new NextResponse(notionExport.markdown, {
+        headers: {
+          'Content-Type': 'text/markdown',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+        },
+      });
     }
-
-    const filename = `${course.title.replace(/[^a-zA-Z0-9]/g, '_')}_notion.md`;
-    
-    return new NextResponse(notionExport.markdown, {
-      headers: {
-        'Content-Type': 'text/markdown',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-      },
-    });
 
   } catch (error) {
     console.error('Notion export error:', error);

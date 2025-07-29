@@ -302,6 +302,7 @@ export function CourseDisplay({
           <NotionExport
             courseId={course.id}
             courseTitle={course.title}
+            courseData={course}
             isNotionConnected={isNotionConnected}
             onConnectionRequired={onNotionConnectionRequired}
           />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
+import { NotionConnectionManager } from '@/components/ui/notion-connection-manager';
 
 export default function TestAuthPage() {
   const { user, loading, canExportNotion, isFreeTier, updateSubscription } = useAuth();
@@ -48,7 +49,7 @@ export default function TestAuthPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Change Subscription</h2>
         <div className="flex gap-2">
           <button
@@ -70,6 +71,11 @@ export default function TestAuthPage() {
             Set Lifetime
           </button>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">Notion Integration</h2>
+        <NotionConnectionManager />
       </div>
 
       <div className="mt-6">
