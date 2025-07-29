@@ -67,14 +67,53 @@ export async function POST(request: NextRequest) {
     // Add logo if available and user is Pro
     if (isPro && branding.logo_url) {
       try {
-        // Note: In a real implementation, you'd need to fetch and embed the image
-        // For now, we'll just add a placeholder text
+        console.log('🖼️ Fetching logo from:', branding.logo_url);
+        
+        // Fetch the logo image
+        const logoResponse = await fetch(branding.logo_url);
+        if (logoResponse.ok) {
+          const logoBuffer = await logoResponse.arrayBuffer();
+          const logoBase64 = Buffer.from(logoBuffer).toString('base64');
+          
+          // Determine image format
+          const contentType = logoResponse.headers.get('content-type') || '';
+          let imageFormat = 'PNG';
+          if (contentType.includes('jpeg') || contentType.includes('jpg')) {
+            imageFormat = 'JPEG';
+          }
+          
+          // Add logo to PDF (centered, max width 60px, max height 30px)
+          const logoWidth = 60;
+          const logoHeight = 30;
+          const logoX = (pageWidth - logoWidth) / 2;
+          
+          pdf.addImage(
+            `data:${contentType};base64,${logoBase64}`,
+            imageFormat,
+            logoX,
+            yPosition,
+            logoWidth,
+            logoHeight,
+            undefined,
+            'FAST'
+          );
+          
+          yPosition += logoHeight + 10;
+          console.log('✅ Logo added successfully');
+        } else {
+          console.log('❌ Failed to fetch logo, using fallback text');
+          pdf.setFontSize(10);
+          pdf.setTextColor(100, 100, 100);
+          pdf.text('Logo: ' + branding.logo_url.split('/').pop(), margin, yPosition);
+          yPosition += 15;
+        }
+      } catch (error) {
+        console.error('Error adding logo to PDF:', error);
+        // Fallback to text if image fails
         pdf.setFontSize(10);
         pdf.setTextColor(100, 100, 100);
         pdf.text('Logo: ' + branding.logo_url.split('/').pop(), margin, yPosition);
         yPosition += 15;
-      } catch (error) {
-        console.error('Error adding logo to PDF:', error);
       }
     }
 
