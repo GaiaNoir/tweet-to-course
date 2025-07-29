@@ -14,22 +14,30 @@ export interface BrandingSettings {
 
 export async function getUserBranding(userId: string): Promise<BrandingSettings> {
   try {
+    console.log('🎨 Fetching branding for user ID:', userId);
+    
     const { data, error } = await supabase
       .from('users')
       .select('branding_settings, subscription_tier')
       .eq('id', userId)
       .single();
 
+    console.log('🎨 Branding query result:', { data, error });
+
     if (error || !data) {
+      console.log('🎨 No branding data found, using defaults');
       return getDefaultBranding();
     }
 
     // Only return custom branding for Pro users
     if (data.subscription_tier !== 'pro' && data.subscription_tier !== 'lifetime') {
+      console.log('🎨 User not Pro, using defaults. Tier:', data.subscription_tier);
       return getDefaultBranding();
     }
 
-    return data.branding_settings || getDefaultBranding();
+    const branding = data.branding_settings || getDefaultBranding();
+    console.log('🎨 Returning branding settings:', branding);
+    return branding;
   } catch (error) {
     console.error('Error fetching user branding:', error);
     return getDefaultBranding();
