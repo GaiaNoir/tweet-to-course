@@ -5,43 +5,42 @@ import { Navigation } from '@/components/ui/navigation';
 import { CourseInputForm } from '@/components/ui/course-input-form';
 import { CourseDisplay } from '@/components/ui/course-display';
 import { useAuth } from '@/hooks/use-auth';
+import { useAsyncCourseGeneration } from '@/hooks/useAsyncCourseGeneration';
 import { Course } from '@/types';
 
 export default function Home() {
   const { user, isSignedIn, loading } = useAuth();
   const [generatedCourse, setGeneratedCourse] = useState<Course | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    generateCourse,
+    job,
+    isLoading,
+    error,
+    progress,
+    estimatedTimeRemaining,
+    cancelPolling
+  } = useAsyncCourseGeneration();
 
   const handleCourseGeneration = async (data: { content: string; type: 'url' | 'text' }) => {
-    setIsLoading(true);
-    setError(null);
-    
     try {
-      const response = await fetch('/api/generate-course', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate course');
-      }
-
-      const result = await response.json();
-      setGeneratedCourse(result.course);
+      await generateCourse(data.content, data.type);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
+      console.error('Course generation failed:', err);
     }
   };
 
+  // Update generated course when job completes
+  if (job?.status === 'completed' && job.course && !generatedCourse) {
+    setGeneratedCourse(job.course);
+  }
+
   const handleErrorDismiss = () => {
-    setError(null);
+    cancelPolling();
+  };
+
+  const handleNewGeneration = () => {
+    setGeneratedCourse(null);
+    cancelPolling();
   };
 
   // Show loading state while checking authentication
@@ -152,10 +151,14 @@ export default function Home() {
               </p>
             </div>
             <CourseInputForm
-              onSubmit={handleCourseGeneration}
+              onSubmitAction={handleCourseGeneration}
               isLoading={isLoading}
-              error={error}
+              error={error || undefined}
               onErrorDismiss={handleErrorDismiss}
+              jobStatus={job?.status}
+              progress={progress}
+              estimatedTimeRemaining={estimatedTimeRemaining}
+              onCancel={cancelPolling}
             />
           </div>
         )}
@@ -170,9 +173,9 @@ export default function Home() {
               }}
               onRegenerate={async () => {
                 // Re-generate with same content
-                if (generatedCourse?.metadata?.sourceUrl || generatedCourse?.metadata?.sourceContent) {
+                if (generatedCourse?.metadata?.sourceUrl || generatedCourse?.metadata?.originalContent) {
                   await handleCourseGeneration({
-                    content: generatedCourse.metadata.sourceUrl || generatedCourse.metadata.sourceContent || '',
+                    content: generatedCourse.metadata.sourceUrl || generatedCourse.metadata.originalContent || '',
                     type: generatedCourse.metadata.sourceUrl ? 'url' : 'text'
                   });
                 }

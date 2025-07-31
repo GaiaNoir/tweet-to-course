@@ -40,7 +40,7 @@ interface GenerateCourseResponse {
   };
   usageCount?: number;
 }
-const TIMEOUT_MS = 25_000; // adjust based on your hosting platform's limits
+const TIMEOUT_MS = 60_000; // adjust based on your hosting platform's limits
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return Promise.race([

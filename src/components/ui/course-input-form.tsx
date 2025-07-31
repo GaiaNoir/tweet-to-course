@@ -4,12 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { LoadingAnimation } from './loading-animation';
 import { ErrorDisplay } from './error-display';
+import { CourseGenerationProgress } from './course-generation-progress';
 
 interface CourseInputFormProps {
-  onSubmit: (data: { content: string; type: 'url' | 'text' }) => Promise<void>;
+  onSubmitAction: (data: { content: string; type: 'url' | 'text' }) => Promise<void>;
   isLoading?: boolean;
-  error?: string | null;
+  error?: string | undefined;
   onErrorDismiss?: () => void;
+  // Async progress props
+  jobStatus?: 'pending' | 'processing' | 'completed' | 'failed';
+  progress?: number;
+  estimatedTimeRemaining?: number;
+  onCancel?: () => void;
 }
 
 interface FormData {
@@ -17,10 +23,14 @@ interface FormData {
 }
 
 export function CourseInputForm({
-  onSubmit,
+  onSubmitAction,
   isLoading = false,
-  error = null,
-  onErrorDismiss
+  error,
+  onErrorDismiss,
+  jobStatus,
+  progress = 0,
+  estimatedTimeRemaining = 0,
+  onCancel
 }: CourseInputFormProps) {
   const [inputType, setInputType] = useState<'url' | 'text'>('url');
   const [mounted, setMounted] = useState(false);
@@ -70,7 +80,7 @@ export function CourseInputForm({
     setInputType(type);
 
     try {
-      await onSubmit({ content: trimmedContent, type });
+      await onSubmitAction({ content: trimmedContent, type });
     } catch (err) {
       // Error handling is managed by parent component
       console.error('Form submission error:', err);
@@ -90,6 +100,18 @@ export function CourseInputForm({
   const getInputLabel = () => {
     return 'Course Content';
   };
+
+  if (isLoading && jobStatus) {
+    return (
+      <CourseGenerationProgress
+        status={jobStatus}
+        progress={progress}
+        estimatedTimeRemaining={estimatedTimeRemaining}
+        error={error}
+        onCancel={onCancel}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
