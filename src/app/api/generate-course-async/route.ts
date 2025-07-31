@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-supabase';
-import { createClient } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase';
 
 interface AsyncCourseRequest {
   content: string;
@@ -36,11 +36,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create supabase client for database operations
-    const supabase = createClient();
+    // Create admin client for database operations (bypasses RLS)
+    const supabase = createAdminClient();
 
     // Create job record
     const jobId = `job-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+    
+    console.log('Creating job with:', { jobId, userId: user.id, contentLength: content.length });
     
     const { error: jobError } = await supabase
       .from('course_generation_jobs')
@@ -52,12 +54,24 @@ export async function POST(request: NextRequest) {
       });
 
     if (jobError) {
-      console.error('Job creation error:', jobError);
+      console.error('Job creation error details:', {
+        error: jobError,
+        message: jobError.message,
+        details: jobError.details,
+        hint: jobError.hint,
+        code: jobError.code
+      });
       return NextResponse.json(
-        { success: false, error: 'Failed to create generation job' },
+        { 
+          success: false, 
+          error: `Failed to create generation job: ${jobError.message}`,
+          details: jobError.details
+        },
         { status: 500 }
       );
     }
+    
+    console.log('Job created successfully:', jobId);
 
     // Trigger background processing
     try {

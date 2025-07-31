@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-supabase';
-import { createClient } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
@@ -29,8 +29,8 @@ export async function GET(
       );
     }
 
-    // Create supabase client for database operations
-    const supabase = createClient();
+    // Create admin client for database operations (bypasses RLS)
+    const supabase = createAdminClient();
 
     // Get job status
     const { data: job, error: jobError } = await supabase
