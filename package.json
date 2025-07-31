@@ -16,9 +16,12 @@
     "deploy:preview": "vercel",
     "switch:tweettocourse": "node scripts/switch-supabase-project.js tweettocourse",
     "switch:gaming": "node scripts/switch-supabase-project.js gaming",
-    "switch:project": "node scripts/switch-supabase-project.js"
+    "switch:project": "node scripts/switch-supabase-project.js",
+    "test:claude": "node test-claude-latest.js",
+    "switch:ai": "node switch-ai-provider.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.57.0",
     "@marp-team/marp-cli": "^4.2.0",
     "@marp-team/marp-core": "^4.1.0",
     "@paystack/inline-js": "^2.22.6",
@@ -39,6 +42,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.53.2",
+    "react-markdown": "^8.0.7",
     "react-pdf": "^10.0.1",
     "svix": "^1.69.0",
     "tailwind-merge": "^2.5.4"

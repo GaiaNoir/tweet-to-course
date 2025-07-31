@@ -5,6 +5,7 @@ import { Course, UserProfile } from '@/types';
 import { NotionExport } from './notion-export';
 import { MarketingAssetsGenerator } from './marketing-assets-generator';
 import { useAuth } from '@/hooks/useAuth';
+import ReactMarkdown from 'react-markdown';
 
 interface CourseDisplayProps {
   course: Course;
@@ -81,11 +82,92 @@ export function CourseDisplay({
     );
   }
 
+  // Extract course overview and learning outcomes from the first module content if available
+  const extractCourseOverview = (content: string) => {
+    const lines = content.split('\n');
+    const overviewStart = lines.findIndex(line => 
+      line.includes('Course Overview') || 
+      line.includes('## Course Overview') ||
+      line.includes('# Course Overview')
+    );
+    const targetAudienceStart = lines.findIndex(line => 
+      line.includes('Target Audience') || 
+      line.includes('**Target Audience:**') ||
+      line.includes('**Target Audience**')
+    );
+    const learningOutcomesStart = lines.findIndex(line => 
+      line.includes('Learning Outcomes') || 
+      line.includes('**Learning Outcomes:**') ||
+      line.includes('**Learning Outcomes**')
+    );
+    const estimatedTimeStart = lines.findIndex(line => 
+      line.includes('Estimated Time') || 
+      line.includes('**Estimated Time:**') ||
+      line.includes('**Estimated Time**')
+    );
+    
+    let overview = '';
+    let targetAudience = '';
+    let learningOutcomes: string[] = [];
+    let estimatedTime = '';
+    
+    if (overviewStart !== -1) {
+      const overviewEnd = Math.min(
+        targetAudienceStart !== -1 ? targetAudienceStart : lines.length,
+        learningOutcomesStart !== -1 ? learningOutcomesStart : lines.length
+      );
+      overview = lines.slice(overviewStart + 1, overviewEnd)
+        .join('\n')
+        .trim()
+        .replace(/^\*\*.*?\*\*:?\s*/, '') // Remove any bold formatting
+        .replace(/^#+\s*/, ''); // Remove any header formatting
+    }
+    
+    if (targetAudienceStart !== -1) {
+      const targetEnd = Math.min(
+        learningOutcomesStart !== -1 ? learningOutcomesStart : lines.length,
+        estimatedTimeStart !== -1 ? estimatedTimeStart : lines.length
+      );
+      const targetLines = lines.slice(targetAudienceStart, targetEnd);
+      targetAudience = targetLines
+        .join('\n')
+        .replace(/\*\*Target Audience:?\*\*\s*/, '')
+        .replace(/Target Audience:?\s*/, '')
+        .trim();
+    }
+    
+    if (learningOutcomesStart !== -1) {
+      const outcomesEnd = estimatedTimeStart !== -1 ? estimatedTimeStart : lines.length;
+      const outcomesLines = lines.slice(learningOutcomesStart + 1, outcomesEnd);
+      learningOutcomes = outcomesLines
+        .filter(line => line.trim().startsWith('-') || line.trim().startsWith('•') || line.trim().startsWith('*'))
+        .map(line => line.replace(/^[-•*]\s*/, '').trim())
+        .filter(line => line.length > 0);
+    }
+    
+    if (estimatedTimeStart !== -1) {
+      const timeLines = lines.slice(estimatedTimeStart, estimatedTimeStart + 2);
+      estimatedTime = timeLines
+        .join(' ')
+        .replace(/\*\*Estimated Time:?\*\*\s*/, '')
+        .replace(/Estimated Time:?\s*/, '')
+        .trim();
+    }
+    
+    return { overview, targetAudience, learningOutcomes, estimatedTime };
+  };
+
+  const courseInfo = extractCourseOverview(course.modules[0]?.summary || '');
+  
+  // Debug logging to see what's being extracted
+  console.log('First module content:', course.modules[0]?.summary?.substring(0, 500));
+  console.log('Extracted course info:', courseInfo);
+
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-4xl mx-auto">
+    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-5xl mx-auto">
       {/* Course Header */}
-      <div className="border-b border-gray-200 pb-6 mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="border-b border-gray-200 pb-8 mb-8">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
           <div className="flex-1">
             {isEditingTitle ? (
               <div className="flex flex-col sm:flex-row gap-2">
@@ -93,7 +175,7 @@ export function CourseDisplay({
                   type="text"
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
-                  className="flex-1 text-2xl md:text-3xl font-bold text-gray-900 border-2 border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"
+                  className="flex-1 text-2xl md:text-4xl font-bold text-gray-900 border-2 border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleTitleSave();
@@ -117,7 +199,7 @@ export function CourseDisplay({
               </div>
             ) : (
               <div className="group cursor-pointer" onClick={() => setIsEditingTitle(true)}>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors leading-tight">
                   {course.title}
                   <span className="ml-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     ✏️
@@ -126,10 +208,53 @@ export function CourseDisplay({
                 <p className="text-sm text-gray-500 mt-1">Click to edit title</p>
               </div>
             )}
+            
+            {/* Course Overview */}
+            {courseInfo.overview && (
+              <div className="mt-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">Course Overview</h2>
+                <p className="text-lg text-gray-700 leading-relaxed">{courseInfo.overview}</p>
+              </div>
+            )}
+            
+            {/* Target Audience */}
+            {courseInfo.targetAudience && (
+              <div className="mt-6">
+                <p className="text-gray-700">
+                  <span className="font-semibold text-gray-900">Target Audience:</span> {courseInfo.targetAudience}
+                </p>
+              </div>
+            )}
+            
+            {/* Learning Outcomes */}
+            {courseInfo.learningOutcomes.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-semibold text-gray-900 mb-3">Learning Outcomes:</h3>
+                <ul className="space-y-2">
+                  {courseInfo.learningOutcomes.map((outcome, index) => (
+                    <li key={index} className="flex items-start gap-3 text-gray-700">
+                      <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-semibold mt-0.5 flex-shrink-0">
+                        {index + 1}
+                      </span>
+                      <span>{outcome}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Estimated Time */}
+            {courseInfo.estimatedTime && (
+              <div className="mt-6">
+                <p className="text-gray-700">
+                  <span className="font-semibold text-gray-900">Estimated Time:</span> {courseInfo.estimatedTime}
+                </p>
+              </div>
+            )}
           </div>
           
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3 min-w-[200px]">
             <button
               onClick={onRegenerate}
               disabled={isRegenerating}
@@ -186,13 +311,11 @@ export function CourseDisplay({
                 </>
               )}
             </button>
-
-
           </div>
         </div>
         
         {/* Course Metadata */}
-        <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
+        <div className="mt-6 flex flex-wrap gap-4 text-sm text-gray-500">
           <span>📅 Generated {new Date(course.metadata.generatedAt).toLocaleDateString()}</span>
           <span>📚 {course.modules.length} modules</span>
           <span>🔗 Source: {course.metadata.sourceType}</span>
@@ -208,41 +331,48 @@ export function CourseDisplay({
       </div>
 
       {/* Course Modules */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {course.modules
           .sort((a, b) => a.order - b.order)
           .map((module, index) => {
             const isExpanded = expandedModules.has(module.id);
+            const wordCount = Math.ceil(module.summary.length / 5);
             
             return (
               <div
                 key={module.id}
-                className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
+                className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
               >
                 {/* Module Header */}
-                <div
-                  className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => toggleModuleExpansion(module.id)}
-                >
-                  <div className="flex items-center justify-between">
+                <div className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200">
+                  <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-semibold text-sm">
+                      <div className="flex items-center gap-4 mb-3">
+                        <span className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                           {index + 1}
                         </span>
-                        <h3 className="text-xl font-semibold text-gray-900">
-                          {module.title}
-                        </h3>
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                            {module.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            Hook sentence that connects to original insight and promises value
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-gray-600 leading-relaxed">
-                        {module.summary}
-                      </p>
-                    </div>
-                    <div className="ml-4 flex-shrink-0">
-                      <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+                      
+                      <div 
+                        className="cursor-pointer hover:text-indigo-600 transition-colors"
+                        onClick={() => toggleModuleExpansion(module.id)}
+                      >
+                        <p className="text-indigo-600 font-medium flex items-center gap-2">
+                          Click to read full content ({wordCount} words)
+                          <span className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </span>
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -250,31 +380,86 @@ export function CourseDisplay({
 
                 {/* Module Content (Expandable) */}
                 {isExpanded && (
-                  <div className="px-6 pb-6 border-t border-gray-100 bg-gray-50">
-                    <div className="pt-4">
-                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <span>🎯</span>
-                        Key Takeaways
-                      </h4>
-                      <ul className="space-y-2">
-                        {module.takeaways.map((takeaway, takeawayIndex) => (
-                          <li
-                            key={takeawayIndex}
-                            className="flex items-start gap-3 text-gray-700"
-                          >
-                            <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-semibold mt-0.5 flex-shrink-0">
-                              {takeawayIndex + 1}
-                            </span>
-                            <span className="leading-relaxed">{takeaway}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {module.estimatedReadTime && (
-                        <div className="mt-4 text-sm text-gray-500 flex items-center gap-2">
-                          <span>⏱️</span>
-                          Estimated read time: {module.estimatedReadTime} minutes
+                  <div className="bg-white">
+                    <div className="p-8 space-y-8">
+                      {/* Complete Module Content */}
+                      <div>
+                        <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                          <span className="text-2xl">📖</span>
+                          Complete Module Content
+                        </h4>
+                        
+                        <div className="prose prose-lg prose-gray max-w-none">
+                          <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
+                            <ReactMarkdown
+                              components={{
+                                h1: ({children}) => <h1 className="text-2xl font-bold text-gray-900 mb-4">{children}</h1>,
+                                h2: ({children}) => <h2 className="text-xl font-bold text-gray-900 mb-3 mt-6">{children}</h2>,
+                                h3: ({children}) => <h3 className="text-lg font-semibold text-gray-900 mb-2 mt-4">{children}</h3>,
+                                p: ({children}) => <p className="mb-4 text-gray-700 leading-relaxed">{children}</p>,
+                                ul: ({children}) => <ul className="mb-4 space-y-2 ml-4">{children}</ul>,
+                                ol: ({children}) => <ol className="mb-4 space-y-2 ml-4 list-decimal">{children}</ol>,
+                                li: ({children}) => <li className="text-gray-700 leading-relaxed">{children}</li>,
+                                strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
+                                em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                                blockquote: ({children}) => <blockquote className="border-l-4 border-indigo-200 pl-4 italic text-gray-600 my-4">{children}</blockquote>,
+                              }}
+                            >
+                              {module.summary}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Key Takeaways */}
+                      {module.takeaways && module.takeaways.length > 0 && (
+                        <div>
+                          <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                            <span className="text-2xl">🎯</span>
+                            Key Takeaways
+                          </h4>
+                          <div className="grid gap-4">
+                            {module.takeaways.map((takeaway, takeawayIndex) => (
+                              <div
+                                key={takeawayIndex}
+                                className="flex items-start gap-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100"
+                              >
+                                <span className="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5 flex-shrink-0">
+                                  {takeawayIndex + 1}
+                                </span>
+                                <div>
+                                  <p className="font-semibold text-gray-900 mb-1">
+                                    {takeaway.split(' - ')[0]}
+                                  </p>
+                                  {takeaway.includes(' - ') && (
+                                    <p className="text-gray-700 leading-relaxed">
+                                      {takeaway.split(' - ').slice(1).join(' - ')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
+
+                      {/* Module Metadata */}
+                      <div className="flex flex-wrap gap-6 text-sm text-gray-500 pt-6 border-t border-gray-200">
+                        {module.estimatedReadTime && (
+                          <span className="flex items-center gap-2 font-medium">
+                            <span className="text-lg">⏱️</span>
+                            {module.estimatedReadTime} min read
+                          </span>
+                        )}
+                        <span className="flex items-center gap-2 font-medium">
+                          <span className="text-lg">📝</span>
+                          Module {index + 1} of {course.modules.length}
+                        </span>
+                        <span className="flex items-center gap-2 font-medium">
+                          <span className="text-lg">📊</span>
+                          {module.takeaways?.length || 0} key takeaways
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}

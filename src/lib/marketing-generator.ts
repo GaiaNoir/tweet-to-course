@@ -1,4 +1,4 @@
-import { openai } from './openai';
+import { claude } from './claude';
 import { Course } from '@/types';
 import { SalesPageContent } from './sales-page-generator';
 
@@ -27,28 +27,25 @@ export class MarketingGenerator {
     try {
       const prompt = this.buildMarketingPrompt(course, salesPage);
       
-      const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert marketing copywriter specializing in course launches.
+      const response = await claude.messages.create({
+        model: "claude-3-5-sonnet-20241022", // Latest Claude 3.5 Sonnet model
+        max_tokens: 3000,
+        temperature: 0.8,
+        system: `You are an expert marketing copywriter specializing in course launches.
             Create engaging, conversion-focused marketing copy across multiple channels.
             Focus on benefits, social proof, and compelling calls-to-action.
-            Return your response as a valid JSON object with the exact structure requested.`
-          },
+            Return your response as a valid JSON object with the exact structure requested.`,
+        messages: [
           {
             role: "user",
             content: prompt
           }
-        ],
-        temperature: 0.8,
-        max_tokens: 3000
+        ]
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.content[0]?.type === 'text' ? response.content[0].text : '';
       if (!content) {
-        throw new Error('No response from OpenAI');
+        throw new Error('No response from Claude');
       }
 
       const marketingData = JSON.parse(content) as MarketingAssets;

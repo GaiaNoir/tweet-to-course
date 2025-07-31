@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
 export interface MarketingAssets {
   coldDMs: string[];
@@ -25,8 +25,8 @@ export async function generateMarketingAssets(
   originalTweet: string,
   targetAudience?: string
 ): Promise<MarketingAssets> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  const claude = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
   });
   const prompt = `
 You are a professional marketing copywriter and growth strategist. Based on the following course content, create comprehensive marketing assets that are professional, persuasive, and conversion-focused.
@@ -93,25 +93,22 @@ Return the response in this exact JSON format:
 `;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+    const response = await claude.messages.create({
+      model: 'claude-3-5-sonnet-20241022', // Latest Claude 3.5 Sonnet model
+      max_tokens: 3000,
+      temperature: 0.7,
+      system: 'You are a professional marketing copywriter and growth strategist. Always return valid JSON responses.',
       messages: [
-        {
-          role: 'system',
-          content: 'You are a professional marketing copywriter and growth strategist. Always return valid JSON responses.'
-        },
         {
           role: 'user',
           content: prompt
         }
       ],
-      temperature: 0.7,
-      max_tokens: 3000,
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = response.content[0]?.type === 'text' ? response.content[0].text : '';
     if (!content) {
-      throw new Error('No response from OpenAI');
+      throw new Error('No response from Claude');
     }
 
     // Parse the JSON response

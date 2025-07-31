@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase';
-import { generateCourseContent, OpenAIError } from '@/lib/openai';
+import { generateCourseContent, ClaudeError } from '@/lib/claude';
 import { processContent, ContentProcessingError, prepareContentForAI } from '@/lib/content-processor';
 import { createAdminClient } from '@/lib/supabase';
 import { checkMonthlyUsage, incrementMonthlyUsage } from '@/lib/usage-limits';
@@ -188,24 +188,41 @@ export async function POST(request: NextRequest) {
     // Prepare content for AI processing
     const aiReadyContent = prepareContentForAI(processedContent.content);
 
-    // Generate course using OpenAI
+    // Generate course using Claude
     let generatedCourse;
     try {
+      console.log('🚀 Starting Claude course generation...');
       generatedCourse = await generateCourseContent(aiReadyContent, userId || undefined);
+      console.log('✅ Claude course generation successful');
     } catch (error) {
-      if (error instanceof OpenAIError) {
+      console.log('❌ Claude course generation failed:', error);
+      if (error instanceof ClaudeError) {
+        console.log('🏷️  Claude error details:', {
+          code: error.code,
+          message: error.message,
+          retryable: error.retryable
+        });
+        
+        // For debugging, let's return more detailed error info
+        const errorResponse = {
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+            retryable: error.retryable,
+            debug: process.env.NODE_ENV === 'development' ? {
+              timestamp: new Date().toISOString(),
+              userId: userId || 'anonymous'
+            } : undefined
+          },
+        } as GenerateCourseResponse;
+        
         return NextResponse.json(
-          {
-            success: false,
-            error: {
-              code: error.code,
-              message: error.message,
-              retryable: error.retryable,
-            },
-          } as GenerateCourseResponse,
+          errorResponse,
           { status: error.retryable ? 503 : 400 }
         );
       }
+      console.log('❌ Non-Claude error:', error);
       throw error;
     }
 

@@ -1,4 +1,4 @@
-import { openai } from './openai';
+import { claude } from './claude';
 import { Course } from '@/types';
 
 export interface SalesPageContent {
@@ -28,28 +28,25 @@ export class SalesPageGenerator {
     try {
       const prompt = this.buildSalesPagePrompt(course);
       
-      const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert copywriter specializing in course sales pages. 
+      const response = await claude.messages.create({
+        model: "claude-3-5-sonnet-20241022", // Latest Claude 3.5 Sonnet model
+        max_tokens: 2000,
+        temperature: 0.8,
+        system: `You are an expert copywriter specializing in course sales pages. 
             Create compelling, benefit-focused copy that converts visitors into customers.
             Focus on transformation, results, and addressing pain points.
-            Return your response as a valid JSON object with the exact structure requested.`
-          },
+            Return your response as a valid JSON object with the exact structure requested.`,
+        messages: [
           {
             role: "user",
             content: prompt
           }
-        ],
-        temperature: 0.8,
-        max_tokens: 2000
+        ]
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.content[0]?.type === 'text' ? response.content[0].text : '';
       if (!content) {
-        throw new Error('No response from OpenAI');
+        throw new Error('No response from Claude');
       }
 
       // Parse the JSON response

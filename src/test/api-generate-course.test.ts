@@ -7,12 +7,12 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }));
 
-vi.mock('@/lib/openai', () => ({
+vi.mock('@/lib/claude', () => ({
   generateCourseContent: vi.fn(),
-  OpenAIError: class OpenAIError extends Error {
+  ClaudeError: class ClaudeError extends Error {
     constructor(message: string, public code: string, public retryable: boolean) {
       super(message);
-      this.name = 'OpenAIError';
+      this.name = 'ClaudeError';
     }
   },
 }));
@@ -88,8 +88,8 @@ describe('/api/generate-course', () => {
         type: 'text',
       });
 
-      // Mock OpenAI
-      const { generateCourseContent } = await import('@/lib/openai');
+      // Mock Claude
+      const { generateCourseContent } = await import('@/lib/claude');
       vi.mocked(generateCourseContent).mockResolvedValue({
         title: 'Test Course',
         modules: [
@@ -129,6 +129,12 @@ describe('/api/generate-course', () => {
             order: 5,
           },
         ],
+        metadata: {
+          coreTheme: 'Test Theme',
+          targetAudience: 'Test Audience',
+          difficultyLevel: 'Beginner',
+          estimatedDuration: 60,
+        },
       });
 
       // Mock database
@@ -197,7 +203,7 @@ describe('/api/generate-course', () => {
       expect(data.error.retryable).toBe(false);
     });
 
-    it('should handle OpenAI errors', async () => {
+    it('should handle Claude errors', async () => {
       // Mock auth
       const { auth } = await import('@clerk/nextjs/server');
       vi.mocked(auth).mockResolvedValue({ userId: 'test-user-123' });
@@ -209,10 +215,10 @@ describe('/api/generate-course', () => {
         type: 'text',
       });
 
-      // Mock OpenAI error
-      const { generateCourseContent, OpenAIError } = await import('@/lib/openai');
+      // Mock Claude error
+      const { generateCourseContent, ClaudeError } = await import('@/lib/claude');
       vi.mocked(generateCourseContent).mockRejectedValue(
-        new OpenAIError('Rate limit exceeded', 'OPENAI_RATE_LIMIT', true)
+        new ClaudeError('Rate limit exceeded', 'CLAUDE_RATE_LIMIT', true)
       );
 
       // Mock database
@@ -232,7 +238,7 @@ describe('/api/generate-course', () => {
 
       expect(response.status).toBe(503);
       expect(data.success).toBe(false);
-      expect(data.error.code).toBe('OPENAI_RATE_LIMIT');
+      expect(data.error.code).toBe('CLAUDE_RATE_LIMIT');
       expect(data.error.retryable).toBe(true);
     });
 
@@ -281,8 +287,8 @@ describe('/api/generate-course', () => {
         type: 'text',
       });
 
-      // Mock OpenAI
-      const { generateCourseContent } = await import('@/lib/openai');
+      // Mock Claude
+      const { generateCourseContent } = await import('@/lib/claude');
       vi.mocked(generateCourseContent).mockResolvedValue({
         title: 'Test Course',
         modules: Array.from({ length: 5 }, (_, i) => ({
@@ -292,6 +298,12 @@ describe('/api/generate-course', () => {
           takeaways: [`Takeaway ${i + 1}`],
           order: i + 1,
         })),
+        metadata: {
+          coreTheme: 'Test Theme',
+          targetAudience: 'Test Audience',
+          difficultyLevel: 'Beginner',
+          estimatedDuration: 60,
+        },
       });
 
       // Mock database - user has already used their free generation

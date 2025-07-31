@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { OpenAIError } from './openai';
+import { ClaudeError } from './claude';
 
 // Build-safe OpenAI client initialization
 const getOpenAIClient = () => {
@@ -121,7 +121,7 @@ export async function generateCoverArt(options: CoverArtOptions): Promise<Genera
       
       const imageUrl = response.data[0]?.url;
       if (!imageUrl) {
-        throw new OpenAIError(
+        throw new ClaudeError(
           'No image URL received from DALL·E',
           'NO_IMAGE_URL',
           true
@@ -140,7 +140,7 @@ export async function generateCoverArt(options: CoverArtOptions): Promise<Genera
     return results;
     
   } catch (error) {
-    if (error instanceof OpenAIError) {
+    if (error instanceof ClaudeError) {
       throw error;
     }
     
@@ -149,7 +149,7 @@ export async function generateCoverArt(options: CoverArtOptions): Promise<Genera
       const apiError = error as { status: number; message?: string };
       
       if (apiError.status === 429) {
-        throw new OpenAIError(
+        throw new ClaudeError(
           'DALL·E API rate limit exceeded. Please try again later.',
           'DALLE_RATE_LIMIT',
           true
@@ -157,7 +157,7 @@ export async function generateCoverArt(options: CoverArtOptions): Promise<Genera
       }
       
       if (apiError.status === 401) {
-        throw new OpenAIError(
+        throw new ClaudeError(
           'DALL·E API authentication failed',
           'DALLE_AUTH_ERROR',
           false
@@ -165,7 +165,7 @@ export async function generateCoverArt(options: CoverArtOptions): Promise<Genera
       }
       
       if (apiError.status === 400) {
-        throw new OpenAIError(
+        throw new ClaudeError(
           'Invalid request to DALL·E API. The content might violate usage policies.',
           'DALLE_INVALID_REQUEST',
           false
@@ -173,14 +173,14 @@ export async function generateCoverArt(options: CoverArtOptions): Promise<Genera
       }
       
       if (apiError.status >= 500) {
-        throw new OpenAIError(
+        throw new ClaudeError(
           'DALL·E service temporarily unavailable',
           'DALLE_SERVER_ERROR',
           true
         );
       }
       
-      throw new OpenAIError(
+      throw new ClaudeError(
         `DALL·E API error: ${apiError.message || 'Unknown error'}`,
         'DALLE_API_ERROR',
         false
@@ -189,7 +189,7 @@ export async function generateCoverArt(options: CoverArtOptions): Promise<Genera
     
     // Handle network errors
     if (error instanceof Error && error.message.includes('fetch')) {
-      throw new OpenAIError(
+      throw new ClaudeError(
         'Network error connecting to DALL·E API',
         'DALLE_NETWORK_ERROR',
         true
@@ -197,7 +197,7 @@ export async function generateCoverArt(options: CoverArtOptions): Promise<Genera
     }
     
     // Generic error fallback
-    throw new OpenAIError(
+    throw new ClaudeError(
       'Unexpected error during cover art generation',
       'DALLE_UNKNOWN_ERROR',
       true
@@ -219,7 +219,7 @@ export async function downloadImageAsBase64(imageUrl: string): Promise<string> {
     
     return `data:${mimeType};base64,${base64}`;
   } catch (error) {
-    throw new OpenAIError(
+    throw new ClaudeError(
       'Failed to download generated image',
       'IMAGE_DOWNLOAD_ERROR',
       true
