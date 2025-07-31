@@ -92,6 +92,16 @@ export async function POST(request: NextRequest) {
       const courseId = `course-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
       // Save course to database
+      console.log('📝 Saving course to database...');
+      console.log('Course data:', {
+        id: courseId,
+        user_id: job.user_id,
+        title: generatedCourse.title,
+        original_content_length: processedContent.content.length,
+        modules_count: generatedCourse.modules?.length || 0,
+        modules_structure: generatedCourse.modules?.map(m => ({ id: m.id, title: m.title })) || []
+      });
+
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
         .insert({
@@ -105,9 +115,17 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (courseError) {
-        console.error('Course save error:', courseError);
-        throw new Error('Failed to save course');
+        console.error('❌ Course save error details:', {
+          error: courseError,
+          message: courseError.message,
+          details: courseError.details,
+          hint: courseError.hint,
+          code: courseError.code
+        });
+        throw new Error(`Failed to save course: ${courseError.message || 'Unknown database error'}`);
       }
+
+      console.log('✅ Course saved successfully:', courseData);
 
       // Update monthly usage
       try {
