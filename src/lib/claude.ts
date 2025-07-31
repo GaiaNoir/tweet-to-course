@@ -9,6 +9,8 @@ const getClaudeClient = () => {
   }
   return new Anthropic({
     apiKey: apiKey || 'placeholder-key',
+    timeout: 120000, // 2 minutes timeout for Claude API calls
+    maxRetries: 2, // Retry failed requests up to 2 times
   });
 };
 
@@ -390,6 +392,15 @@ Return the response as a JSON object with the following structure:
   } catch (error) {
     if (error instanceof ClaudeError) {
       throw error;
+    }
+
+    // Handle timeout errors specifically
+    if (error instanceof Error && (error.message.includes('timeout') || error.message.includes('TIMEOUT'))) {
+      throw new ClaudeError(
+        'Claude API request timed out. Please try again with shorter content or try again later.',
+        'CLAUDE_TIMEOUT',
+        true
+      );
     }
 
     // Handle Claude API errors
