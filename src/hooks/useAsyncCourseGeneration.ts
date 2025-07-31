@@ -56,7 +56,26 @@ export function useAsyncCourseGeneration(): UseAsyncCourseGenerationReturn {
   const pollJobStatus = useCallback(async (jobId: string) => {
     try {
       const response = await fetch(`/api/job-status/${jobId}`);
-      const data = await response.json();
+      
+      // Handle non-200 responses
+      if (!response.ok) {
+        if (response.status === 504) {
+          console.log('Job status check timed out, will retry...');
+          return; // Don't stop polling on timeout, just skip this poll
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Handle JSON parsing errors
+      let data;
+      try {
+        const text = await response.text();
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.log('Response was not valid JSON, will retry...');
+        return; // Don't stop polling on parse error, just skip this poll
+      }
 
       if (data.success) {
         setJob(data);
@@ -83,6 +102,14 @@ export function useAsyncCourseGeneration(): UseAsyncCourseGenerationReturn {
       }
     } catch (err) {
       console.error('Error polling job status:', err);
+      
+      // Don't immediately fail on network errors, retry a few times
+      const currentJob = job;
+      if (currentJob && (currentJob.status === 'pending' || currentJob.status === 'processing')) {
+        console.log('Network error during polling, will retry...');
+        return; // Continue polling
+      }
+      
       setError('Failed to check job status');
       if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -90,7 +117,7 @@ export function useAsyncCourseGeneration(): UseAsyncCourseGenerationReturn {
       }
       setIsLoading(false);
     }
-  }, [pollingInterval]);
+  }, [pollingInterval, job]);
 
   // Start course generation
   const generateCourse = useCallback(async (content: string, type: 'url' | 'text' = 'text'): Promise<string> => {
@@ -107,7 +134,17 @@ export function useAsyncCourseGeneration(): UseAsyncCourseGenerationReturn {
         body: JSON.stringify({ content, type }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw new Error('Server returned invalid response. Please try again.');
+      }
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to start course generation');

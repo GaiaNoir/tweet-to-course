@@ -67,6 +67,16 @@ export async function POST(request: NextRequest) {
     console.log(`🚀 Starting background course generation for job ${jobId}`);
 
     try {
+      // Set a timeout to prevent jobs from being stuck indefinitely
+      const PROCESSING_TIMEOUT = 240000; // 4 minutes
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Processing timeout - job took too long')), PROCESSING_TIMEOUT);
+      });
+
+      // Wrap the processing in a timeout
+      await Promise.race([processJob(), timeoutPromise]);
+
+      async function processJob() {
       // Process content
       const processedContent = await processContent(job.content);
       console.log('✅ Content processed successfully');
@@ -144,13 +154,14 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', jobId);
 
-      console.log(`✅ Job ${jobId} completed successfully`);
+        console.log(`✅ Job ${jobId} completed successfully`);
 
-      return NextResponse.json({
-        success: true,
-        message: 'Course generation completed',
-        courseId
-      });
+        return NextResponse.json({
+          success: true,
+          message: 'Course generation completed',
+          courseId
+        });
+      } // End of processJob function
 
     } catch (error) {
       console.error(`❌ Job ${jobId} failed:`, error);
@@ -166,17 +177,25 @@ export async function POST(request: NextRequest) {
         retryable = error.retryable;
       } else if (error instanceof Error) {
         errorMessage = error.message;
+        if (error.message.includes('timeout')) {
+          errorMessage = 'Course generation timed out. Please try again with shorter content.';
+          retryable = true;
+        }
       }
 
       // Update job as failed
-      await supabase
-        .from('course_generation_jobs')
-        .update({
-          status: 'failed',
-          error_message: errorMessage,
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', jobId);
+      try {
+        await supabase
+          .from('course_generation_jobs')
+          .update({
+            status: 'failed',
+            error_message: errorMessage,
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', jobId);
+      } catch (dbError) {
+        console.error('Failed to update job status to failed:', dbError);
+      }
 
       return NextResponse.json(
         { 
