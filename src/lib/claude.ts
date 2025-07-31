@@ -145,8 +145,6 @@ Module Structure (Repeat for all 5 modules):
 [Module Title: Compelling and Specific]
 [Hook sentence that connects to original tweet insight and promises value]
 
-Click to read full content ([word count] words)
-
 ### 📖 Complete Module Content
 
 [DETAILED EXPANSION - 250-350 words that include:]
@@ -184,10 +182,6 @@ Click to read full content ([word count] words)
 2. **[Takeaway 2]** - [Another implementable insight from the module]
 3. **[Takeaway 3]** - [Third practical point with specific guidance]
 4. **[Takeaway 4]** - [Fourth actionable takeaway with clear benefit]
-
-⏱️ [X] min read  
-📝 Module [X] of 5  
-📊 4 key takeaways
 
 Content Expansion Guidelines
 From Tweet to Module - Expansion Strategy:
@@ -347,6 +341,19 @@ Return the response as a JSON object with the following structure:
     const modules = parsedResponse.modules.map((module: any, index: number) => {
       // Clean up the content to ensure it's properly formatted
       let content = module.content || module.summary || '';
+
+      // Remove unwanted UI text that shouldn't be in the content
+      content = content
+        .replace(/Click to read full content \(\d+ words\)/gi, '')
+        .replace(/Click to read full content/gi, '')
+        .replace(/\(\d+ words\)/gi, '')
+        .replace(/⏱️ \[?\d+\]? min read/gi, '')
+        .replace(/📝 Module \[?\d+\]? of \d+/gi, '')
+        .replace(/📊 \d+ key takeaways/gi, '')
+        .replace(/⏱️.*?min read/gi, '')
+        .replace(/📝.*?Module.*?of.*?\d+/gi, '')
+        .replace(/📊.*?takeaways/gi, '')
+        .trim();
 
       // If the content contains markdown headers, ensure proper formatting
       if (content.includes('###') || content.includes('**')) {
