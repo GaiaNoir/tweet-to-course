@@ -88,13 +88,12 @@ export async function POST(request: NextRequest) {
       const generatedCourse = await generateCourseContent(aiReadyContent, job.user_id);
       console.log('✅ Claude course generation successful');
 
-      // Create course ID
-      const courseId = `course-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      // Let database auto-generate UUID for course ID
+      // const courseId = `course-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`; // This was causing UUID format error
 
       // Save course to database
       console.log('📝 Saving course to database...');
       console.log('Course data:', {
-        id: courseId,
         user_id: job.user_id,
         title: generatedCourse.title,
         original_content_length: processedContent.content.length,
@@ -105,7 +104,6 @@ export async function POST(request: NextRequest) {
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
         .insert({
-          id: courseId,
           user_id: job.user_id,
           title: generatedCourse.title,
           original_content: processedContent.content,
@@ -126,6 +124,7 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('✅ Course saved successfully:', courseData);
+      const courseId = courseData.id; // Get the auto-generated UUID from database
 
       // Update monthly usage
       try {
