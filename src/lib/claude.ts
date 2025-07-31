@@ -9,8 +9,8 @@ const getClaudeClient = () => {
   }
   return new Anthropic({
     apiKey: apiKey || 'placeholder-key',
-    timeout: 120000, // 2 minutes timeout for Claude API calls
-    maxRetries: 2, // Retry failed requests up to 2 times
+    timeout: 180000, // 3 minutes timeout for Claude API calls
+    maxRetries: 3, // Retry failed requests up to 3 times
   });
 };
 
@@ -68,6 +68,54 @@ export function checkRateLimit(userId: string): boolean {
 }
 
 // Enhanced Claude API client with content analysis
+// Exponential backoff retry function
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error = new Error('Unknown error');
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry on non-retryable errors
+      if (error instanceof ClaudeError && !error.retryable) {
+        throw error;
+      }
+      
+      // Don't retry on the last attempt
+      if (attempt === maxRetries) {
+        break;
+      }
+      
+      // Calculate delay with exponential backoff
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`⏳ Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms delay`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+}
+
+// Optimize content for Claude API to reduce processing time
+function optimizeContentForClaude(content: string): string {
+  // Truncate extremely long content to prevent timeouts
+  const MAX_CONTENT_LENGTH = 8000; // Reasonable limit for course generation
+  
+  if (content.length > MAX_CONTENT_LENGTH) {
+    console.log(`⚠️ Content truncated from ${content.length} to ${MAX_CONTENT_LENGTH} characters`);
+    return content.substring(0, MAX_CONTENT_LENGTH) + '...';
+  }
+  
+  return content;
+}
+
 export async function generateCourseContent(
   content: string,
   userId?: string
@@ -98,27 +146,32 @@ export async function generateCourseContent(
   }
 
   try {
+    // Optimize content to reduce processing time
+    const optimizedContent = optimizeContentForClaude(content);
+    
     // Analyze content for better course generation
-    const contentAnalysis = analyzeContent(content);
+    const contentAnalysis = analyzeContent(optimizedContent);
 
-    console.log('🔍 Content length:', content.length);
+    console.log('🔍 Optimized content length:', optimizedContent.length);
 
-    const response = await claude.messages.create({
-      model: 'claude-sonnet-4-20250514', // Latest Claude 3.5 Sonnet model
-      max_tokens: 20000, // Increased tokens for comprehensive courses
-      temperature: 1, // Higher creativity for more engaging content
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `You are an expert course creator tasked with developing a high-value, expert-level mini-course based on a single tweet. Your goal is to create a course outline that provides deep, specialized knowledge and can be sold for at least $25. The course should focus on actionable advice and encourage learners to take immediate action based on what they've learned.
+    // Use retry with exponential backoff for Claude API call
+    const response = await retryWithBackoff(async () => {
+      return await claude.messages.create({
+        model: 'claude-sonnet-4-20250514', // Latest Claude 3.5 Sonnet model
+        max_tokens: 20000, // Increased tokens for comprehensive courses
+        temperature: 1, // Higher creativity for more engaging content
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `You are an expert course creator tasked with developing a high-value, expert-level mini-course based on a single tweet. Your goal is to create a course outline that provides deep, specialized knowledge and can be sold for at least $25. The course should focus on actionable advice and encourage learners to take immediate action based on what they've learned.
 
 Here is the tweet you'll be working with:
 
 <tweet>
-${content}
+${optimizedContent}
 </tweet>
 
 Your Task
@@ -283,10 +336,8 @@ Return the response as a JSON object with the following structure:
           ]
         }
       ],
-    }, {
-      timeout: 45000 // 45 seconds timeout
-    
-    });
+      });
+    }, 3, 2000); // 3 retries with 2 second base delay
 
     const responseText = response.content[0]?.type === 'text' ? response.content[0].text : '';
     if (!responseText) {
@@ -374,7 +425,7 @@ Return the response as a JSON object with the following structure:
         summary: content,
         takeaways: Array.isArray(module.takeaways) ? module.takeaways : [],
         order: index + 1,
-        estimatedReadTime: module.estimatedReadTime || Math.ceil(contentAnalysis.estimatedDuration / parsedResponse.modules.length),
+        estimatedReadTime: module.estimatedReadTime || 8,
       };
     });
 
@@ -382,10 +433,10 @@ Return the response as a JSON object with the following structure:
       title: title,
       modules,
       metadata: {
-        coreTheme: contentAnalysis.coreTheme,
-        targetAudience: contentAnalysis.targetAudience,
-        difficultyLevel: contentAnalysis.difficultyLevel,
-        estimatedDuration: contentAnalysis.estimatedDuration,
+        coreTheme: 'Course Generation',
+        targetAudience: 'General Audience',
+        difficultyLevel: 'Intermediate',
+        estimatedDuration: 120,
       },
     };
 
