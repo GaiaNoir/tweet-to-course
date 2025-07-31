@@ -282,7 +282,7 @@ Return the response as a JSON object with the following structure:
         }
       ],
     }, {
-      timeout: 75000 // 75 seconds timeout
+      timeout: 45000 // 45 seconds timeout
     
     });
 

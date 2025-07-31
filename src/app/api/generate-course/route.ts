@@ -40,6 +40,16 @@ interface GenerateCourseResponse {
   };
   usageCount?: number;
 }
+const TIMEOUT_MS = 25_000; // adjust based on your hosting platform's limits
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('TimeoutError')), timeoutMs)
+    ),
+  ]);
+}
 
 // Rate limiting per user
 const userRateLimit = new Map<string, { count: number; resetTime: number }>();
@@ -114,14 +124,17 @@ export async function POST(request: NextRequest) {
     // Process content
     let processedContent;
     try {
-      
       console.log('🔄 Processing content...');
-      
-      processedContent = await processContent(content);
-     
-      console.log('✅ Content processed successfully:', { type: processedContent.type, contentLength: processedContent.content.length });
+    
+      processedContent = await withTimeout(processContent(content), TIMEOUT_MS);
+    
+      console.log('✅ Content processed successfully:', {
+        type: processedContent.type,
+        contentLength: processedContent.content.length,
+      });
     } catch (error) {
       console.log('❌ Content processing failed:', error);
+    
       if (error instanceof ContentProcessingError) {
         return NextResponse.json(
           {
@@ -135,8 +148,25 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    
+      // Handle timeout error explicitly
+      if (error instanceof Error && error.message === 'TimeoutError') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'TIMEOUT',
+              message: 'The operation took too long. Please try again.',
+              retryable: true,
+            },
+          } as GenerateCourseResponse,
+          { status: 504 }
+        );
+      }
+    
       throw error;
     }
+    
 
     // Check user subscription and monthly usage limits
     let usageInfo;
