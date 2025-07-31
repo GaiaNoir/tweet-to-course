@@ -4,15 +4,23 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { signOut } from '@/lib/auth';
+import { createClient } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, isSignedIn } = useAuth();
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await supabase.auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (

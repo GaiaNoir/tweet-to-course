@@ -112,9 +112,9 @@ export function CourseInputForm({
   }
 
   return (
-    <div className="card max-w-3xl mx-auto p-8 lg:p-10">
+    <div className="card max-w-3xl mx-auto p-6 sm:p-8 lg:p-10">
       {error && (
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <ErrorDisplay
             error={error}
             onRetry={handleRetry}
@@ -124,11 +124,11 @@ export function CourseInputForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 sm:space-y-6">
         <div>
           <label
             htmlFor="content-input"
-            className="block text-left text-lg font-semibold card-title mb-3"
+            className="block text-left text-base sm:text-lg font-semibold card-title mb-2 sm:mb-3"
           >
             {getInputLabel()}
           </label>
@@ -145,14 +145,14 @@ export function CourseInputForm({
                 }
               })}
               placeholder={getPlaceholder()}
-              className={`w-full px-6 py-4 text-lg leading-relaxed resize-none transition-all duration-200 ${errors.content
+              className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg leading-relaxed resize-none transition-all duration-200 ${errors.content
                 ? 'border-red-300 bg-red-50 focus:border-red-500'
                 : 'border-slate-200 hover:border-slate-300 focus:border-indigo-500'
                 }`}
               rows={4}
               style={{ minHeight: '120px' }}
             />
-            <div className="absolute bottom-4 right-4 text-xs card-description">
+            <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-xs card-description">
               {contentValue.length}/5000
             </div>
           </div>
@@ -169,34 +169,36 @@ export function CourseInputForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="btn btn-primary w-full btn-lg text-lg"
+          className="btn btn-primary w-full btn-lg text-base sm:text-lg"
         >
           {isLoading ? (
             <>
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Generating Your Course...
+              <span className="hidden sm:inline">Generating Your Course...</span>
+              <span className="sm:hidden">Generating...</span>
             </>
           ) : (
             <>
               <span className="mr-2">✨</span>
-              Generate Course
+              <span className="hidden sm:inline">Generate Course</span>
+              <span className="sm:hidden">Generate</span>
             </>
           )}
         </button>
       </form>
 
       {/* Features highlight */}
-      <div className="mt-8 pt-6 border-t border-slate-200">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+      <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-200">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center">
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
             <span className="text-green-500">⚡</span>
             <span>Instant Generation</span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
             <span className="text-blue-500">🎯</span>
             <span>AI-Structured</span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
             <span className="text-purple-500">📄</span>
             <span>Export Ready</span>
           </div>
@@ -204,8 +206,8 @@ export function CourseInputForm({
       </div>
 
       {/* Upgrade prompt */}
-      <div className="mt-6 text-center">
-        <p className="text-sm text-slate-500">
+      <div className="mt-4 sm:mt-6 text-center">
+        <p className="text-xs sm:text-sm text-slate-500">
           Need unlimited generations?
           <button
             onClick={() => window.location.href = '/pricing'}

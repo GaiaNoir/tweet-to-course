@@ -2,7 +2,7 @@ import { requireAuth, getUserProfile } from '@/lib/auth-supabase';
 import { getSubscriptionLimits } from '@/lib/subscription-utils';
 import Link from 'next/link';
 import { NotionConnection } from '@/components/ui/notion-connection';
-import { Navigation } from '@/components/ui/navigation-supabase';
+import { Navigation } from '@/components/ui/navigation';
 import { RetryButton } from '@/components/ui/retry-button';
 
 // Force dynamic rendering for this page
@@ -52,37 +52,37 @@ export default async function DashboardPage() {
       <Navigation />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
         {/* Main Content */}
-      <main className="max-w-7xl mx-auto container-padding py-12">
-          <div className="mb-12">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center">
-                <span className="text-white text-xl font-bold">👋</span>
+      <main className="max-w-7xl mx-auto container-padding py-8 sm:py-12">
+          <div className="mb-8 sm:mb-12">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center">
+                <span className="text-white text-lg sm:text-xl font-bold">👋</span>
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-slate-900">Welcome back!</h1>
-                <p className="text-xl text-slate-600">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">Welcome back!</h1>
+                <p className="text-base sm:text-lg lg:text-xl text-slate-600">
                   Here's your account overview and quick actions.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
             {/* Subscription Status Card */}
-            <div className="card card-hover p-6">
-              <div className="flex items-center mb-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
+            <div className="card card-hover p-4 sm:p-6">
+              <div className="flex items-center mb-3 sm:mb-4">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-xl sm:text-2xl ${
                   userProfile.subscriptionTier === 'free' 
                     ? 'bg-slate-100' 
                     : 'bg-gradient-to-r from-green-100 to-emerald-100'
                 }`}>
                   {userProfile.subscriptionTier === 'free' ? '🆓' : '⭐'}
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-semibold card-description uppercase tracking-wider">
+                <div className="ml-3 sm:ml-4">
+                  <h3 className="text-xs sm:text-sm font-semibold card-description uppercase tracking-wider">
                     Current Plan
                   </h3>
-                  <p className="text-2xl font-bold card-title capitalize">
+                  <p className="text-xl sm:text-2xl font-bold card-title capitalize">
                     {userProfile.subscriptionTier}
                   </p>
                 </div>
@@ -104,19 +104,19 @@ export default async function DashboardPage() {
             </div>
 
             {/* Usage Card */}
-            <div className="card card-hover p-6">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center text-2xl">
+            <div className="card card-hover p-4 sm:p-6">
+              <div className="flex items-center mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center text-xl sm:text-2xl">
                   📊
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                <div className="ml-3 sm:ml-4">
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">
                     Monthly Usage
                   </h3>
-                  <p className="text-2xl font-bold text-slate-900">
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900">
                     {userProfile.monthlyUsageCount}
                     {limits.monthlyGenerations !== -1 && (
-                      <span className="text-lg text-slate-500 font-normal">
+                      <span className="text-base sm:text-lg text-slate-500 font-normal">
                         {' '}/ {limits.monthlyGenerations}
                       </span>
                     )}
@@ -141,16 +141,16 @@ export default async function DashboardPage() {
             </div>
 
             {/* Features Card */}
-            <div className="card card-hover p-6">
-              <div className="flex items-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center text-2xl">
+            <div className="card card-hover p-4 sm:p-6">
+              <div className="flex items-center mb-4 sm:mb-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center text-xl sm:text-2xl">
                   ✨
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                <div className="ml-3 sm:ml-4">
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">
                     Features
                   </h3>
-                  <p className="text-lg font-bold text-slate-900">
+                  <p className="text-base sm:text-lg font-bold text-slate-900">
                     Available Now
                   </p>
                 </div>
@@ -200,16 +200,16 @@ export default async function DashboardPage() {
           {(userProfile.subscriptionTier === 'pro' || userProfile.subscriptionTier === 'lifetime') && (
             <>
               {/* Custom Branding Section */}
-              <div className="card p-8 mb-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center text-2xl">
+              <div className="card p-6 sm:p-8 mb-6 sm:mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center text-xl sm:text-2xl">
                     🎨
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                       Custom Branding
                     </h2>
-                    <p className="text-slate-600">
+                    <p className="text-sm sm:text-base text-slate-600">
                       Make your courses truly yours with custom styling
                     </p>
                   </div>
@@ -228,16 +228,16 @@ export default async function DashboardPage() {
               </div>
 
               {/* Integrations Section */}
-              <div className="card p-8 mb-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center text-2xl">
+              <div className="card p-6 sm:p-8 mb-6 sm:mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center text-xl sm:text-2xl">
                     🔗
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                       Integrations
                     </h2>
-                    <p className="text-slate-600">
+                    <p className="text-sm sm:text-base text-slate-600">
                       Connect your favorite tools and platforms
                     </p>
                   </div>
@@ -250,21 +250,21 @@ export default async function DashboardPage() {
           )}
 
           {/* Quick Actions */}
-          <div className="card p-8">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl flex items-center justify-center text-2xl">
+          <div className="card p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl flex items-center justify-center text-xl sm:text-2xl">
                 ⚡
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                   Quick Actions
                 </h2>
-                <p className="text-slate-600">
+                <p className="text-sm sm:text-base text-slate-600">
                   Everything you need to get started
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Link
                 href="/"
                 className="btn btn-primary"
@@ -299,29 +299,29 @@ export default async function DashboardPage() {
           </div>
 
           {/* Account Info */}
-          <div className="mt-12 card p-8">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-gradient-to-r from-slate-100 to-gray-100 rounded-2xl flex items-center justify-center text-2xl">
+          <div className="mt-8 sm:mt-12 card p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-slate-100 to-gray-100 rounded-2xl flex items-center justify-center text-xl sm:text-2xl">
                 👤
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                   Account Information
                 </h2>
-                <p className="text-slate-600">
+                <p className="text-sm sm:text-base text-slate-600">
                   Your profile and membership details
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <dt className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Email</dt>
-                  <dd className="text-lg text-slate-900 font-medium">{userProfile.email}</dd>
+                  <dt className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Email</dt>
+                  <dd className="text-base sm:text-lg text-slate-900 font-medium break-all">{userProfile.email}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Member Since</dt>
-                  <dd className="text-lg text-slate-900 font-medium">
+                  <dt className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Member Since</dt>
+                  <dd className="text-base sm:text-lg text-slate-900 font-medium">
                     {new Date(userProfile.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -330,10 +330,10 @@ export default async function DashboardPage() {
                   </dd>
                 </div>
               </div>
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <dt className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Last Active</dt>
-                  <dd className="text-lg text-slate-900 font-medium">
+                  <dt className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">Last Active</dt>
+                  <dd className="text-base sm:text-lg text-slate-900 font-medium">
                     {new Date(userProfile.lastActive).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -342,8 +342,8 @@ export default async function DashboardPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">User ID</dt>
-                  <dd className="text-sm text-slate-600 font-mono bg-slate-100 px-3 py-2 rounded-lg">
+                  <dt className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1 sm:mb-2">User ID</dt>
+                  <dd className="text-xs sm:text-sm text-slate-600 font-mono bg-slate-100 px-2 sm:px-3 py-1 sm:py-2 rounded-lg break-all">
                     {userProfile.id}
                   </dd>
                 </div>

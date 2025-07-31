@@ -164,18 +164,18 @@ export function CourseDisplay({
   console.log('Extracted course info:', courseInfo);
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 max-w-5xl mx-auto">
+    <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 max-w-5xl mx-auto">
       {/* Course Header */}
-      <div className="border-b border-gray-200 pb-8 mb-8">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+      <div className="border-b border-gray-200 pb-6 sm:pb-8 mb-6 sm:mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 sm:gap-6">
           <div className="flex-1">
             {isEditingTitle ? (
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col gap-3">
                 <input
                   type="text"
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
-                  className="flex-1 text-2xl md:text-4xl font-bold text-gray-900 border-2 border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"
+                  className="w-full text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 border-2 border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleTitleSave();
@@ -199,21 +199,21 @@ export function CourseDisplay({
               </div>
             ) : (
               <div className="group cursor-pointer" onClick={() => setIsEditingTitle(true)}>
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors leading-tight">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors leading-tight">
                   {course.title}
                   <span className="ml-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     ✏️
                   </span>
                 </h1>
-                <p className="text-sm text-gray-500 mt-1">Click to edit title</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Click to edit title</p>
               </div>
             )}
             
             {/* Course Overview */}
             {courseInfo.overview && (
-              <div className="mt-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Course Overview</h2>
-                <p className="text-lg text-gray-700 leading-relaxed">{courseInfo.overview}</p>
+              <div className="mt-4 sm:mt-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">Course Overview</h2>
+                <p className="text-base sm:text-lg text-gray-700 leading-relaxed">{courseInfo.overview}</p>
               </div>
             )}
             
@@ -254,7 +254,7 @@ export function CourseDisplay({
           </div>
           
           {/* Action Buttons */}
-          <div className="flex flex-col gap-3 min-w-[200px]">
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:min-w-[200px]">
             <button
               onClick={onRegenerate}
               disabled={isRegenerating}
@@ -315,10 +315,10 @@ export function CourseDisplay({
         </div>
         
         {/* Course Metadata */}
-        <div className="mt-6 flex flex-wrap gap-4 text-sm text-gray-500">
+        <div className="mt-4 sm:mt-6 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
           <span>📅 Generated {new Date(course.metadata.generatedAt).toLocaleDateString()}</span>
           <span>📚 {course.modules.length} modules</span>
-          <span>🔗 Source: {course.metadata.sourceType}</span>
+          <span className="hidden sm:inline">🔗 Source: {course.metadata.sourceType}</span>
           {userProfile && (
             <span className={`font-medium ${isFreeTier ? 'text-orange-600' : 'text-green-600'}`}>
               {userProfile.subscriptionTier.toUpperCase()} Plan
@@ -331,7 +331,7 @@ export function CourseDisplay({
       </div>
 
       {/* Course Modules */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {course.modules
           .sort((a, b) => a.order - b.order)
           .map((module, index) => {
@@ -344,18 +344,18 @@ export function CourseDisplay({
                 className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
               >
                 {/* Module Header */}
-                <div className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200">
+                <div className="p-4 sm:p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-3">
-                        <span className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
+                        <span className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm sm:text-lg flex-shrink-0 mt-1 sm:mt-0">
                           {index + 1}
                         </span>
-                        <div>
-                          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 leading-tight">
                             {module.title}
                           </h3>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                             Hook sentence that connects to original insight and promises value
                           </p>
                         </div>

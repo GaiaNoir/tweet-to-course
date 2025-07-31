@@ -276,22 +276,22 @@ export default function DemoPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navigation />
       
-      <main className="max-w-6xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+      <main className="max-w-6xl mx-auto container-padding py-8 sm:py-12 lg:py-16">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
             Premium Course Display Demo
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
             Experience the new comprehensive course format with detailed modules, learning outcomes, and professional presentation.
           </p>
           
           {/* User Tier Toggle */}
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <span className="text-gray-700 font-medium">Demo as:</span>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <span className="text-gray-700 font-medium text-sm sm:text-base">Demo as:</span>
             <div className="flex bg-white rounded-lg p-1 shadow-sm">
               <button
                 onClick={() => setUserTier('free')}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${
                   userTier === 'free'
                     ? 'bg-indigo-600 text-white'
                     : 'text-gray-600 hover:text-gray-900'
@@ -301,7 +301,7 @@ export default function DemoPage() {
               </button>
               <button
                 onClick={() => setUserTier('pro')}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${
                   userTier === 'pro'
                     ? 'bg-indigo-600 text-white'
                     : 'text-gray-600 hover:text-gray-900'
@@ -314,12 +314,12 @@ export default function DemoPage() {
 
           {/* Notion Connection Toggle (for Pro users) */}
           {userTier === 'pro' && (
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <span className="text-gray-700 font-medium">Notion Status:</span>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <span className="text-gray-700 font-medium text-sm sm:text-base">Notion Status:</span>
               <div className="flex bg-white rounded-lg p-1 shadow-sm">
                 <button
                   onClick={() => setIsNotionConnected(false)}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  className={`px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${
                     !isNotionConnected
                       ? 'bg-red-100 text-red-700'
                       : 'text-gray-600 hover:text-gray-900'
@@ -329,7 +329,7 @@ export default function DemoPage() {
                 </button>
                 <button
                   onClick={() => setIsNotionConnected(true)}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  className={`px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${
                     isNotionConnected
                       ? 'bg-green-100 text-green-700'
                       : 'text-gray-600 hover:text-gray-900'
@@ -357,67 +357,67 @@ export default function DemoPage() {
         />
 
         {/* Feature Highlights */}
-        <div className="mt-16 bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+        <div className="mt-12 sm:mt-16 bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">
             New Premium Course Format Features
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">📚</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <span className="text-indigo-600 text-lg sm:text-xl">📚</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Course Overview</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Course Overview</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Professional course header with learning outcomes and target audience
               </p>
             </div>
             
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">📖</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <span className="text-indigo-600 text-lg sm:text-xl">📖</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Rich Content</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Rich Content</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Detailed modules with markdown formatting and comprehensive content
               </p>
             </div>
             
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">🎯</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <span className="text-indigo-600 text-lg sm:text-xl">🎯</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Enhanced Takeaways</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Enhanced Takeaways</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Structured key takeaways with detailed explanations and benefits
               </p>
             </div>
             
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">💎</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <span className="text-indigo-600 text-lg sm:text-xl">💎</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Premium Design</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Premium Design</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Professional layout worthy of $25-$90 course pricing
               </p>
             </div>
             
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">📊</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <span className="text-indigo-600 text-lg sm:text-xl">📊</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Detailed Metrics</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Detailed Metrics</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Word counts, read times, and comprehensive module information
               </p>
             </div>
             
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 text-xl">🚀</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <span className="text-indigo-600 text-lg sm:text-xl">🚀</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Actionable Content</h3>
-              <p className="text-gray-600 text-sm">
+              <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Actionable Content</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 Every module includes specific tools, frameworks, and implementation steps
               </p>
             </div>
@@ -425,8 +425,8 @@ export default function DemoPage() {
         </div>
 
         {/* Instructions */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-600">
+        <div className="mt-6 sm:mt-8 text-center">
+          <p className="text-gray-600 text-sm sm:text-base">
             Try expanding the modules to see the full comprehensive content format. Switch between user tiers to see different features.
           </p>
         </div>

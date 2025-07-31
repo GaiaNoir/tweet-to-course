@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Navigation } from '@/components/ui/navigation-supabase';
+import { Navigation } from '@/components/ui/navigation';
 import { CourseInputForm } from '@/components/ui/course-input-form';
 import { CourseDisplay } from '@/components/ui/course-display';
 import { useAuth } from '@/hooks/use-auth';
@@ -79,29 +79,29 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="relative max-w-7xl mx-auto container-padding py-24 lg:py-32">
+          <div className="relative max-w-7xl mx-auto container-padding py-16 sm:py-24 lg:py-32">
             <div className="text-center">
-              <div className="mb-8">
-                <span className="inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200/50 shadow-sm mb-6">
+              <div className="mb-6 sm:mb-8">
+                <span className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-semibold bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200/50 shadow-sm mb-4 sm:mb-6">
                   <span className="mr-2">✨</span>
                   AI-Powered Course Creation
                 </span>
               </div>
-              <h1 className="text-5xl font-bold text-slate-900 sm:text-6xl lg:text-7xl leading-tight text-balance">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-slate-900 leading-tight text-balance px-4 sm:px-0">
                 Turn Your Tweets Into
-                <span className="block gradient-text mt-2">
+                <span className="block gradient-text mt-1 sm:mt-2">
                   Sellable Courses
                 </span>
               </h1>
-              <p className="mt-8 max-w-3xl mx-auto text-xl text-slate-600 leading-relaxed text-balance">
+              <p className="mt-6 sm:mt-8 max-w-3xl mx-auto text-base sm:text-lg lg:text-xl text-slate-600 leading-relaxed text-balance px-4 sm:px-0">
                 Transform Twitter threads and tweets into structured mini-courses with AI. 
                 Perfect for content creators, coaches, and solopreneurs who want to monetize their knowledge instantly.
               </p>
               {!loading && !isSignedIn && (
-                <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4 sm:px-0">
                   <a
                     href="/auth/sign-up"
-                    className="btn btn-primary btn-lg group shadow-xl hover:shadow-2xl"
+                    className="btn btn-primary btn-lg group shadow-xl hover:shadow-2xl w-full sm:w-auto"
                   >
                     Get Started Free
                     <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@ export default function Home() {
                   </a>
                   <a
                     href="/demo"
-                    className="btn btn-secondary btn-lg"
+                    className="btn btn-secondary btn-lg w-full sm:w-auto"
                   >
                     <span className="mr-2">🎬</span>
                     Try Demo
@@ -119,21 +119,21 @@ export default function Home() {
               )}
               
               {/* Social proof */}
-              <div className="mt-16 flex flex-col items-center">
-                <p className="text-sm text-slate-500 mb-4">Trusted by content creators worldwide</p>
-                <div className="flex items-center gap-8 opacity-60">
+              <div className="mt-12 sm:mt-16 flex flex-col items-center px-4 sm:px-0">
+                <p className="text-xs sm:text-sm text-slate-500 mb-3 sm:mb-4">Trusted by content creators worldwide</p>
+                <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 lg:gap-8 opacity-60">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                    <div className="w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-bold">TC</span>
                     </div>
-                    <span className="text-sm font-medium text-slate-600">TweetToCourse</span>
+                    <span className="text-xs sm:text-sm font-medium text-slate-600">TweetToCourse</span>
                   </div>
-                  <div className="text-slate-300">•</div>
-                  <span className="text-sm text-slate-500">AI-Powered</span>
-                  <div className="text-slate-300">•</div>
-                  <span className="text-sm text-slate-500">Instant Export</span>
-                  <div className="text-slate-300">•</div>
-                  <span className="text-sm text-slate-500">Professional Quality</span>
+                  <div className="text-slate-300 hidden sm:block">•</div>
+                  <span className="text-xs sm:text-sm text-slate-500">AI-Powered</span>
+                  <div className="text-slate-300 hidden sm:block">•</div>
+                  <span className="text-xs sm:text-sm text-slate-500">Instant Export</span>
+                  <div className="text-slate-300 hidden lg:block">•</div>
+                  <span className="text-xs sm:text-sm text-slate-500 hidden lg:inline">Professional Quality</span>
                 </div>
               </div>
             </div>
@@ -142,12 +142,12 @@ export default function Home() {
 
         {/* Course Input Form - Only show when user is logged in */}
         {!loading && isSignedIn && (
-          <div className="max-w-7xl mx-auto container-padding mt-20">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+          <div className="max-w-7xl mx-auto container-padding mt-16 sm:mt-20">
+            <div className="text-center mb-8 sm:mb-12 px-4 sm:px-0">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 sm:mb-4">
                 Create Your Course
               </h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
                 Paste your Twitter thread or any educational content below to get started
               </p>
             </div>
@@ -162,7 +162,7 @@ export default function Home() {
 
         {/* Generated Course Display */}
         {generatedCourse && (
-          <div className="max-w-7xl mx-auto container-padding mt-20">
+          <div className="max-w-7xl mx-auto container-padding mt-16 sm:mt-20">
             <CourseDisplay
               course={generatedCourse}
               onTitleUpdate={(newTitle) => {
@@ -212,30 +212,30 @@ export default function Home() {
         )}
 
         {/* Feature Overview */}
-        <div className="max-w-7xl mx-auto container-padding mt-32">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-slate-900 mb-6 text-balance">
+        <div className="max-w-7xl mx-auto container-padding mt-24 sm:mt-32">
+          <div className="text-center mb-16 sm:mb-20 px-4 sm:px-0">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4 sm:mb-6 text-balance">
               How It Works
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto text-balance">
+            <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto text-balance">
               Transform your content in three simple steps and start monetizing your knowledge today
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-8 lg:gap-12 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="card card-hover group relative p-8 text-center">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:gap-12 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="card card-hover group relative p-6 sm:p-8 text-center">
+              <div className="absolute -top-4 sm:-top-6 left-1/2 -translate-x-1/2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg">
                   1
                 </div>
               </div>
-              <div className="text-6xl mb-8 animate-float">🧵</div>
-              <h3 className="text-2xl font-bold card-title mb-4">
+              <div className="text-4xl sm:text-6xl mb-6 sm:mb-8 animate-float">🧵</div>
+              <h3 className="text-xl sm:text-2xl font-bold card-title mb-3 sm:mb-4">
                 Paste Your Content
               </h3>
-              <p className="card-description leading-relaxed text-lg">
+              <p className="card-description leading-relaxed text-base sm:text-lg">
                 Simply paste your Twitter thread or any educational content. Our AI works with any knowledge you've shared.
               </p>
-              <div className="mt-6 flex justify-center">
+              <div className="mt-4 sm:mt-6 flex justify-center">
                 <div className="status-indicator status-info">
                   <span className="w-2 h-2 bg-current rounded-full"></span>
                   Supports all formats
@@ -243,20 +243,20 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="card card-hover group relative p-8 text-center">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            <div className="card card-hover group relative p-6 sm:p-8 text-center">
+              <div className="absolute -top-4 sm:-top-6 left-1/2 -translate-x-1/2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg">
                   2
                 </div>
               </div>
-              <div className="text-6xl mb-8 animate-float" style={{animationDelay: '0.5s'}}>🤖</div>
-              <h3 className="text-2xl font-bold card-title mb-4">
+              <div className="text-4xl sm:text-6xl mb-6 sm:mb-8 animate-float" style={{animationDelay: '0.5s'}}>🤖</div>
+              <h3 className="text-xl sm:text-2xl font-bold card-title mb-3 sm:mb-4">
                 AI Magic
               </h3>
-              <p className="card-description leading-relaxed text-lg">
+              <p className="card-description leading-relaxed text-base sm:text-lg">
                 Our advanced AI analyzes your content and structures it into professional educational modules with clear learning objectives.
               </p>
-              <div className="mt-6 flex justify-center">
+              <div className="mt-4 sm:mt-6 flex justify-center">
                 <div className="status-indicator status-success">
                   <span className="w-2 h-2 bg-current rounded-full animate-pulse"></span>
                   AI-Powered
@@ -264,20 +264,20 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="card card-hover group relative p-8 text-center sm:col-span-2 lg:col-span-1">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            <div className="card card-hover group relative p-6 sm:p-8 text-center sm:col-span-2 lg:col-span-1">
+              <div className="absolute -top-4 sm:-top-6 left-1/2 -translate-x-1/2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg">
                   3
                 </div>
               </div>
-              <div className="text-6xl mb-8 animate-float" style={{animationDelay: '1s'}}>📚</div>
-              <h3 className="text-2xl font-bold card-title mb-4">
+              <div className="text-4xl sm:text-6xl mb-6 sm:mb-8 animate-float" style={{animationDelay: '1s'}}>📚</div>
+              <h3 className="text-xl sm:text-2xl font-bold card-title mb-3 sm:mb-4">
                 Export & Monetize
               </h3>
-              <p className="card-description leading-relaxed text-lg">
+              <p className="card-description leading-relaxed text-base sm:text-lg">
                 Export as beautiful PDFs, Notion pages, or presentation slides. Ready to sell to your audience immediately.
               </p>
-              <div className="mt-6 flex justify-center">
+              <div className="mt-4 sm:mt-6 flex justify-center">
                 <div className="status-indicator status-warning">
                   <span className="w-2 h-2 bg-current rounded-full"></span>
                   Multiple formats
@@ -288,15 +288,15 @@ export default function Home() {
           
           {/* Call to action */}
           {!loading && !isSignedIn && (
-            <div className="text-center mt-16">
+            <div className="text-center mt-12 sm:mt-16 px-4 sm:px-0">
               <a
                 href="/auth/sign-up"
-                className="btn btn-primary btn-lg"
+                className="btn btn-primary btn-lg w-full sm:w-auto"
               >
                 Start Creating Courses
                 <span className="ml-2">→</span>
               </a>
-              <p className="mt-4 text-sm text-slate-500">
+              <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-slate-500">
                 No credit card required • Free forever plan available
               </p>
             </div>
