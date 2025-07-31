@@ -114,8 +114,11 @@ export async function POST(request: NextRequest) {
     // Process content
     let processedContent;
     try {
+      
       console.log('🔄 Processing content...');
+      
       processedContent = await processContent(content);
+     
       console.log('✅ Content processed successfully:', { type: processedContent.type, contentLength: processedContent.content.length });
     } catch (error) {
       console.log('❌ Content processing failed:', error);

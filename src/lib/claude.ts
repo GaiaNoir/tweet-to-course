@@ -27,7 +27,7 @@ const claude = new Proxy({} as Anthropic, {
 // Rate limiting configuration
 const RATE_LIMIT = {
   maxRequests: 10,
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 120 * 1000, // 1 minute
   requestCounts: new Map<string, { count: number; resetTime: number }>(),
 };
 
@@ -281,6 +281,9 @@ Return the response as a JSON object with the following structure:
           ]
         }
       ],
+    }, {
+      timeout: 75000 // 75 seconds timeout
+    
     });
 
     const responseText = response.content[0]?.type === 'text' ? response.content[0].text : '';
