@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth-supabase';
 import { createClient } from '@/lib/supabase';
 
 export async function GET(
@@ -15,16 +16,21 @@ export async function GET(
       );
     }
 
-    // Get user authentication
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get user authentication using the same approach as working endpoints
+    const user = await getCurrentUser();
+    
+    console.log('Job status auth debug - User:', user?.id);
     
     if (!user) {
+      console.log('No user found in job status check');
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: 'Authentication required. Please sign in and try again.' },
         { status: 401 }
       );
     }
+
+    // Create supabase client for database operations
+    const supabase = createClient();
 
     // Get job status
     const { data: job, error: jobError } = await supabase
