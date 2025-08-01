@@ -52,7 +52,7 @@ vi.mock('@/lib/supabase', () => {
 });
 
 // Import after mocking
-import { UserService, CourseService, UsageService, DatabaseService } from '@/lib/database';
+import { UserService, CourseService, UsageService } from '@/lib/database';
 
 describe('UserService', () => {
   beforeEach(() => {

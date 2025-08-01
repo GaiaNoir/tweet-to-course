@@ -4,7 +4,6 @@
  */
 
 import { createClient, createAdminClient } from './supabase';
-import { getCurrentUser } from './auth';
 import type { UserProfile } from './auth';
 
 // Database interfaces

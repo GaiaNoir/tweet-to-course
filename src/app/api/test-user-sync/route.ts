@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserProfile } from '@/lib/auth';
+import { getOrCreateUserProfile } from '@/lib/auth';
 import { createClient } from '@/lib/supabase';
 
 export async function POST(req: Request) {
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     // Get or create user profile (this will sync the user if they don't exist)
-    const userProfile = await getUserProfile(user.id);
+    const userProfile = await getOrCreateUserProfile(user.id, user.email || '');
 
     if (!userProfile) {
       return NextResponse.json({ error: 'Failed to sync user' }, { status: 500 });

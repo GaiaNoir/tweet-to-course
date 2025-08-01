@@ -5,7 +5,6 @@
 
 import { createClient } from '@/lib/supabase';
 import { createAdminClient } from '@/lib/supabase';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export type SubscriptionTier = 'free' | 'pro' | 'lifetime';
 

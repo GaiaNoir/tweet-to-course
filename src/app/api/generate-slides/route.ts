@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import SlideGenerator, { SlideOptions, SlideTheme } from '@/lib/slide-generator';
 import { createClient } from '@/lib/supabase';
-import { database } from '@/lib/database';
+import { CourseService } from '@/lib/database';
 import { Course } from '@/types';
 
 export async function POST(request: NextRequest) {
