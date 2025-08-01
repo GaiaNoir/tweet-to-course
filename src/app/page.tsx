@@ -1,15 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navigation } from '@/components/ui/navigation';
 import { CourseInputForm } from '@/components/ui/course-input-form';
 import { CourseDisplay } from '@/components/ui/course-display';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/contexts/auth-context';
 import { useAsyncCourseGeneration } from '@/hooks/useAsyncCourseGeneration';
 import { Course } from '@/types';
 
 export default function Home() {
-  const { user, isSignedIn, loading } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const isSignedIn = !!user;
   const [generatedCourse, setGeneratedCourse] = useState<Course | null>(null);
   const {
     generateCourse,
@@ -42,6 +45,13 @@ export default function Home() {
     setGeneratedCourse(null);
     cancelPolling();
   };
+
+  // Redirect unauthenticated users to landing page
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/landing');
+    }
+  }, [user, loading, router]);
 
   // Show loading state while checking authentication
   if (loading) {

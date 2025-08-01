@@ -3,21 +3,20 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, User, LogOut } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { createClient } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { user, isSignedIn } = useAuth();
+  const { user, signOut: authSignOut } = useAuth();
   const router = useRouter();
-  const supabase = createClient();
+  const isSignedIn = !!user;
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      router.push('/');
+      await authSignOut();
+      router.push('/landing');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -28,7 +27,7 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto container-padding py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 group">
+          <Link href={isSignedIn ? "/" : "/landing"} className="flex items-center space-x-3 group">
             <div className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
               <span className="text-white font-bold text-xl">TC</span>
             </div>
@@ -62,7 +61,7 @@ export function Navigation() {
             </Link>
             {!isSignedIn ? (
               <Link
-                href="/auth/sign-in"
+                href="/auth"
                 className="btn btn-primary"
               >
                 Sign In
@@ -154,7 +153,7 @@ export function Navigation() {
               {!isSignedIn ? (
                 <div className="pt-2">
                   <Link
-                    href="/auth/sign-in"
+                    href="/auth"
                     className="btn btn-primary w-full"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

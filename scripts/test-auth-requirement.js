@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * Direct test of the course generation API
+ * Test script to verify authentication is required for course generation
  */
 
 const http = require('http');
 
-function testAPI() {
+function testAuthRequirement() {
   const postData = JSON.stringify({
-    content: "Productivity tip: Focus on one task at a time. Multitasking reduces efficiency by up to 40%. Block distractions and take breaks.",
+    content: "Test content for authentication requirement",
     type: "text"
   });
 
@@ -23,12 +23,11 @@ function testAPI() {
     }
   };
 
-  console.log('🧪 Testing course generation API...');
-  console.log('📤 Sending request to:', `http://${options.hostname}:${options.port}${options.path}`);
+  console.log('🧪 Testing authentication requirement...');
+  console.log('📤 Sending request without authentication...');
 
   const req = http.request(options, (res) => {
     console.log('📊 Status Code:', res.statusCode);
-    console.log('📊 Headers:', res.headers);
 
     let data = '';
     res.on('data', (chunk) => {
@@ -38,17 +37,14 @@ function testAPI() {
     res.on('end', () => {
       try {
         const result = JSON.parse(data);
-        console.log('📊 Response:', JSON.stringify(result, null, 2));
-
-        if (result.success) {
-          console.log('\n✅ Course generation successful!');
-          console.log('📚 Course Title:', result.course?.title);
-          console.log('📚 Course ID:', result.course?.id);
-          console.log('📚 Number of Modules:', result.course?.modules?.length);
+        
+        if (res.statusCode === 401 && result.error?.code === 'AUTHENTICATION_REQUIRED') {
+          console.log('✅ Authentication requirement working correctly!');
+          console.log('📋 Error message:', result.error.message);
+          console.log('\n🎉 Test passed: Unauthenticated requests are properly rejected');
         } else {
-          console.log('\n❌ Course generation failed:');
-          console.log('Error Code:', result.error?.code);
-          console.log('Error Message:', result.error?.message);
+          console.log('❌ Authentication requirement not working');
+          console.log('📊 Response:', JSON.stringify(result, null, 2));
         }
       } catch (error) {
         console.error('❌ Failed to parse response:', error.message);
@@ -59,6 +55,7 @@ function testAPI() {
 
   req.on('error', (error) => {
     console.error('💥 Request failed:', error.message);
+    console.log('Make sure the development server is running on http://localhost:3000');
   });
 
   req.write(postData);
@@ -66,4 +63,4 @@ function testAPI() {
 }
 
 // Wait a moment for the server to be ready, then test
-setTimeout(testAPI, 2000);
+setTimeout(testAuthRequirement, 1000);

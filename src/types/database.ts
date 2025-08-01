@@ -6,28 +6,37 @@ export interface Database {
       users: {
         Row: {
           id: string;
-          clerk_user_id: string;
+          auth_user_id: string;
+          clerk_user_id?: string; // Optional for backward compatibility
           email: string;
           subscription_tier: 'free' | 'pro' | 'lifetime';
           usage_count: number;
+          monthly_usage_count: number;
+          monthly_usage_reset_date: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
-          clerk_user_id: string;
+          auth_user_id: string;
+          clerk_user_id?: string;
           email: string;
           subscription_tier?: 'free' | 'pro' | 'lifetime';
           usage_count?: number;
+          monthly_usage_count?: number;
+          monthly_usage_reset_date?: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
+          auth_user_id?: string;
           clerk_user_id?: string;
           email?: string;
           subscription_tier?: 'free' | 'pro' | 'lifetime';
           usage_count?: number;
+          monthly_usage_count?: number;
+          monthly_usage_reset_date?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -67,6 +76,7 @@ export interface Database {
           user_id: string;
           action: 'generate' | 'export_pdf' | 'export_notion';
           metadata: Record<string, any> | null;
+          usage_month: string;
           created_at: string;
         };
         Insert: {
@@ -74,6 +84,7 @@ export interface Database {
           user_id: string;
           action: 'generate' | 'export_pdf' | 'export_notion';
           metadata?: Record<string, any> | null;
+          usage_month?: string;
           created_at?: string;
         };
         Update: {
@@ -81,6 +92,7 @@ export interface Database {
           user_id?: string;
           action?: 'generate' | 'export_pdf' | 'export_notion';
           metadata?: Record<string, any> | null;
+          usage_month?: string;
           created_at?: string;
         };
       };

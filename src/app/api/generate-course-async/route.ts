@@ -39,6 +39,47 @@ export async function POST(request: NextRequest) {
     // Create admin client for database operations (bypasses RLS)
     const supabase = createAdminClient();
 
+    // Ensure user exists in the custom users table
+    console.log('🔍 Checking if user exists in users table...');
+    const { data: existingUser, error: userCheckError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+
+    if (userCheckError && userCheckError.code !== 'PGRST116') {
+      console.error('Error checking user existence:', userCheckError);
+      return NextResponse.json(
+        { success: false, error: 'Database error checking user' },
+        { status: 500 }
+      );
+    }
+
+    if (!existingUser) {
+      console.log('👤 User not found in users table, creating user record...');
+      // Create user record in custom users table
+      const { error: createUserError } = await supabase
+        .from('users')
+        .insert({
+          id: user.id,
+          clerk_user_id: user.id, // Use Supabase user ID as clerk_user_id for compatibility
+          email: user.email || 'unknown@example.com',
+          subscription_tier: 'free',
+          usage_count: 0
+        });
+
+      if (createUserError) {
+        console.error('Error creating user:', createUserError);
+        return NextResponse.json(
+          { success: false, error: 'Failed to create user record' },
+          { status: 500 }
+        );
+      }
+      console.log('✅ User created successfully');
+    } else {
+      console.log('✅ User already exists in users table');
+    }
+
     // Create job record
     const jobId = `job-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     

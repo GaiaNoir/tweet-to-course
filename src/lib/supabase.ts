@@ -28,7 +28,7 @@ const getSupabaseServiceKey = () => {
 
 // Client for browser/client-side operations with auth
 export const createClient = () => {
-  return createBrowserClient<Database>(
+  return createBrowserClient(
     getSupabaseUrl(),
     getSupabaseAnonKey()
   );
@@ -39,7 +39,7 @@ export const createServerSupabaseClient = async () => {
   const { cookies } = await import('next/headers');
   const cookieStore = cookies();
   
-  return createServerClient<Database>(
+  return createServerClient(
     getSupabaseUrl(),
     getSupabaseAnonKey(),
     {
@@ -70,7 +70,7 @@ export const createAdminClient = () => {
     throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
   }
   
-  return createBrowserClient<Database>(
+  return createBrowserClient(
     getSupabaseUrl(),
     serviceKey,
     {

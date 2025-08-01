@@ -4,7 +4,7 @@ import { generateCourseContent, ClaudeError } from '@/lib/claude';
 import { processContent, ContentProcessingError, prepareContentForAI } from '@/lib/content-processor';
 import { createAdminClient } from '@/lib/supabase';
 import { checkMonthlyUsage, incrementMonthlyUsage } from '@/lib/usage-limits';
-import { UserService } from '@/lib/database';
+import { getOrCreateUserProfile } from '@/lib/auth';
 
 // Types for the API
 interface GenerateCourseRequest {
@@ -100,11 +100,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user authentication
+    // Get user authentication from Supabase Auth - REQUIRED
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     const userId = user?.id;
-    console.log('👤 User authentication:', { userId: userId ? 'authenticated' : 'anonymous' });
+    
+    console.log('👤 User authentication:', { 
+      userId: userId ? 'authenticated' : 'not authenticated',
+      email: user?.email 
+    });
+
+    // Require authentication for course generation
+    if (!userId || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'AUTHENTICATION_REQUIRED',
+            message: 'You must be signed in to generate courses. Please create an account or sign in.',
+            retryable: false,
+          },
+        } as GenerateCourseResponse,
+        { status: 401 }
+      );
+    }
     
     // Check user rate limiting
     if (userId && !checkUserRateLimit(userId)) {
@@ -170,52 +189,63 @@ export async function POST(request: NextRequest) {
 
     // Check user subscription and monthly usage limits
     let usageInfo;
-    
     let dbUser = null;
-    if (userId && user) {
-      try {
-        // First, ensure user exists in Supabase
-        const email = user.email || '';
-        // This will create the user if they don't exist
-        dbUser = await UserService.getOrCreateUser(userId, email);
-        
-        usageInfo = await checkMonthlyUsage(userId);
-        
-        // Check if user can generate a course (skip check for regenerations)
-        if (!regenerate && !usageInfo.canGenerate) {
-          const resetDate = new Date(usageInfo.resetDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          });
-          
-          return NextResponse.json(
-            {
-              success: false,
-              error: {
-                code: 'MONTHLY_LIMIT_EXCEEDED',
-                message: `Free plan allows 1 course generation per month. Your limit resets on ${resetDate}. Please upgrade to Pro for unlimited generations.`,
-                retryable: false,
-              },
-              usageCount: usageInfo.currentUsage,
-            } as GenerateCourseResponse,
-            { status: 403 }
-          );
-        }
-      } catch (error) {
-        console.error('Error checking monthly usage:', error);
+    
+    try {
+      // Get or create user profile in database
+      const email = user.email || '';
+      dbUser = await getOrCreateUserProfile(userId, email);
+      
+      if (!dbUser) {
         return NextResponse.json(
           {
             success: false,
             error: {
-              code: 'DATABASE_ERROR',
-              message: 'Failed to check usage limits',
+              code: 'USER_PROFILE_ERROR',
+              message: 'Failed to create or retrieve user profile',
               retryable: true,
             },
           } as GenerateCourseResponse,
           { status: 500 }
         );
       }
+      
+      usageInfo = await checkMonthlyUsage(userId);
+      
+      // Check if user can generate a course (skip check for regenerations)
+      if (!regenerate && !usageInfo.canGenerate) {
+        const resetDate = new Date(usageInfo.resetDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+        
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'MONTHLY_LIMIT_EXCEEDED',
+              message: `Free plan allows 1 course generation per month. Your limit resets on ${resetDate}. Please upgrade to Pro for unlimited generations.`,
+              retryable: false,
+            },
+            usageCount: usageInfo.currentUsage,
+          } as GenerateCourseResponse,
+          { status: 403 }
+        );
+      }
+    } catch (error) {
+      console.error('Error checking monthly usage:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: 'Failed to check usage limits',
+            retryable: true,
+          },
+        } as GenerateCourseResponse,
+        { status: 500 }
+      );
     }
 
     // Prepare content for AI processing
@@ -259,60 +289,71 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    // Save course to database and update usage
+    // Save course to database for authenticated user
     let courseId = `course-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+    const saveUserId = dbUser.id;
     
-    if (userId && dbUser) {
-      try {
-        // Start a transaction-like operation
-        // First, save the course using the database user ID
-        const adminClient = createAdminClient();
-        const { data: courseData, error: courseError } = await adminClient
-          .from('courses')
-          .insert({
-            user_id: dbUser.id, // Use database user ID, not Clerk user ID
-            title: generatedCourse.title,
-            original_content: processedContent.content,
-            modules: generatedCourse.modules,
-          })
-          .select('id')
-          .single();
+    try {
+      // Save the course using the appropriate user ID
+      const adminClient = createAdminClient();
+      const { data: courseData, error: courseError } = await adminClient
+        .from('courses')
+        .insert({
+          user_id: saveUserId,
+          title: generatedCourse.title,
+          original_content: processedContent.content,
+          modules: generatedCourse.modules,
+        })
+        .select('id')
+        .single();
 
-        if (courseError) {
-          console.error('Course save error:', courseError);
-        } else if (courseData) {
-          courseId = courseData.id;
-        }
-
-        // Update monthly usage count (only for new generations, not regenerations)
-        if (!regenerate) {
-          try {
-            await incrementMonthlyUsage(userId);
-          } catch (error) {
-            console.error('Monthly usage update error:', error);
-          }
-
-          // Log the usage
-          const { error: logError } = await adminClient
-            .from('usage_logs')
-            .insert({
-              user_id: dbUser.id, // Use database user ID, not Clerk user ID
-              action: 'generate',
-              metadata: {
-                content_type: processedContent.type,
-                course_id: courseId,
-              },
-              usage_month: new Date().toISOString().slice(0, 10), // YYYY-MM-DD format
-            });
-
-          if (logError) {
-            console.error('Usage log error:', logError);
-          }
-        }
-      } catch (dbError) {
-        console.error('Database operation failed:', dbError);
-        // Continue with response even if database operations fail
+      if (courseError) {
+        console.error('Course save error:', courseError);
+        throw new Error(`Failed to save course: ${courseError.message}`);
+      } else if (courseData) {
+        courseId = courseData.id;
+        console.log('✅ Course saved successfully with ID:', courseId);
       }
+
+      // Update monthly usage count (only for new generations, not regenerations)
+      if (!regenerate) {
+        try {
+          await incrementMonthlyUsage(userId);
+        } catch (error) {
+          console.error('Monthly usage update error:', error);
+        }
+      }
+
+      // Log the usage
+      const { error: logError } = await adminClient
+        .from('usage_logs')
+        .insert({
+          user_id: saveUserId,
+          action: 'generate',
+          metadata: {
+            content_type: processedContent.type,
+            course_id: courseId,
+            user_email: user.email,
+          },
+        });
+
+      if (logError) {
+        console.error('Usage log error:', logError);
+        // Don't fail the request for logging errors
+      }
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: `Failed to save course: ${dbError instanceof Error ? dbError.message : 'Unknown database error'}`,
+            retryable: true,
+          },
+        } as GenerateCourseResponse,
+        { status: 500 }
+      );
     }
 
     // Return successful response
@@ -331,7 +372,7 @@ export async function POST(request: NextRequest) {
             version: 1,
           },
         },
-        usageCount: userId && usageInfo ? usageInfo.currentUsage + (regenerate ? 0 : 1) : undefined,
+        usageCount: usageInfo ? usageInfo.currentUsage + (regenerate ? 0 : 1) : undefined,
       } as GenerateCourseResponse,
       { status: 200 }
     );
