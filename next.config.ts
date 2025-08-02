@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   compress: true,
-  // Ignore build errors for deployment
+  // Temporarily disable build error reporting to allow build completion
   typescript: {
     ignoreBuildErrors: true,
   },

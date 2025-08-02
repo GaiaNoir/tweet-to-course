@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ 
   children, 
-  redirectTo = '/auth', 
+  redirectTo = '/auth/sign-in', 
   requireAuth = true 
 }: ProtectedRouteProps) {
   const { user, loading } = useAuth();

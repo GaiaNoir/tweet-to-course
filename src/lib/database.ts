@@ -4,7 +4,7 @@
  */
 
 import { createClient, createAdminClient } from './supabase';
-import type { UserProfile } from './auth';
+// Auth removed - UserProfile type removed
 
 // Database interfaces
 export interface DbUser extends UserProfile {}

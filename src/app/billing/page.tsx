@@ -1,5 +1,5 @@
-import { requireAuth, getUserProfile } from '@/lib/auth-supabase';
-import { Navigation } from '@/components/ui/navigation-supabase';
+import { authServer, getOrCreateUserProfile } from '@/lib/auth';
+import { Navigation } from '@/components/ui/navigation';
 import { SubscriptionManagement } from '@/components/ui/subscription-management';
 import { CreditCard, Calendar, DollarSign, FileText } from 'lucide-react';
 import Link from 'next/link';
@@ -8,10 +8,10 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export default async function BillingPage() {
-  const user = await requireAuth();
-  const userProfile = await getUserProfile(user.id);
+  const user = await authServer.requireAuth();
+  const profile = await getOrCreateUserProfile(user.id, user.email || '');
   
-  if (!userProfile) {
+  if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -19,7 +19,7 @@ export default async function BillingPage() {
             Error loading profile
           </h1>
           <p className="text-gray-600 mb-4">
-            We couldn't load your billing information. Please try again.
+            We couldn&apos;t load your billing information. Please try again.
           </p>
           <Link 
             href="/dashboard"
@@ -50,9 +50,10 @@ export default async function BillingPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Subscription Management */}
             <SubscriptionManagement 
-              currentTier={userProfile.subscriptionTier}
-              customerCode={userProfile.customerCode}
-              subscriptionCode={userProfile.subscriptionCode}
+              currentTier={profile.subscription_status}
+              customerCode={user.id}
+              subscriptionCode={''}
+              userId={user.id}
             />
 
             {/* Billing Information */}
@@ -70,19 +71,19 @@ export default async function BillingPage() {
                     <label className="block text-sm font-medium text-gray-700">
                       Email Address
                     </label>
-                    <p className="mt-1 text-sm text-gray-900">{userProfile.email}</p>
+                    <p className="mt-1 text-sm text-gray-900">{user.email}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Customer ID
                     </label>
                     <p className="mt-1 text-sm text-gray-900 font-mono">
-                      {userProfile.customerCode || 'Not available'}
+                      {user.id || 'Not available'}
                     </p>
                   </div>
                 </div>
 
-                {userProfile.subscriptionTier !== 'free' && (
+                {profile.subscription_status !== 'free' && (
                   <div className="p-4 bg-green-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
@@ -118,7 +119,7 @@ export default async function BillingPage() {
                 <p className="text-gray-500">
                   Payment history will appear here once you make your first payment.
                 </p>
-                {userProfile.subscriptionTier === 'free' && (
+                {profile.subscription_status === 'free' && (
                   <Link
                     href="/pricing"
                     className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200"
@@ -145,7 +146,7 @@ export default async function BillingPage() {
                     <span className="text-sm text-gray-600">Member Since</span>
                   </div>
                   <span className="text-sm font-medium text-gray-900">
-                    {new Date(userProfile.createdAt).toLocaleDateString()}
+                    {new Date(profile.created_at).toLocaleDateString()}
                   </span>
                 </div>
                 
@@ -155,7 +156,7 @@ export default async function BillingPage() {
                     <span className="text-sm text-gray-600">Current Plan</span>
                   </div>
                   <span className="text-sm font-medium text-gray-900 capitalize">
-                    {userProfile.subscriptionTier}
+                    {profile.subscription_status}
                   </span>
                 </div>
                 
@@ -165,7 +166,7 @@ export default async function BillingPage() {
                     <span className="text-sm text-gray-600">Courses Generated</span>
                   </div>
                   <span className="text-sm font-medium text-gray-900">
-                    {userProfile.usageCount}
+                    {profile.monthly_usage_count}
                   </span>
                 </div>
               </div>

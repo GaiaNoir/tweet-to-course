@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Navigation } from '@/components/ui/navigation';
 import { Check, X, Zap, Gift } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 
 interface PricingTier {
@@ -20,12 +20,12 @@ interface PricingTier {
 }
 
 export default function PricingPage() {
-  const { user, isSignedIn } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const handleFreeTier = () => {
-    if (!isSignedIn) {
+    if (!user) {
       router.push('/sign-up');
     } else {
       router.push('/dashboard');
@@ -33,7 +33,7 @@ export default function PricingPage() {
   };
 
   const handleProSubscription = async () => {
-    if (!isSignedIn) {
+    if (!user) {
       router.push('/sign-up');
       return;
     }
@@ -71,7 +71,7 @@ export default function PricingPage() {
         'Default styling only',
         'Limited to 1 generation per month',
       ],
-      buttonText: isSignedIn ? 'Current Plan' : 'Get Started Free',
+      buttonText: user ? 'Current Plan' : 'Get Started Free',
       buttonAction: handleFreeTier,
       icon: <Gift className="w-6 h-6" />,
     },

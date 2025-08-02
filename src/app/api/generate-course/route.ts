@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase';
-import { generateCourseContent, ClaudeError } from '@/lib/claude';
-import { processContent, ContentProcessingError, prepareContentForAI } from '@/lib/content-processor';
+import { processContent, ContentProcessingError } from '@/lib/content-processor';
 import { createAdminClient } from '@/lib/supabase';
-import { checkMonthlyUsage, incrementMonthlyUsage } from '@/lib/usage-limits';
+import { checkMonthlyUsage } from '@/lib/usage-limits';
 import { getOrCreateUserProfile } from '@/lib/auth';
 
 // Types for the API
@@ -15,40 +14,15 @@ interface GenerateCourseRequest {
 
 interface GenerateCourseResponse {
   success: boolean;
-  course?: {
-    id: string;
-    title: string;
-    modules: Array<{
-      id: string;
-      title: string;
-      summary: string;
-      takeaways: string[];
-      order: number;
-    }>;
-    metadata: {
-      sourceType: 'tweet' | 'thread' | 'manual';
-      sourceUrl?: string;
-      originalContent?: string;
-      generatedAt: string;
-      version: number;
-    };
-  };
+  jobId?: string;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
+  message?: string;
   error?: {
     code: string;
     message: string;
     retryable: boolean;
   };
   usageCount?: number;
-}
-const TIMEOUT_MS = 60_000; // adjust based on your hosting platform's limits
-
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error('TimeoutError')), timeoutMs)
-    ),
-  ]);
 }
 
 // Rate limiting per user
@@ -76,9 +50,16 @@ function checkUserRateLimit(userId: string): boolean {
   return true;
 }
 
+/**
+ * Asynchronous Course Generation API
+ * 
+ * This API creates a job for course generation and returns immediately,
+ * avoiding timeout issues on serverless platforms. The actual course
+ * generation happens asynchronously via a background worker.
+ */
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 Starting course generation API...');
+    console.log('🚀 Starting async course generation API...');
     
     // Parse request body
     const body: GenerateCourseRequest = await request.json();
@@ -140,14 +121,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Process content
+    // Process content quickly (this should be fast)
     let processedContent;
     try {
       console.log('🔄 Processing content...');
-    
-      processedContent = await withTimeout(processContent(content), TIMEOUT_MS);
-    
-      console.log('✅ Content processed successfully:', {
+      processedContent = await processContent(content);
+      console.log('✅ Content processing successful:', {
         type: processedContent.type,
         contentLength: processedContent.content.length,
       });
@@ -185,7 +164,6 @@ export async function POST(request: NextRequest) {
     
       throw error;
     }
-    
 
     // Check user subscription and monthly usage limits
     let usageInfo;
@@ -248,107 +226,175 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare content for AI processing
-    const aiReadyContent = prepareContentForAI(processedContent.content);
-
-    // Generate course using Claude
-    let generatedCourse;
-    try {
-      console.log('🚀 Starting Claude course generation...');
-      generatedCourse = await generateCourseContent(aiReadyContent, userId || undefined);
-      console.log('✅ Claude course generation successful');
-    } catch (error) {
-      console.log('❌ Claude course generation failed:', error);
-      if (error instanceof ClaudeError) {
-        console.log('🏷️  Claude error details:', {
-          code: error.code,
-          message: error.message,
-          retryable: error.retryable
-        });
-        
-        // For debugging, let's return more detailed error info
-        const errorResponse = {
-          success: false,
-          error: {
-            code: error.code,
-            message: error.message,
-            retryable: error.retryable,
-            debug: process.env.NODE_ENV === 'development' ? {
-              timestamp: new Date().toISOString(),
-              userId: userId || 'anonymous'
-            } : undefined
-          },
-        } as GenerateCourseResponse;
-        
-        return NextResponse.json(
-          errorResponse,
-          { status: error.retryable ? 503 : 400 }
-        );
-      }
-      console.log('❌ Non-Claude error:', error);
-      throw error;
-    }
-
-    // Save course to database for authenticated user
-    let courseId = `course-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-    const saveUserId = dbUser.id;
+    // Create a job in the database for async processing
+    const adminSupabase = createAdminClient();
     
     try {
-      // Save the course using the appropriate user ID
-      const adminClient = createAdminClient();
-      const { data: courseData, error: courseError } = await adminClient
-        .from('courses')
+      console.log('💾 Creating job in database...');
+      
+      const { data: job, error: jobError } = await adminSupabase
+        .from('jobs')
         .insert({
-          user_id: saveUserId,
-          title: generatedCourse.title,
-          original_content: processedContent.content,
-          modules: generatedCourse.modules,
+          user_id: userId,
+          status: 'pending',
+          input_content: processedContent.content,
         })
-        .select('id')
+        .select()
         .single();
 
-      if (courseError) {
-        console.error('Course save error:', courseError);
-        throw new Error(`Failed to save course: ${courseError.message}`);
-      } else if (courseData) {
-        courseId = courseData.id;
-        console.log('✅ Course saved successfully with ID:', courseId);
+      if (jobError || !job) {
+        console.error('Failed to create job:', jobError);
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'JOB_CREATION_FAILED',
+              message: 'Failed to create course generation job',
+              retryable: true,
+            },
+          } as GenerateCourseResponse,
+          { status: 500 }
+        );
       }
 
-      // Update monthly usage count (only for new generations, not regenerations)
-      if (!regenerate) {
+      console.log('✅ Job created successfully:', { jobId: job.id });
+
+      // IMMEDIATE PROCESSING: Process the job directly instead of relying on background processing
+      // This fixes the issue where jobs stay in "pending" status forever
+      console.log('🚀 Starting immediate job processing for job:', job.id);
+      
+      // Import the required modules for immediate processing
+      const { generateCourseContent } = await import('@/lib/claude');
+      const { prepareContentForAI } = await import('@/lib/content-processor');
+      const { incrementMonthlyUsage } = await import('@/lib/usage-limits');
+      
+      // Process the job immediately in the background (don't block the response)
+      setTimeout(async () => {
         try {
-          await incrementMonthlyUsage(userId);
+          console.log('🔄 Updating job status to processing...');
+          
+          // Update job status to processing
+          await adminSupabase
+            .from('jobs')
+            .update({ 
+              status: 'processing',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', job.id);
+          
+          // Prepare content for AI processing
+          const aiReadyContent = prepareContentForAI(processedContent.content);
+          
+          console.log('🤖 Starting Claude course generation...');
+          // Generate course using Claude
+          const generatedCourse = await generateCourseContent(aiReadyContent, userId);
+          console.log('✅ Claude course generation completed successfully');
+          
+          // Save course to database
+          const { data: courseData, error: courseError } = await adminSupabase
+            .from('courses')
+            .insert({
+              user_id: userId,
+              title: generatedCourse.title,
+              original_content: processedContent.content,
+              modules: generatedCourse.modules,
+              job_id: job.id,
+            })
+            .select('id')
+            .single();
+          
+          if (courseError) {
+            console.error('❌ Course save error:', courseError);
+            throw new Error(`Failed to save course: ${courseError.message}`);
+          }
+          
+          const finalCourseId = courseData?.id;
+          console.log('✅ Course saved successfully with ID:', finalCourseId);
+          
+          // Update monthly usage count
+          try {
+            await incrementMonthlyUsage(userId);
+            console.log('✅ Monthly usage updated');
+          } catch (error) {
+            console.error('⚠️ Monthly usage update error:', error);
+            // Don't fail the job for usage update errors
+          }
+          
+          // Update job status to completed with result
+          await adminSupabase
+            .from('jobs')
+            .update({ 
+              status: 'completed',
+              result: {
+                course_id: finalCourseId,
+                title: generatedCourse.title,
+                modules_count: generatedCourse.modules.length
+              },
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', job.id);
+          
+          console.log('✅ Job completed successfully:', job.id);
+          
+          // Log the usage
+          const { error: logError } = await adminSupabase
+            .from('usage_logs')
+            .insert({
+              user_id: userId,
+              action: 'generate',
+              metadata: {
+                content_type: 'text',
+                course_id: finalCourseId,
+                job_id: job.id,
+              },
+            });
+          
+          if (logError) {
+            console.error('⚠️ Usage log error:', logError);
+            // Don't fail the job for logging errors
+          }
+          
         } catch (error) {
-          console.error('Monthly usage update error:', error);
+          console.error('❌ Immediate job processing failed:', error);
+          
+          // Update job status to failed
+          try {
+            await adminSupabase
+              .from('jobs')
+              .update({ 
+                status: 'failed',
+                error_message: error instanceof Error ? error.message : 'Unknown error during immediate processing',
+                completed_at: new Date().toISOString()
+              })
+              .eq('id', job.id);
+            
+            console.log('❌ Job marked as failed:', job.id);
+          } catch (updateError) {
+            console.error('❌ Failed to update job status after processing failure:', updateError);
+          }
         }
-      }
+      }, 100); // Small delay to ensure response is sent first
 
-      // Log the usage
-      const { error: logError } = await adminClient
-        .from('usage_logs')
-        .insert({
-          user_id: saveUserId,
-          action: 'generate',
-          metadata: {
-            content_type: processedContent.type,
-            course_id: courseId,
-            user_email: user.email,
-          },
-        });
+      // Return immediately with job ID - the actual processing happens asynchronously
+      return NextResponse.json(
+        {
+          success: true,
+          jobId: job.id,
+          status: 'pending',
+          message: 'Course generation job created successfully. Processing will begin shortly.',
+          usageCount: usageInfo?.currentUsage || 0,
+        } as GenerateCourseResponse,
+        { status: 202 } // 202 Accepted - request accepted for processing
+      );
 
-      if (logError) {
-        console.error('Usage log error:', logError);
-        // Don't fail the request for logging errors
-      }
-    } catch (dbError) {
-      console.error('Database operation failed:', dbError);
+    } catch (error) {
+      console.error('Error creating job:', error);
       return NextResponse.json(
         {
           success: false,
           error: {
-            code: 'DATABASE_ERROR',
-            message: `Failed to save course: ${dbError instanceof Error ? dbError.message : 'Unknown database error'}`,
+            code: 'INTERNAL_ERROR',
+            message: 'An unexpected error occurred while creating the job',
             retryable: true,
           },
         } as GenerateCourseResponse,
@@ -356,31 +402,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return successful response
-    return NextResponse.json(
-      {
-        success: true,
-        course: {
-          id: courseId,
-          title: generatedCourse.title,
-          modules: generatedCourse.modules,
-          metadata: {
-            sourceType: processedContent.type === 'url' ? 'tweet' : 'manual',
-            sourceUrl: processedContent.type === 'url' ? content : undefined,
-            originalContent: processedContent.content,
-            generatedAt: new Date().toISOString(),
-            version: 1,
-          },
-        },
-        usageCount: usageInfo ? usageInfo.currentUsage + (regenerate ? 0 : 1) : undefined,
-      } as GenerateCourseResponse,
-      { status: 200 }
-    );
-
   } catch (error) {
-    console.error('Unexpected error in generate-course API:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
+    console.error('Unexpected error in course generation API:', error);
     return NextResponse.json(
       {
         success: false,

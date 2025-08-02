@@ -1,47 +1,35 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+// Auth removed - useAuth hook removed
 import { CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface SubscriptionManagementProps {
   currentTier: string;
   customerCode?: string;
   subscriptionCode?: string;
+  userId: string;
 }
 
 export function SubscriptionManagement({ 
   currentTier, 
   customerCode, 
-  subscriptionCode 
+  subscriptionCode,
+  userId 
 }: SubscriptionManagementProps) {
-  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const handleUpgrade = async () => {
-    if (!user) return;
+    if (!userId) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/payments/create-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          plan: 'pro',
-          userId: user.id,
-        }),
-      });
-
-      const data = await response.json();
+      // Use the Paystack payment link directly
+      const paymentUrl = 'https://paystack.shop/pay/xbom5adxzi';
       
-      if (data.success && data.authorizationUrl) {
-        window.location.href = data.authorizationUrl;
-      } else {
-        throw new Error(data.error || 'Failed to create subscription');
-      }
+      // Redirect directly to Paystack payment page
+      window.location.href = paymentUrl;
     } catch (error) {
       console.error('Upgrade error:', error);
       alert('Failed to start upgrade process. Please try again.');

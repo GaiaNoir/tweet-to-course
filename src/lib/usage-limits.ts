@@ -31,8 +31,8 @@ export async function checkMonthlyUsage(authUserId: string): Promise<UsageInfo> 
     const adminClient = createAdminClient();
     const { data: userData, error } = await adminClient
       .from('users')
-      .select('monthly_usage_count, monthly_usage_reset_date, subscription_tier')
-      .eq('auth_user_id', authUserId)
+      .select('monthly_usage_count, usage_reset_date, subscription_status')
+      .eq('id', authUserId)
       .single();
     
     if (error && error.code !== 'PGRST116') {
@@ -42,21 +42,25 @@ export async function checkMonthlyUsage(authUserId: string): Promise<UsageInfo> 
     
     // Handle case where user doesn't exist yet
     if (!userData) {
+      // Set reset date to first day of next month
+      const nextMonth = new Date();
+      const resetDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 1);
+      
       return {
         currentUsage: 0,
-        resetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        resetDate: resetDate.toISOString(),
         subscriptionTier: 'free',
         canGenerate: true,
         remainingGenerations: MONTHLY_LIMITS.free,
       };
     }
     
-    const tier = userData.subscription_tier as keyof UsageLimits;
+    const tier = userData.subscription_status as keyof UsageLimits;
     const limit = MONTHLY_LIMITS[tier];
     const currentUsage = userData.monthly_usage_count || 0;
     
     // Check if we need to reset the monthly usage
-    const resetDate = new Date(userData.monthly_usage_reset_date);
+    const resetDate = new Date(userData.usage_reset_date);
     const now = new Date();
     
     let actualCurrentUsage = currentUsage;
@@ -64,16 +68,16 @@ export async function checkMonthlyUsage(authUserId: string): Promise<UsageInfo> 
     
     // If reset date has passed, reset the usage count
     if (now > resetDate) {
-      const nextResetDate = new Date(now);
-      nextResetDate.setMonth(nextResetDate.getMonth() + 1);
+      // Calculate the first day of next month properly
+      const nextResetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       
       await adminClient
         .from('users')
         .update({
           monthly_usage_count: 0,
-          monthly_usage_reset_date: nextResetDate.toISOString(),
+          usage_reset_date: nextResetDate.toISOString(),
         })
-        .eq('auth_user_id', authUserId);
+        .eq('id', authUserId);
       
       actualCurrentUsage = 0;
       actualResetDate = nextResetDate.toISOString();
@@ -107,7 +111,7 @@ export async function incrementMonthlyUsage(authUserId: string): Promise<number>
     const { data: userData, error: fetchError } = await adminClient
       .from('users')
       .select('monthly_usage_count')
-      .eq('auth_user_id', authUserId)
+      .eq('id', authUserId)
       .single();
     
     if (fetchError) {
@@ -121,7 +125,7 @@ export async function incrementMonthlyUsage(authUserId: string): Promise<number>
     const { error: updateError } = await adminClient
       .from('users')
       .update({ monthly_usage_count: newUsageCount })
-      .eq('auth_user_id', authUserId);
+      .eq('id', authUserId);
     
     if (updateError) {
       console.error('Error incrementing monthly usage:', updateError);

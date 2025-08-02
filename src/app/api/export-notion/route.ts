@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
-import { hasNotionConnection, getNotionConnection, createNotionPage } from '@/lib/notion-integration';
+import { hasNotionConnection, getNotionConnection, createNotionPage as createNotionPageIntegration } from '@/lib/notion-integration';
 
 interface ExportNotionRequest {
   courseId?: string;
-  courseData?: any;
+  courseData?: unknown;
   parentPageId?: string;
   exportType: 'direct' | 'markdown';
 }
@@ -12,7 +12,7 @@ interface ExportNotionRequest {
 interface NotionBlock {
   object: 'block';
   type: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface NotionExport {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current user
-    const user = getCurrentUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       return NextResponse.json(
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
 
 async function createNotionPage(
   accessToken: string,
-  course: any,
+  course: unknown,
   parentPageId?: string
 ): Promise<NotionPageResult> {
   try {
@@ -237,7 +237,7 @@ async function createNotionPage(
       }
     });
 
-    modules.forEach((module: any, index: number) => {
+    modules.forEach((module: unknown, index: number) => {
       children.push({
         object: 'block',
         type: 'bulleted_list_item',
@@ -253,7 +253,7 @@ async function createNotionPage(
     });
 
     // Modules content
-    modules.forEach((module: any, index: number) => {
+    modules.forEach((module: unknown, index: number) => {
       // Module heading
       children.push({
         object: 'block',
@@ -342,7 +342,7 @@ async function createNotionPage(
     });
 
     // Create the page
-    const pageData: any = {
+    const pageData: unknown = {
       properties: {
         title: {
           title: [
@@ -423,7 +423,7 @@ async function createNotionPage(
   }
 }
 
-function generateNotionContent(course: any): NotionExport {
+function generateNotionContent(course: unknown): NotionExport {
   // For markdown export, we don't need proper Notion blocks, just generate markdown
   let markdown = '';
 
@@ -446,15 +446,15 @@ function generateNotionContent(course: any): NotionExport {
   // Table of contents
   markdown += `## Table of Contents\n\n`;
 
-  modules.forEach((module: any, index: number) => {
-    markdown += `- Module ${index + 1}: ${module.title}\n`;
+  modules.forEach((module: unknown, index: number) => {
+    markdown += `- Module ${index + 1}: ${(module as any).title}\n`;
   });
   markdown += '\n';
 
   // Modules content
-  modules.forEach((module: any, index: number) => {
+  modules.forEach((module: unknown, index: number) => {
     // Module heading
-    markdown += `## Module ${index + 1}: ${module.title}\n\n`;
+    markdown += `## Module ${index + 1}: ${(module as any).title}\n\n`;
 
     // Module summary
     if (module.summary) {

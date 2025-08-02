@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getCurrentUser, getUserProfile } from '@/lib/auth-supabase';
+import { authUtils, userProfile } from '@/lib/auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,20 +9,20 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
+    const userId = await authUtils.getUserId();
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userProfile = await getUserProfile(user.id);
-    if (!userProfile) {
+    const profile = await userProfile.getProfile(userId);
+    if (!profile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
     const { data, error } = await supabase
       .from('users')
       .select('branding_settings')
-      .eq('id', userProfile.id)
+      .eq('id', profile.id)
       .single();
 
     if (error) {

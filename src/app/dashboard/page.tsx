@@ -1,23 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { ProtectedRoute } from '@/components/ui/protected-route';
 import { getSubscriptionLimits } from '@/lib/subscription-utils';
 import Link from 'next/link';
 import { NotionConnection } from '@/components/ui/notion-connection';
 import { Navigation } from '@/components/ui/navigation';
-import type { User } from '@/lib/auth';
+import { BrandingSettings } from '@/components/ui/branding-settings';
+import type { DbUser } from '@/lib/auth';
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
-  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const { user, profile, loading } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      setUserProfile(user);
-    }
-  }, [user]);
+    // Profile is automatically loaded by AuthProvider
+  }, [profile]);
 
   if (loading) {
     return (
@@ -31,16 +29,16 @@ export default function DashboardPage() {
   }
   return (
     <ProtectedRoute>
-      {userProfile ? <DashboardContent userProfile={userProfile} /> : null}
+      {profile ? <DashboardContent userProfile={profile} /> : null}
     </ProtectedRoute>
   );
 }
 
-function DashboardContent({ userProfile }: { userProfile: User }) {
-  const limits = getSubscriptionLimits(userProfile.subscriptionTier);
+function DashboardContent({ userProfile }: { userProfile: DbUser }) {
+  const limits = getSubscriptionLimits(userProfile.subscription_status);
   const usagePercentage = limits.monthlyGenerations === -1 
     ? 0 
-    : (userProfile.monthlyUsageCount / limits.monthlyGenerations) * 100;
+    : (userProfile.monthly_usage_count / limits.monthlyGenerations) * 100;
 
   return (
     <>
@@ -67,18 +65,18 @@ function DashboardContent({ userProfile }: { userProfile: User }) {
             <div className="card card-hover p-4 sm:p-6">
               <div className="flex items-center mb-3 sm:mb-4">
                 <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-xl sm:text-2xl ${
-                  userProfile.subscriptionTier === 'free' 
+                  userProfile.subscription_status === 'free' 
                     ? 'bg-slate-100' 
                     : 'bg-gradient-to-r from-green-100 to-emerald-100'
                 }`}>
-                  {userProfile.subscriptionTier === 'free' ? '🆓' : '⭐'}
+                  {userProfile.subscription_status === 'free' ? '🆓' : '⭐'}
                 </div>
                 <div className="ml-3 sm:ml-4">
                   <h3 className="text-xs sm:text-sm font-semibold card-description uppercase tracking-wider">
                     Current Plan
                   </h3>
                   <p className="text-xl sm:text-2xl font-bold card-title capitalize">
-                    {userProfile.subscriptionTier}
+                    {userProfile.subscription_status}
                   </p>
                 </div>
               </div>
@@ -90,7 +88,7 @@ function DashboardContent({ userProfile }: { userProfile: User }) {
                   Upgrade to Pro
                 </Link>
               )}
-              {userProfile.subscriptionTier !== 'free' && (
+              {userProfile.subscription_status !== 'free' && (
                 <div className="status-indicator status-success w-full justify-center">
                   <span className="w-2 h-2 bg-current rounded-full"></span>
                   Pro features active
@@ -261,7 +259,7 @@ function DashboardContent({ userProfile }: { userProfile: User }) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Link
-                href="/"
+                href="/generate"
                 className="btn btn-primary"
               >
                 <span className="mr-2">✨</span>
@@ -292,6 +290,13 @@ function DashboardContent({ userProfile }: { userProfile: User }) {
               </Link>
             </div>
           </div>
+
+          {/* Custom Branding Section - Only for Pro users */}
+          {userProfile.subscription_status !== 'free' && (
+            <div className="mt-8 sm:mt-12">
+              <BrandingSettings />
+            </div>
+          )}
 
           {/* Account Info */}
           <div className="mt-8 sm:mt-12 card p-6 sm:p-8">

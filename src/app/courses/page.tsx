@@ -1,4 +1,4 @@
-import { requireAuth } from '@/lib/auth-supabase';
+import { authServer } from '@/lib/auth';
 import { Navigation } from '@/components/ui/navigation';
 import Link from 'next/link';
 
@@ -6,7 +6,7 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export default async function CoursesPage() {
-  await requireAuth();
+  await authServer.requireAuth();
 
   return (
     <>

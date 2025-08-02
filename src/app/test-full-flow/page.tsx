@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+// Auth removed - useAuth hook removed
 
 export default function TestFullFlowPage() {
-  const { user, isLoaded } = useAuth();
   const [testResults, setTestResults] = useState<string[]>([]);
 
   const addResult = (message: string) => {
@@ -211,10 +210,6 @@ export default function TestFullFlowPage() {
     setTestResults([]);
   };
 
-  if (!isLoaded) {
-    return <div className="p-8">Loading...</div>;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
@@ -223,15 +218,7 @@ export default function TestFullFlowPage() {
         {/* User Info */}
         <div className="bg-white p-6 rounded-lg shadow mb-8">
           <h2 className="text-xl font-semibold mb-4">Authentication Status</h2>
-          {user ? (
-            <div>
-              <p><strong>User ID:</strong> {user.id}</p>
-              <p><strong>Email:</strong> {user.email}</p>
-              <p><strong>Status:</strong> <span className="text-green-600">Authenticated</span></p>
-            </div>
-          ) : (
-            <p className="text-red-600">Not authenticated - Please sign in</p>
-          )}
+          <p className="text-blue-600">Authentication handled by server-side components</p>
         </div>
 
         {/* Test Buttons */}

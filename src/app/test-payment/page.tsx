@@ -1,19 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+// Auth removed - useAuth hook removed
 
 export default function TestPaymentPage() {
-  const { user } = useAuth();
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const testPaymentUpdate = async () => {
-    if (!user) {
-      alert('Please sign in first');
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await fetch('/api/test-payment-webhook', {
@@ -22,7 +16,7 @@ export default function TestPaymentPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.id,
+          userId: 'test-user-id',
           plan: 'pro'
         }),
       });
@@ -37,14 +31,9 @@ export default function TestPaymentPage() {
   };
 
   const checkUserStatus = async () => {
-    if (!user) {
-      alert('Please sign in first');
-      return;
-    }
-
     setLoading(true);
     try {
-      const response = await fetch(`/api/test-payment-webhook?userId=${user.id}`);
+      const response = await fetch(`/api/test-payment-webhook?userId=test-user-id`);
       const data = await response.json();
       setResult(data);
     } catch (error) {
@@ -61,24 +50,17 @@ export default function TestPaymentPage() {
           Payment System Test
         </h1>
 
-        {user ? (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">User Information</h2>
-            <p><strong>User ID:</strong> {user.id}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-          </div>
-        ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <p className="text-yellow-800">Please sign in to test the payment system.</p>
-          </div>
-        )}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">User Information</h2>
+          <p>Authentication handled by server-side components</p>
+        </div>
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Test Actions</h2>
           <div className="space-y-4">
             <button
               onClick={checkUserStatus}
-              disabled={loading || !user}
+              disabled={loading}
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 mr-4"
             >
               {loading ? 'Loading...' : 'Check User Status'}
@@ -86,7 +68,7 @@ export default function TestPaymentPage() {
             
             <button
               onClick={testPaymentUpdate}
-              disabled={loading || !user}
+              disabled={loading}
               className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
             >
               {loading ? 'Loading...' : 'Test Payment Update'}

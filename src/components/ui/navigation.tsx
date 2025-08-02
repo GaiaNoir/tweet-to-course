@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, User, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 
 export function Navigation() {
@@ -16,7 +16,7 @@ export function Navigation() {
   const handleSignOut = async () => {
     try {
       await authSignOut();
-      router.push('/landing');
+      router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -27,7 +27,7 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto container-padding py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href={isSignedIn ? "/" : "/landing"} className="flex items-center space-x-3 group">
+          <Link href={isSignedIn ? "/" : "/"} className="flex items-center space-x-3 group">
             <div className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
               <span className="text-white font-bold text-xl">TC</span>
             </div>
@@ -61,7 +61,7 @@ export function Navigation() {
             </Link>
             {!isSignedIn ? (
               <Link
-                href="/auth"
+                href="/auth/sign-in"
                 className="btn btn-primary"
               >
                 Sign In
@@ -98,7 +98,7 @@ export function Navigation() {
                       </div>
                       <button
                         onClick={handleSignOut}
-                        className="flex items-center space-x-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 w-full text-left transition-colors"
+                        className="flex items-center space-x-3 px-4 py-3 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium transition-colors w-full text-left"
                       >
                         <LogOut className="w-4 h-4" />
                         <span>Sign Out</span>
@@ -153,7 +153,7 @@ export function Navigation() {
               {!isSignedIn ? (
                 <div className="pt-2">
                   <Link
-                    href="/auth"
+                    href="/auth/sign-in"
                     className="btn btn-primary w-full"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

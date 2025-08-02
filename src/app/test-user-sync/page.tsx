@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
+// Auth removed - useAuth hook removed
 import { useState, useEffect } from 'react';
 
 interface UserProfile {
@@ -13,14 +13,11 @@ interface UserProfile {
 }
 
 export default function TestUserSync() {
-  const { user, isLoaded } = useAuth();
   const [supabaseUser, setSupabaseUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const checkUserSync = async () => {
-    if (!user) return;
-    
     setLoading(true);
     setError(null);
     
@@ -47,23 +44,8 @@ export default function TestUserSync() {
   };
 
   useEffect(() => {
-    if (isLoaded && user) {
-      checkUserSync();
-    }
-  }, [isLoaded, user]);
-
-  if (!isLoaded) {
-    return <div className="p-8">Loading...</div>;
-  }
-
-  if (!user) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">User Sync Test</h1>
-        <p>Please sign in to test user synchronization.</p>
-      </div>
-    );
-  }
+    checkUserSync();
+  }, []);
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -74,10 +56,7 @@ export default function TestUserSync() {
         <div className="bg-blue-50 p-6 rounded-lg">
           <h2 className="text-xl font-semibold mb-4 text-blue-800">Supabase Auth User</h2>
           <div className="space-y-2">
-            <p><strong>ID:</strong> {user.id}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Created:</strong> {user.created_at ? new Date(user.created_at).toLocaleString() : 'Unknown'}</p>
-            <p><strong>Last Sign In:</strong> {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}</p>
+            <p>Authentication handled by server-side components</p>
           </div>
         </div>
 
@@ -125,7 +104,7 @@ export default function TestUserSync() {
         <h3 className="text-lg font-semibold mb-3">Sync Status</h3>
         {supabaseUser ? (
           <div className="text-green-600">
-            ✅ User is synced between Clerk and Supabase
+            ✅ User is synced with Supabase
           </div>
         ) : (
           <div className="text-red-600">

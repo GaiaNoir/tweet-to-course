@@ -1,190 +1,34 @@
-/**
- * Supabase Authentication System
- * Handles user authentication, registration, and profile management
- */
+import { createClient, createServerSupabaseClient } from './supabase';
+import type { User } from '@supabase/supabase-js';
+import type { Database } from '@/types/database';
 
-import { createClient } from '@/lib/supabase';
-import { createAdminClient } from '@/lib/supabase';
+export type AuthUser = User;
+export type DbUser = Database['public']['Tables']['users']['Row'];
 
-export type SubscriptionTier = 'free' | 'pro' | 'lifetime';
-
-export interface User {
-  id: string; // Supabase auth user ID
-  email: string;
-  subscriptionTier: SubscriptionTier;
-  usageCount: number;
-  monthlyUsageCount: number;
-  monthlyUsageResetDate: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UserProfile {
-  id: string; // Database user profile ID
-  auth_user_id: string; // References auth.users.id
-  email: string;
-  subscription_tier: SubscriptionTier;
-  usage_count: number;
-  monthly_usage_count: number;
-  monthly_usage_reset_date: string;
-  created_at: string;
-  updated_at: string;
-}
-
-/**
- * Get current authenticated user from Supabase
- */
-export async function getCurrentUser(): Promise<User | null> {
-  try {
-    const supabase = createClient();
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !authUser) {
-      return null;
-    }
-
-    // Get user profile from database
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('auth_user_id', authUser.id)
-      .single();
-
-    if (profileError || !profile) {
-      console.error('Failed to get user profile:', profileError);
-      return null;
-    }
-
-    return {
-      id: authUser.id,
-      email: profile.email,
-      subscriptionTier: profile.subscription_tier,
-      usageCount: profile.usage_count,
-      monthlyUsageCount: profile.monthly_usage_count,
-      monthlyUsageResetDate: profile.monthly_usage_reset_date,
-      createdAt: profile.created_at,
-      updatedAt: profile.updated_at,
-    };
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
-}
-
-/**
- * Sign up a new user
- */
-export async function signUp(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
-  try {
-    console.log('🔐 Starting signup process for:', email);
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return { user: null, error: 'Please enter a valid email address' };
-    }
-    
+// Client-side auth functions
+export const authClient = {
+  // Sign up with email and password (no email confirmation required)
+  async signUp(email: string, password: string) {
     const supabase = createClient();
     
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-    });
-
-    console.log('📧 Signup response:', { 
-      user: data.user ? 'created' : 'null', 
-      session: data.session ? 'exists' : 'null',
-      error: error?.message 
+      options: {
+        // Email confirmation is disabled in Supabase settings
+        emailRedirectTo: undefined,
+      },
     });
 
     if (error) {
-      console.error('❌ Signup error:', error.message);
-      return { user: null, error: error.message };
+      throw new Error(error.message);
     }
 
-    if (!data.user) {
-      console.error('❌ No user returned from signup');
-      return { user: null, error: 'Failed to create user' };
-    }
+    return data;
+  },
 
-    // Email confirmation is disabled, so we should have a session immediately
-    console.log('✅ User signed up successfully, session:', !!data.session);
-
-    console.log('✅ User signed up successfully');
-    
-    // If no session was created (email confirmation required), auto-confirm the user
-    if (!data.session) {
-      console.log('⚠️  No session created, auto-confirming user...');
-      
-      try {
-        // Auto-confirm the user using a server-side API call
-        const confirmResponse = await fetch('/api/auth/confirm-user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email: email,
-            password: password,
-          }),
-        });
-
-        const confirmResult = await confirmResponse.json();
-
-        if (confirmResult.success) {
-          console.log('✅ User auto-confirmed, now signing in...');
-          
-          // Now try to sign in with the confirmed user
-          const { data: signinData, error: signinError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (signinError) {
-            console.error('❌ Signin after confirm failed:', signinError.message);
-            return { user: null, error: 'Account confirmed but signin failed. Please try signing in manually.' };
-          }
-
-          if (signinData.session) {
-            console.log('✅ Signin successful after confirmation!');
-            
-            // Wait a moment then get the current user
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const user = await getCurrentUser();
-            
-            return { user, error: null };
-          } else {
-            return { user: null, error: 'Account confirmed but no session created.' };
-          }
-        } else {
-          console.error('❌ Auto-confirm failed:', confirmResult.error);
-          return { user: null, error: 'Account created but confirmation failed. Please contact support.' };
-        }
-      } catch (confirmErr) {
-        console.error('❌ Auto-confirm attempt failed:', confirmErr);
-        return { user: null, error: 'Account created but confirmation failed. Please try again.' };
-      }
-    }
-    
-    // Wait for the database trigger to create the user profile
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const user = await getCurrentUser();
-    console.log('👤 Final user state:', user ? 'authenticated' : 'not authenticated');
-    
-    return { user, error: null };
-  } catch (error) {
-    console.error('💥 Signup process failed:', error);
-    return { user: null, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
-
-/**
- * Sign in an existing user
- */
-export async function signIn(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
-  try {
+  // Sign in with email and password
+  async signIn(email: string, password: string) {
     const supabase = createClient();
     
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -193,161 +37,324 @@ export async function signIn(email: string, password: string): Promise<{ user: U
     });
 
     if (error) {
-      return { user: null, error: error.message };
+      throw new Error(error.message);
     }
 
-    const user = await getCurrentUser();
-    return { user, error: null };
-  } catch (error) {
-    return { user: null, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
+    return data;
+  },
 
-/**
- * Sign out the current user
- */
-export async function signOut(): Promise<{ error: string | null }> {
-  try {
+  // Sign out
+  async signOut() {
     const supabase = createClient();
+    
     const { error } = await supabase.auth.signOut();
     
     if (error) {
-      return { error: error.message };
+      throw new Error(error.message);
     }
+  },
 
-    return { error: null };
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
-
-/**
- * Update user subscription tier
- */
-export async function updateUserSubscription(tier: SubscriptionTier): Promise<{ user: User | null; error: string | null }> {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { user: null, error: 'User not authenticated' };
-    }
-
+  // Reset password
+  async resetPassword(email: string) {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from('users')
-      .update({ subscription_tier: tier })
-      .eq('auth_user_id', currentUser.id)
-      .select()
-      .single();
-
-    if (error) {
-      return { user: null, error: error.message };
-    }
-
-    const updatedUser = await getCurrentUser();
-    return { user: updatedUser, error: null };
-  } catch (error) {
-    return { user: null, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
-
-/**
- * Increment user usage count
- */
-export async function incrementUsage(): Promise<{ user: User | null; error: string | null }> {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { user: null, error: 'User not authenticated' };
-    }
-
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('users')
-      .update({ 
-        usage_count: currentUser.usageCount + 1,
-        monthly_usage_count: currentUser.monthlyUsageCount + 1,
-      })
-      .eq('auth_user_id', currentUser.id)
-      .select()
-      .single();
-
-    if (error) {
-      return { user: null, error: error.message };
-    }
-
-    const updatedUser = await getCurrentUser();
-    return { user: updatedUser, error: null };
-  } catch (error) {
-    return { user: null, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
-
-/**
- * Check if user can perform a specific action
- */
-export async function canPerformAction(action: 'generate' | 'export_pdf' | 'export_notion'): Promise<boolean> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return false;
-
-    switch (action) {
-      case 'generate':
-        return user.subscriptionTier === 'free' 
-          ? user.monthlyUsageCount < 1 
-          : true;
-      
-      case 'export_pdf':
-        return true; // All users can export PDF
-      
-      case 'export_notion':
-        return user.subscriptionTier === 'pro' || user.subscriptionTier === 'lifetime';
-      
-      default:
-        return false;
-    }
-  } catch (error) {
-    console.error('Error checking user permissions:', error);
-    return false;
-  }
-}
-
-/**
- * Get or create user profile (for server-side operations)
- */
-export async function getOrCreateUserProfile(authUserId: string, email: string): Promise<UserProfile | null> {
-  try {
-    const adminClient = createAdminClient();
     
-    // First try to get existing profile
-    const { data: existingProfile, error: getError } = await adminClient
-      .from('users')
-      .select('*')
-      .eq('auth_user_id', authUserId)
-      .single();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
 
-    if (existingProfile && !getError) {
-      return existingProfile;
+    if (error) {
+      throw new Error(error.message);
+    }
+  },
+
+  // Update password
+  async updatePassword(password: string) {
+    const supabase = createClient();
+    
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  },
+
+  // Get current user
+  async getUser() {
+    const supabase = createClient();
+    
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error) {
+      throw new Error(error.message);
     }
 
-    // If profile doesn't exist, create it
-    const { data: newProfile, error: createError } = await adminClient
-      .from('users')
-      .insert({
-        auth_user_id: authUserId,
-        email,
-        subscription_tier: 'free',
-        usage_count: 0,
-        monthly_usage_count: 0,
-        monthly_usage_reset_date: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    return user;
+  },
 
-    if (createError) {
-      console.error('Failed to create user profile:', createError);
+  // Get current session
+  async getSession() {
+    const supabase = createClient();
+    
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return session;
+  },
+
+  // Listen to auth state changes
+  onAuthStateChange(callback: (event: string, session: any) => void) {
+    const supabase = createClient();
+    
+    return supabase.auth.onAuthStateChange(callback);
+  },
+};
+
+// Server-side auth functions
+export const authServer = {
+  // Get user from server-side
+  async getUser() {
+    const supabase = await createServerSupabaseClient();
+    
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error) {
+      console.error('Server auth error:', error);
       return null;
     }
 
+    return user;
+  },
+
+  // Get session from server-side
+  async getSession() {
+    const supabase = await createServerSupabaseClient();
+    
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Server session error:', error);
+      return null;
+    }
+
+    return session;
+  },
+
+  // Server-side require authentication (throws if not authenticated)
+  async requireAuth(): Promise<AuthUser> {
+    const supabase = await createServerSupabaseClient();
+    
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+      throw new Error('Authentication required');
+    }
+
+    return user;
+  },
+};
+
+// User profile functions
+export const userProfile = {
+  // Get user profile data
+  async getProfile(userId: string): Promise<DbUser | null> {
+    const supabase = createClient();
+    
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+
+    return data;
+  },
+
+  // Create user profile (called automatically by trigger)
+  async createProfile(userId: string, email: string): Promise<DbUser> {
+    const supabase = createClient();
+    
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        email,
+        subscription_status: 'free',
+        monthly_usage_count: 0,
+        usage_reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create user profile: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  // Update user profile
+  async updateProfile(userId: string, updates: Partial<DbUser>): Promise<DbUser> {
+    const supabase = createClient();
+    
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update user profile: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  // Increment usage count
+  async incrementUsage(userId: string): Promise<void> {
+    const supabase = createClient();
+    
+    const { error } = await supabase.rpc('increment_usage', {
+      user_id: userId,
+    });
+
+    if (error) {
+      // Fallback to manual increment if RPC doesn't exist
+      const profile = await this.getProfile(userId);
+      if (profile) {
+        await this.updateProfile(userId, {
+          monthly_usage_count: profile.monthly_usage_count + 1,
+        });
+      }
+    }
+  },
+
+  // Check if user has usage remaining
+  async hasUsageRemaining(userId: string): Promise<boolean> {
+    const profile = await this.getProfile(userId);
+    if (!profile) return false;
+
+    // Check if usage needs to be reset
+    const now = new Date();
+    const resetDate = new Date(profile.usage_reset_date);
+    
+    if (now > resetDate) {
+      // Reset usage count
+      await this.updateProfile(userId, {
+        monthly_usage_count: 0,
+        usage_reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+      return true;
+    }
+
+    // Check limits based on subscription
+    const limits = {
+      free: 3,
+      pro: 50,
+      lifetime: Infinity,
+    };
+
+    const limit = limits[profile.subscription_status as keyof typeof limits] || 0;
+    return profile.monthly_usage_count < limit;
+  },
+};
+
+// Utility functions
+export const authUtils = {
+  // Check if user is authenticated
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      const user = await authClient.getUser();
+      return !!user;
+    } catch {
+      return false;
+    }
+  },
+
+  // Get user ID safely
+  async getUserId(): Promise<string | null> {
+    try {
+      const user = await authClient.getUser();
+      return user?.id || null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Require authentication (throws if not authenticated)
+  async requireAuth(): Promise<AuthUser> {
+    const user = await authClient.getUser();
+    if (!user) {
+      throw new Error('Authentication required');
+    }
+    return user;
+  },
+
+  // Get user with profile data
+  async getUserWithProfile(): Promise<{ user: AuthUser; profile: DbUser } | null> {
+    try {
+      const user = await authClient.getUser();
+      if (!user) return null;
+
+      const profile = await userProfile.getProfile(user.id);
+      if (!profile) return null;
+
+      return { user, profile };
+    } catch {
+      return null;
+    }
+  },
+};
+
+// Legacy function for backward compatibility with existing API
+// This function is designed to be used server-side with admin privileges
+export async function getOrCreateUserProfile(userId: string, email: string) {
+  try {
+    // Import admin client here to avoid circular dependencies
+    const { createAdminClient } = await import('./supabase');
+    const adminClient = createAdminClient();
+    
+    // First try to get existing profile using admin client
+    const { data: profile, error: getError } = await adminClient
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (profile && !getError) {
+      return profile;
+    }
+    
+    // If no profile exists, create one using admin client (bypasses RLS)
+    const { data: newProfile, error: createError } = await adminClient
+      .from('users')
+      .insert({
+        id: userId,
+        email,
+        subscription_status: 'free',
+        monthly_usage_count: 0,
+        usage_reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select()
+      .single();
+    
+    if (createError) {
+      console.error('Error creating user profile:', createError);
+      return null;
+    }
+    
     return newProfile;
   } catch (error) {
     console.error('Error in getOrCreateUserProfile:', error);
@@ -355,30 +362,41 @@ export async function getOrCreateUserProfile(authUserId: string, email: string):
   }
 }
 
-/**
- * Reset monthly usage for all users (admin function)
- */
-export async function resetMonthlyUsage(): Promise<{ success: boolean; error: string | null }> {
-  try {
-    const adminClient = createAdminClient();
-    const nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    nextMonth.setDate(1);
+// Additional legacy functions for backward compatibility
+export async function getCurrentUser() {
+  return await authServer.getUser();
+}
 
-    const { error } = await adminClient
-      .from('users')
-      .update({
-        monthly_usage_count: 0,
-        monthly_usage_reset_date: nextMonth.toISOString(),
-      })
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Don't reset anonymous user
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, error: null };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+export async function incrementUsage(userId?: string) {
+  const user = userId ? { id: userId } : await authServer.getUser();
+  if (user?.id) {
+    return await userProfile.incrementUsage(user.id);
   }
 }
+
+export async function canPerformAction(action: string, userId?: string) {
+  const user = userId ? { id: userId } : await authServer.getUser();
+  if (!user?.id) return false;
+  
+  const profile = await userProfile.getProfile(user.id);
+  if (!profile) return false;
+  
+  // Check subscription-based permissions
+  const permissions = {
+    'export_notion': ['pro', 'lifetime'],
+    'export_pdf': ['free', 'pro', 'lifetime'],
+    'generate': ['free', 'pro', 'lifetime'],
+    'export_marketing_pdf': ['pro', 'lifetime']
+  };
+  
+  const allowedTiers = permissions[action as keyof typeof permissions] || [];
+  return allowedTiers.includes(profile.subscription_status);
+}
+
+export async function updateUserSubscription(userId: string, subscriptionTier: string) {
+  return await userProfile.updateProfile(userId, {
+    subscription_status: subscriptionTier as any
+  });
+}
+
+export type SubscriptionTier = 'free' | 'pro' | 'lifetime';

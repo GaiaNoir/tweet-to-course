@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth-supabase';
+import { authServer } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase';
 
 export async function GET(
@@ -17,7 +17,7 @@ export async function GET(
     }
 
     // Get user authentication using the same approach as working endpoints
-    const user = await getCurrentUser();
+    const user = await authServer.getUser();
     
     console.log('Job status auth debug - User:', user?.id);
     

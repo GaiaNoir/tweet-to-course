@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth-supabase';
+import { authServer } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase';
 
 interface AsyncCourseRequest {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user authentication using the same approach as working endpoints
-    const user = await getCurrentUser();
+    const user = await authServer.getUser();
     
     console.log('Auth debug - User:', user?.id);
     

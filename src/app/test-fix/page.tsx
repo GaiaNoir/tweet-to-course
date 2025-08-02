@@ -1,15 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { AuthForm } from '@/components/ui/auth-form';
 
 export default function TestFixPage() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showAuth, setShowAuth] = useState(false);
-  const { user, signOut } = useAuth();
 
   const testCourseGeneration = async () => {
     setLoading(true);
@@ -48,45 +44,11 @@ export default function TestFixPage() {
       {/* Authentication Status */}
       <div className="mb-6 p-4 bg-gray-50 rounded">
         <h2 className="text-xl font-semibold mb-2">Authentication Status</h2>
-        {user ? (
-          <div className="space-y-2">
-            <p><strong>Status:</strong> <span className="text-green-600">Authenticated</span></p>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Subscription:</strong> {user.subscriptionTier}</p>
-            <p><strong>Monthly Usage:</strong> {user.monthlyUsageCount}</p>
-            <button
-              onClick={() => signOut()}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
-            >
-              Sign Out
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <p><strong>Status:</strong> <span className="text-orange-600">Anonymous</span></p>
-            <button
-              onClick={() => setShowAuth(!showAuth)}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-            >
-              {showAuth ? 'Hide Auth' : 'Show Auth Form'}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Authentication Form */}
-      {showAuth && !user && (
-        <div className="mb-6">
-          <AuthForm
-            mode="signup"
-            onSuccess={() => {
-              setShowAuth(false);
-              window.location.reload();
-            }}
-            onModeChange={() => {}}
-          />
+        <div className="space-y-2">
+          <p><strong>Status:</strong> <span className="text-orange-600">Test Mode (No Auth)</span></p>
+          <p className="text-sm text-gray-600">This test page runs without authentication for debugging purposes.</p>
         </div>
-      )}
+      </div>
       
       {/* Course Generation Test */}
       <div className="mb-6">
@@ -122,7 +84,7 @@ export default function TestFixPage() {
               <p><strong>Course Title:</strong> {result.course?.title}</p>
               <p><strong>Course ID:</strong> {result.course?.id}</p>
               <p><strong>Modules:</strong> {result.course?.modules?.length}</p>
-              <p><strong>User Mode:</strong> {user ? 'Authenticated' : 'Anonymous'}</p>
+              <p><strong>User Mode:</strong> Test Mode</p>
             </div>
           )}
         </div>
@@ -130,18 +92,16 @@ export default function TestFixPage() {
 
       {/* Instructions */}
       <div className="mt-8 p-4 bg-blue-50 rounded">
-        <h3 className="font-semibold text-blue-800 mb-2">Full Authentication Flow Test:</h3>
+        <h3 className="font-semibold text-blue-800 mb-2">Course Generation Test:</h3>
         <ol className="list-decimal list-inside space-y-1 text-sm text-blue-700">
-          <li><strong>Without Account:</strong> Try course generation (should fail with auth required message)</li>
-          <li><strong>Create Account:</strong> Use the auth form above to sign up</li>
-          <li><strong>With Account:</strong> Test course generation (should work with user tracking)</li>
-          <li><strong>Usage Limits:</strong> Check that free tier limits are enforced (1 course/month)</li>
-          <li><strong>Dashboard:</strong> Visit /dashboard to see your profile and courses</li>
+          <li><strong>Test API:</strong> Click the button above to test course generation</li>
+          <li><strong>Check Response:</strong> Review the JSON response for errors or success</li>
+          <li><strong>Debug Issues:</strong> Use this page to debug API connectivity and response format</li>
+          <li><strong>Production Testing:</strong> Visit /dashboard for full authentication flow</li>
         </ol>
         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
           <p className="text-sm text-yellow-800">
-            <strong>Note:</strong> Anonymous course generation has been disabled. 
-            All users must create an account to generate courses.
+            <strong>Note:</strong> This is a debug page that bypasses authentication for testing purposes.
           </p>
         </div>
       </div>

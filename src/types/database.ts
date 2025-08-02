@@ -6,37 +6,28 @@ export interface Database {
       users: {
         Row: {
           id: string;
-          auth_user_id: string;
-          clerk_user_id?: string; // Optional for backward compatibility
           email: string;
-          subscription_tier: 'free' | 'pro' | 'lifetime';
-          usage_count: number;
+          subscription_status: 'free' | 'pro' | 'lifetime';
           monthly_usage_count: number;
-          monthly_usage_reset_date: string;
+          usage_reset_date: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          auth_user_id: string;
-          clerk_user_id?: string;
+          id: string;
           email: string;
-          subscription_tier?: 'free' | 'pro' | 'lifetime';
-          usage_count?: number;
+          subscription_status?: 'free' | 'pro' | 'lifetime';
           monthly_usage_count?: number;
-          monthly_usage_reset_date?: string;
+          usage_reset_date?: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
-          auth_user_id?: string;
-          clerk_user_id?: string;
           email?: string;
-          subscription_tier?: 'free' | 'pro' | 'lifetime';
-          usage_count?: number;
+          subscription_status?: 'free' | 'pro' | 'lifetime';
           monthly_usage_count?: number;
-          monthly_usage_reset_date?: string;
+          usage_reset_date?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -45,27 +36,36 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          job_id?: string;
           title: string;
           original_content: string;
           modules: CourseModuleData[];
+          metadata?: Record<string, any>;
+          status: 'active' | 'archived' | 'deleted';
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
+          job_id?: string;
           title: string;
           original_content: string;
           modules: CourseModuleData[];
+          metadata?: Record<string, any>;
+          status?: 'active' | 'archived' | 'deleted';
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
+          job_id?: string;
           title?: string;
           original_content?: string;
           modules?: CourseModuleData[];
+          metadata?: Record<string, any>;
+          status?: 'active' | 'archived' | 'deleted';
           created_at?: string;
           updated_at?: string;
         };

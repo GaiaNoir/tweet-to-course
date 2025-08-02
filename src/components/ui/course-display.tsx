@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { Course, UserProfile } from '@/types';
-import { NotionExport } from './notion-export';
+
 import { MarketingAssetsGenerator } from './marketing-assets-generator';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/auth/AuthProvider';
 import ReactMarkdown from 'react-markdown';
 
 interface CourseDisplayProps {
@@ -34,10 +34,17 @@ export function CourseDisplay({
 }: CourseDisplayProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(course.title);
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [expandedModules, setExpandedModules] = useState<Set<number>>(new Set());
+  const [showMarketing, setShowMarketing] = useState(false);
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+  const [isDownloadingMarkdown, setIsDownloadingMarkdown] = useState(false);
 
   // Use the hook to get user profile and permissions
-  const { user: userProfile, loading, canExportNotion, isFreeTier } = useAuth();
+  const { user, profile, loading } = useAuth();
+  
+  // Derive permissions from profile data
+  const canExportNotion = profile?.subscription_status === 'pro' || profile?.subscription_status === 'premium';
+  const isFreeTier = !profile?.subscription_status || profile?.subscription_status === 'free';
 
   const handleTitleSave = () => {
     if (editedTitle.trim() && editedTitle !== course.title) {
@@ -51,7 +58,7 @@ export function CourseDisplay({
     setIsEditingTitle(false);
   };
 
-  const toggleModuleExpansion = (moduleId: string) => {
+  const toggleModuleExpansion = (moduleId: number) => {
     const newExpanded = new Set(expandedModules);
     if (newExpanded.has(moduleId)) {
       newExpanded.delete(moduleId);
@@ -60,9 +67,216 @@ export function CourseDisplay({
     }
     setExpandedModules(newExpanded);
   };
+
+  const handleDownloadPDF = async () => {
+    if (isDownloadingPDF) return;
+    
+    setIsDownloadingPDF(true);
+    
+    try {
+      console.log('🔄 Starting PDF download...', { 
+        courseId: course.id, 
+        courseTitle: course.title,
+        modulesCount: course.modules?.length || 0
+      });
+      
+      // Validate course data before sending
+      if (!course || !course.title) {
+        throw new Error('Course data is incomplete. Please try regenerating the course.');
+      }
+      
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify({
+          courseId: course.id,
+          courseData: {
+            ...course,
+            // Ensure modules is an array
+            modules: Array.isArray(course.modules) ? course.modules : []
+          },
+        }),
+      });
+
+      console.log('📡 PDF API response:', { 
+        status: response.status, 
+        ok: response.ok,
+        contentType: response.headers.get('content-type')
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: Failed to generate PDF`;
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.details || errorMessage;
+          console.error('❌ PDF API error details:', errorData);
+        } catch (parseError) {
+          console.error('❌ Could not parse error response:', parseError);
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Verify we got a PDF response
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/pdf')) {
+        console.warn('⚠️ Unexpected content type:', contentType);
+      }
+
+      // Create download blob
+      const blob = await response.blob();
+      console.log('📄 PDF blob created:', { 
+        size: blob.size, 
+        type: blob.type,
+        sizeKB: Math.round(blob.size / 1024)
+      });
+      
+      if (blob.size === 0) {
+        throw new Error('Generated PDF is empty. Please try again.');
+      }
+      
+      // Create and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const filename = `${course.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_')}_course.pdf`;
+      
+      // Create download link with better attributes
+      const downloadLink = document.createElement('a');
+      downloadLink.href = url;
+      downloadLink.download = filename;
+      downloadLink.style.display = 'none';
+      
+      // Add to DOM, click, and clean up
+      document.body.appendChild(downloadLink);
+      
+      // Force download with multiple fallback methods
+      try {
+        downloadLink.click();
+      } catch (clickError) {
+        console.warn('⚠️ Click method failed, trying alternative:', clickError);
+        // Fallback: try to trigger download via window.open
+        const newWindow = window.open(url, '_blank');
+        if (newWindow) {
+          newWindow.document.title = filename;
+        }
+      }
+      
+      // Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(downloadLink);
+      }, 100);
+      
+      console.log('✅ PDF download initiated successfully:', filename);
+      
+      // Show success message
+      const successMessage = `PDF "${filename}" download started! Check your downloads folder.`;
+      
+      // Use a more user-friendly notification instead of alert
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('PDF Download', {
+          body: successMessage,
+          icon: '/favicon.ico'
+        });
+      } else {
+        // Fallback to alert for now, but could be replaced with a toast notification
+        alert(successMessage);
+      }
+      
+    } catch (error) {
+      console.error('❌ PDF download error:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Show detailed error to user
+      alert(`Failed to download PDF: ${errorMessage}\n\nPlease try again. If the problem persists, contact support.`);
+    } finally {
+      setIsDownloadingPDF(false);
+    }
+  };
+
+  const handleDownloadMarkdown = async () => {
+    if (isDownloadingMarkdown) return;
+    
+    setIsDownloadingMarkdown(true);
+    
+    try {
+      console.log('🔄 Starting Markdown download...', { 
+        courseId: course.id, 
+        courseTitle: course.title,
+        modulesCount: course.modules?.length || 0
+      });
+      
+      // Validate course data before sending
+      if (!course || !course.title) {
+        throw new Error('Course data is incomplete. Please try regenerating the course.');
+      }
+      
+      const response = await fetch('/api/export-markdown', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify({
+          courseData: {
+            ...course,
+            // Ensure modules is an array
+            modules: Array.isArray(course.modules) ? course.modules : []
+          },
+        }),
+      });
+
+      console.log('📡 Markdown API response:', { 
+        status: response.status, 
+        ok: response.ok,
+        contentType: response.headers.get('content-type')
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: Failed to generate Markdown`;
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.details || errorMessage;
+          console.error('❌ Markdown API error details:', errorData);
+        } catch (parseError) {
+          console.error('❌ Could not parse error response:', parseError);
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Get the markdown content as text
+      const markdownContent = await response.text();
+      
+      // Create a blob and download it
+      const blob = new Blob([markdownContent], { type: 'text/markdown' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${course.title.replace(/[^a-z0-9\s\-_]/gi, '').replace(/\s+/g, '-').toLowerCase()}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ Markdown download completed successfully');
+      
+    } catch (error) {
+      console.error('❌ Markdown download failed:', error);
+      alert(`Failed to download Markdown: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsDownloadingMarkdown(false);
+    }
+  };
   
   // Debug logging
-  console.log('CourseDisplay - User Profile:', userProfile);
+  console.log('CourseDisplay - User:', user);
+  console.log('CourseDisplay - Profile:', profile);
   console.log('CourseDisplay - Can Export Notion:', canExportNotion);
   console.log('CourseDisplay - Is Free Tier:', isFreeTier);
 
@@ -273,14 +487,14 @@ export function CourseDisplay({
             </button>
             
             <button
-              onClick={onExportPDF}
-              disabled={isExporting}
+              onClick={handleDownloadPDF}
+              disabled={isDownloadingPDF}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
             >
-              {isExporting ? (
+              {isDownloadingPDF ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Exporting...
+                  Generating PDF...
                 </>
               ) : (
                 <>
@@ -288,6 +502,26 @@ export function CourseDisplay({
                 </>
               )}
             </button>
+            
+            {/* Markdown Download Button - Pro Feature */}
+            {!isFreeTier && (
+              <button
+                onClick={handleDownloadMarkdown}
+                disabled={isDownloadingMarkdown}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                {isDownloadingMarkdown ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Generating Markdown...
+                  </>
+                ) : (
+                  <>
+                    📝 Download Markdown
+                  </>
+                )}
+              </button>
+            )}
             
             {/* Complete Export Button - Premium Feature */}
             <button
@@ -319,9 +553,9 @@ export function CourseDisplay({
           <span>📅 Generated {new Date(course.metadata.generatedAt).toLocaleDateString()}</span>
           <span>📚 {course.modules.length} modules</span>
           <span className="hidden sm:inline">🔗 Source: {course.metadata.sourceType}</span>
-          {userProfile && (
+          {profile && (
             <span className={`font-medium ${isFreeTier ? 'text-orange-600' : 'text-green-600'}`}>
-              {userProfile.subscriptionTier.toUpperCase()} Plan
+              {profile.subscription_status.toUpperCase()} Plan
             </span>
           )}
           {isFreeTier && (
@@ -481,18 +715,7 @@ export function CourseDisplay({
         />
       </div>
 
-      {/* Export Options */}
-      {canExportNotion && (
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <NotionExport
-            courseId={course.id}
-            courseTitle={course.title}
-            courseData={course}
-            isNotionConnected={isNotionConnected}
-            onConnectionRequired={onNotionConnectionRequired}
-          />
-        </div>
-      )}
+
 
       {/* Footer Actions */}
       <div className="mt-8 pt-6 border-t border-gray-200">
