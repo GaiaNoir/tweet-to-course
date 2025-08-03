@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { LoadingAnimation } from './loading-animation';
 import { ErrorDisplay } from './error-display';
 import { CourseGenerationProgress } from './course-generation-progress';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface CourseInputFormProps {
   onSubmitAction: (data: { content: string; type: 'url' | 'text' }) => Promise<void>;
@@ -32,6 +33,7 @@ export function CourseInputForm({
   estimatedTimeRemaining = 0,
   onCancel
 }: CourseInputFormProps) {
+  const { user } = useAuth();
   const [inputType, setInputType] = useState<'url' | 'text'>('url');
   const [mounted, setMounted] = useState(false);
 
@@ -71,6 +73,16 @@ export function CourseInputForm({
     }
 
     return true;
+  };
+
+  const handleUpgradeClick = () => {
+    if (!user) {
+      // Redirect to sign-up if user is not authenticated
+      window.location.href = '/auth/sign-up';
+    } else {
+      // Redirect to pricing page if user is authenticated
+      window.location.href = '/pricing';
+    }
   };
 
   const onFormSubmit = async (data: FormData) => {
@@ -232,7 +244,7 @@ export function CourseInputForm({
         <p className="text-xs sm:text-sm text-slate-500">
           Need unlimited generations?
           <button
-            onClick={() => window.location.href = '/pricing'}
+            onClick={handleUpgradeClick}
             className="text-indigo-600 hover:text-indigo-700 ml-1 font-medium underline decoration-2 underline-offset-2"
           >
             Upgrade to Pro

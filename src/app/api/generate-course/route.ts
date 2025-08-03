@@ -367,19 +367,22 @@ export async function POST(request: NextRequest) {
       // Trigger the background job processor asynchronously
       // This doesn't block the API response and handles the job processing properly
       processJobAsync(job.id, userId, processedContent.content, adminSupabase)
-        .catch(error => {
+        .catch(async (error) => {
           console.error('❌ Async job processing failed:', error);
           // Update job status to failed if async processing fails
-          adminSupabase
-            .from('jobs')
-            .update({ 
-              status: 'failed',
-              error_message: error instanceof Error ? error.message : 'Unknown error during async processing',
-              completed_at: new Date().toISOString()
-            })
-            .eq('id', job.id)
-            .then(() => console.log('❌ Job marked as failed:', job.id))
-            .catch(updateError => console.error('❌ Failed to update job status:', updateError));
+          try {
+            await adminSupabase
+              .from('jobs')
+              .update({ 
+                status: 'failed',
+                error_message: error instanceof Error ? error.message : 'Unknown error during async processing',
+                completed_at: new Date().toISOString()
+              })
+              .eq('id', job.id);
+            console.log('❌ Job marked as failed:', job.id);
+          } catch (updateError: any) {
+            console.error('❌ Failed to update job status:', updateError);
+          }
         });
 
       // FALLBACK: Also trigger the background job processor API as a backup
