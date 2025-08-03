@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import jsPDF from 'jspdf';
 import { MarketingAssets } from '@/lib/marketing-assets-generator';
-import { UsageService } from '@/lib/database';
-import { UserService } from '@/lib/database';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { getCurrentUser, canPerformAction, incrementUsage } from '@/lib/auth';
 
 interface ExportMarketingPDFRequest {
   marketingAssets: MarketingAssets;
@@ -14,14 +12,9 @@ interface ExportMarketingPDFRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
-    
-    // For debugging - log the auth status
-    console.log('Marketing PDF Export - Auth status:', { userId });
-    
-    if (!userId) {
+    // Get current user with profile
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
@@ -38,17 +31,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user data and check permissions
-    const dbUser = await UserService.getUserByAuthId(userId);
-    if (!dbUser) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
-
     // Check if user can export PDF
-    if (!canPerformAction(dbUser.subscription_tier, dbUser.usage_count, 'export_pdf')) {
+    const canExport = canPerformAction('export_pdf');
+    if (!canExport) {
       return NextResponse.json(
         { 
           success: false, 
@@ -147,7 +132,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Add watermark for free users
-    const shouldAddWatermark = !canPerformAction(user.subscription_tier, user.usage_count, 'remove_watermark');
+    const shouldAddWatermark = !canPerformAction('remove_watermark');
     
     if (shouldAddWatermark) {
       // Add watermark to each page
@@ -163,15 +148,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the export action
-    await UsageService.logAction({
-      user_id: dbUser.id,
-      action: 'export_marketing_pdf',
-      metadata: {
-        course_title: courseTitle,
-        has_watermark: shouldAddWatermark,
-        asset_types: ['coldDMs', 'adCopy', 'spreadsheet', 'bonusResource'],
-      },
-    });
+    await incrementUsage();
 
     // Generate PDF buffer
     const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));

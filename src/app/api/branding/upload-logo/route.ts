@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { authUtils, userProfile } from '@/lib/auth';
+import { getCurrentUser, userProfile } from '@/lib/auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,17 +19,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userProfile = await getUserProfile(user.id);
-    console.log('👤 User profile:', userProfile?.id, userProfile?.subscriptionTier);
+    const profile = await userProfile.getProfile(user.id);
+    console.log('👤 User profile:', profile?.id, profile?.subscription_status);
     
-    if (!userProfile) {
+    if (!profile) {
       console.log('❌ No user profile found');
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
     // Check if user has Pro subscription
-    if (userProfile.subscriptionTier !== 'pro' && userProfile.subscriptionTier !== 'lifetime') {
-      console.log('❌ User not Pro:', userProfile.subscriptionTier);
+    if (profile.subscription_status !== 'pro' && profile.subscription_status !== 'lifetime') {
+      console.log('❌ User not Pro:', profile.subscription_status);
       return NextResponse.json({ 
         error: 'Pro subscription required for custom branding' 
       }, { status: 403 });

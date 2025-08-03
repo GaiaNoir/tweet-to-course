@@ -21,7 +21,11 @@ export function SubscriptionManagement({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const handleUpgrade = async () => {
-    if (!userId) return;
+    if (!userId) {
+      // Redirect to sign-up if user is not authenticated
+      window.location.href = '/auth/sign-up';
+      return;
+    }
 
     setIsLoading(true);
     try {
