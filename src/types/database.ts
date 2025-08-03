@@ -74,7 +74,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          action: 'generate' | 'export_pdf' | 'export_notion';
+          action: 'generate' | 'export_pdf' | 'export_notion' | 'export_markdown';
           metadata: Record<string, any> | null;
           usage_month: string;
           created_at: string;
@@ -82,7 +82,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          action: 'generate' | 'export_pdf' | 'export_notion';
+          action: 'generate' | 'export_pdf' | 'export_notion' | 'export_markdown';
           metadata?: Record<string, any> | null;
           usage_month?: string;
           created_at?: string;
@@ -90,7 +90,7 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
-          action?: 'generate' | 'export_pdf' | 'export_notion';
+          action?: 'generate' | 'export_pdf' | 'export_notion' | 'export_markdown';
           metadata?: Record<string, any> | null;
           usage_month?: string;
           created_at?: string;

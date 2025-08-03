@@ -29,9 +29,10 @@ export default function GenerateCoursePage() {
     }
   }, [user]);
 
-  // Function to poll job status
-  const pollJobStatus = async (jobId: string) => {
+  // Function to poll job status with improved error handling
+  const pollJobStatus = async (jobId: string): Promise<boolean> => {
     try {
+      console.log('🔍 Polling job status for:', jobId);
       const response = await fetch(`/api/job-status?jobId=${jobId}`);
       
       if (!response.ok) {
@@ -40,6 +41,7 @@ export default function GenerateCoursePage() {
       }
       
       const result = await response.json();
+      console.log('📊 Job status result:', result);
       
       if (result.success && result.job) {
         setJobStatus(result.job.status);
@@ -48,44 +50,48 @@ export default function GenerateCoursePage() {
         switch (result.job.status) {
           case 'pending':
             setProgress(10);
-            break;
+            console.log('⏳ Job is pending...');
+            return false; // Continue polling
+            
           case 'processing':
             setProgress(50);
-            break;
+            console.log('🔄 Job is processing...');
+            return false; // Continue polling
+            
           case 'completed':
             setProgress(100);
             setIsGenerating(false);
+            console.log('✅ Job completed successfully!');
+            
             if (result.course) {
               setGeneratedCourse(result.course);
+            } else {
+              console.warn('⚠️ Job completed but no course data received');
+              setError('Course generation completed but no course data was returned');
             }
-            // Clear polling interval
-            if (pollingInterval) {
-              clearInterval(pollingInterval);
-              setPollingInterval(null);
-            }
-            // Trigger background job processing
-            fetch('/api/process-jobs', { method: 'POST' }).catch(console.error);
-            break;
+            return true; // Stop polling
+            
           case 'failed':
             setProgress(0);
             setIsGenerating(false);
-            setError(result.job.error_message || 'Course generation failed');
-            // Clear polling interval
-            if (pollingInterval) {
-              clearInterval(pollingInterval);
-              setPollingInterval(null);
-            }
-            break;
+            const errorMsg = result.job.error_message || 'Course generation failed';
+            console.error('❌ Job failed:', errorMsg);
+            setError(errorMsg);
+            return true; // Stop polling
+            
+          default:
+            console.warn('⚠️ Unknown job status:', result.job.status);
+            return false; // Continue polling
         }
+      } else {
+        console.error('❌ Invalid job status response:', result);
+        throw new Error('Invalid response from job status API');
       }
     } catch (err) {
-      console.error('Job status polling error:', err);
+      console.error('❌ Job status polling error:', err);
       setError(err instanceof Error ? err.message : 'Failed to check job status');
       setIsGenerating(false);
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
-      }
+      return true; // Stop polling on error
     }
   };
 
@@ -132,16 +138,61 @@ export default function GenerateCoursePage() {
         setJobStatus(result.status || 'pending');
         
         // Trigger background job processing immediately
-        fetch('/api/process-jobs', { method: 'POST' }).catch(console.error);
+        console.log('🚀 Triggering background job processing...');
+        fetch('/api/process-jobs', { method: 'POST' })
+          .then(response => {
+            if (response.ok) {
+              console.log('✅ Background job processing triggered successfully');
+            } else {
+              console.warn('⚠️ Background job processing trigger failed:', response.status);
+            }
+          })
+          .catch(error => {
+            console.error('❌ Background job processing trigger error:', error);
+          });
         
-        // Set up polling interval to check job status every 2 seconds
-        const jobPollingInterval = setInterval(() => {
-          pollJobStatus(result.jobId);
-        }, 2000);
-        setPollingInterval(jobPollingInterval);
+        // Set up improved polling with timeout and cleanup
+        let pollCount = 0;
+        const maxPolls = 150; // 5 minutes at 2-second intervals
         
-        // Initial poll
-        pollJobStatus(result.jobId);
+        const startPolling = () => {
+          const jobPollingInterval = setInterval(async () => {
+            pollCount++;
+            console.log(`🔄 Poll attempt ${pollCount}/${maxPolls}`);
+            
+            // Check if we've exceeded max polling attempts
+            if (pollCount >= maxPolls) {
+              console.error('❌ Polling timeout - job took too long');
+              clearInterval(jobPollingInterval);
+              setPollingInterval(null);
+              setIsGenerating(false);
+              setError('Course generation is taking longer than expected. Please try again.');
+              return;
+            }
+            
+            // Poll job status and check if we should stop
+            const shouldStop = await pollJobStatus(result.jobId);
+            if (shouldStop) {
+              console.log('🛑 Stopping polling - job completed or failed');
+              clearInterval(jobPollingInterval);
+              setPollingInterval(null);
+            }
+          }, 2000);
+          
+          setPollingInterval(jobPollingInterval);
+        };
+        
+        // Initial poll, then start interval polling
+        console.log('🔍 Starting initial job status poll...');
+        pollJobStatus(result.jobId).then(shouldStop => {
+          if (!shouldStop) {
+            console.log('🔄 Starting interval polling...');
+            startPolling();
+          }
+        }).catch(error => {
+          console.error('❌ Initial polling failed:', error);
+          setIsGenerating(false);
+        });
       } else {
         throw new Error('Failed to create course generation job');
       }
@@ -159,12 +210,19 @@ export default function GenerateCoursePage() {
   };
 
   const handleCancel = () => {
-    // Clear polling interval if active
+    console.log('🛑 User cancelled course generation');
+    setIsGenerating(false);
+    
+    // Clean up polling interval
     if (pollingInterval) {
+      console.log('🧹 Cleaning up polling interval');
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-    setIsGenerating(false);
+    
+    // Reset all states
+    setGeneratedCourse(null);
+    setError(null);
     setJobStatus(null);
     setProgress(0);
     setCurrentJobId(null);
@@ -187,10 +245,20 @@ export default function GenerateCoursePage() {
   useEffect(() => {
     return () => {
       if (pollingInterval) {
+        console.log('🧹 Cleaning up polling interval on component unmount');
         clearInterval(pollingInterval);
       }
     };
   }, [pollingInterval]);
+  
+  // Additional cleanup effect for when isGenerating changes
+  useEffect(() => {
+    if (!isGenerating && pollingInterval) {
+      console.log('🧹 Cleaning up polling interval - generation stopped');
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+  }, [isGenerating, pollingInterval]);
 
   if (loading) {
     return (

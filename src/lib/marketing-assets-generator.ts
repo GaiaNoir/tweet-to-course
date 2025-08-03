@@ -2,6 +2,11 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export interface MarketingAssets {
   coldDMs: string[];
+  socialMediaPosts: {
+    headline: string;
+    primaryText: string;
+    cta: string;
+  }[];
   adCopyTemplate: {
     facebook: string;
     twitter: string;
@@ -48,21 +53,28 @@ Create the following marketing assets:
 - Keep each under 150 words
 - Make them feel personal, not automated
 
-2. AD COPY TEMPLATES:
+2. SOCIAL MEDIA POSTS (3-4 samples):
+- Create engaging social media posts for LinkedIn, Twitter, etc.
+- Each post should have: headline, primary text, and call-to-action
+- Focus on value-driven content that promotes the course
+- Include different angles and hooks
+- Keep posts engaging and shareable
+
+3. AD COPY TEMPLATES:
 Create fill-in-the-blank ad copy for:
 - Facebook/Meta ads (include headline, primary text, and CTA)
 - Twitter/X promoted posts
 - Instagram story/feed ads
 - Include placeholders like [YOUR_RESULT], [TIMEFRAME], etc.
 
-3. SPREADSHEET TEMPLATE:
+4. SPREADSHEET TEMPLATE:
 Create a marketing budget/tracking spreadsheet structure with:
 - Column headers for tracking marketing performance
 - 3-5 sample rows of realistic data
 - Include metrics like: traffic sources, ad spend, conversion rates, ROI, etc.
 - Brief description of how to use it
 
-4. BONUS RESOURCE:
+5. BONUS RESOURCE:
 Choose the most appropriate format (checklist, cheat sheet, or mini playbook) and create:
 - 8-12 actionable items
 - Quick reference format
@@ -74,6 +86,11 @@ Make everything professional, actionable, and conversion-focused. Use persuasive
 Return the response in this exact JSON format:
 {
   "coldDMs": ["dm1", "dm2", "dm3", "dm4", "dm5"],
+  "socialMediaPosts": [
+    {"headline": "post 1 headline", "primaryText": "post 1 content", "cta": "post 1 CTA"},
+    {"headline": "post 2 headline", "primaryText": "post 2 content", "cta": "post 2 CTA"},
+    {"headline": "post 3 headline", "primaryText": "post 3 content", "cta": "post 3 CTA"}
+  ],
   "adCopyTemplate": {
     "facebook": "facebook ad template with placeholders",
     "twitter": "twitter ad template with placeholders", 
@@ -115,7 +132,7 @@ Return the response in this exact JSON format:
     const marketingAssets = JSON.parse(content) as MarketingAssets;
     
     // Validate the response structure
-    if (!marketingAssets.coldDMs || !marketingAssets.adCopyTemplate || 
+    if (!marketingAssets.coldDMs || !marketingAssets.socialMediaPosts || !marketingAssets.adCopyTemplate || 
         !marketingAssets.spreadsheetTemplate || !marketingAssets.bonusResource) {
       throw new Error('Invalid marketing assets structure');
     }
@@ -134,6 +151,19 @@ export function formatMarketingAssetsForDownload(assets: MarketingAssets, course
 
 ${assets.coldDMs.map((dm, index) => `### Message ${index + 1}
 ${dm}
+
+---`).join('\n\n')}
+
+## 📱 Social Media Posts
+
+${assets.socialMediaPosts.map((post, index) => `### Post ${index + 1}
+
+**Headline:** ${post.headline}
+
+**Content:**
+${post.primaryText}
+
+**Call to Action:** ${post.cta}
 
 ---`).join('\n\n')}
 

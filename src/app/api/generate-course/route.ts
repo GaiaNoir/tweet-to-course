@@ -5,6 +5,108 @@ import { createAdminClient } from '@/lib/supabase';
 import { checkMonthlyUsage } from '@/lib/usage-limits';
 import { getOrCreateUserProfile } from '@/lib/auth';
 
+/**
+ * Truly asynchronous job processing function
+ * This runs independently of the API response and handles all job processing
+ */
+async function processJobAsync(jobId: string, userId: string, inputContent: string, adminSupabase: any): Promise<void> {
+  try {
+    console.log('🔄 Starting async job processing for job:', jobId);
+    
+    // Update job status to processing
+    await adminSupabase
+      .from('jobs')
+      .update({ 
+        status: 'processing',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', jobId);
+    
+    console.log('🔄 Job status updated to processing');
+    
+    // Import required modules dynamically to avoid circular dependencies
+    const { generateCourseContent } = await import('@/lib/claude');
+    const { prepareContentForAI } = await import('@/lib/content-processor');
+    const { incrementMonthlyUsage } = await import('@/lib/usage-limits');
+    
+    // Prepare content for AI processing
+    const aiReadyContent = prepareContentForAI(inputContent);
+    
+    console.log('🤖 Starting Claude course generation...');
+    // Generate course using Claude
+    const generatedCourse = await generateCourseContent(aiReadyContent, userId);
+    console.log('✅ Claude course generation completed successfully');
+    
+    // Save course to database
+    const { data: courseData, error: courseError } = await adminSupabase
+      .from('courses')
+      .insert({
+        user_id: userId,
+        title: generatedCourse.title,
+        original_content: inputContent,
+        modules: generatedCourse.modules,
+        job_id: jobId,
+      })
+      .select('id')
+      .single();
+    
+    if (courseError) {
+      console.error('❌ Course save error:', courseError);
+      throw new Error(`Failed to save course: ${courseError.message}`);
+    }
+    
+    const finalCourseId = courseData?.id;
+    console.log('✅ Course saved successfully with ID:', finalCourseId);
+    
+    // Update monthly usage count
+    try {
+      await incrementMonthlyUsage(userId);
+      console.log('✅ Monthly usage updated');
+    } catch (error) {
+      console.error('⚠️ Monthly usage update error:', error);
+      // Don't fail the job for usage update errors
+    }
+    
+    // Update job status to completed with result
+    await adminSupabase
+      .from('jobs')
+      .update({ 
+        status: 'completed',
+        result: {
+          course_id: finalCourseId,
+          title: generatedCourse.title,
+          modules_count: generatedCourse.modules.length
+        },
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', jobId);
+    
+    console.log('✅ Job completed successfully:', jobId);
+    
+    // Log the usage
+    const { error: logError } = await adminSupabase
+      .from('usage_logs')
+      .insert({
+        user_id: userId,
+        action: 'generate',
+        metadata: {
+          content_type: 'text',
+          course_id: finalCourseId,
+          job_id: jobId,
+        },
+      });
+    
+    if (logError) {
+      console.error('⚠️ Usage log error:', logError);
+      // Don't fail the job for logging errors
+    }
+    
+  } catch (error) {
+    console.error('❌ Async job processing failed:', error);
+    throw error; // Re-throw to be handled by the caller
+  }
+}
+
 // Types for the API
 interface GenerateCourseRequest {
   content: string;
@@ -259,121 +361,40 @@ export async function POST(request: NextRequest) {
 
       console.log('✅ Job created successfully:', { jobId: job.id });
 
-      // IMMEDIATE PROCESSING: Process the job directly instead of relying on background processing
-      // This fixes the issue where jobs stay in "pending" status forever
-      console.log('🚀 Starting immediate job processing for job:', job.id);
+      // TRULY ASYNCHRONOUS PROCESSING: Trigger background processing without blocking the response
+      console.log('🚀 Triggering asynchronous job processing for job:', job.id);
       
-      // Import the required modules for immediate processing
-      const { generateCourseContent } = await import('@/lib/claude');
-      const { prepareContentForAI } = await import('@/lib/content-processor');
-      const { incrementMonthlyUsage } = await import('@/lib/usage-limits');
-      
-      // Process the job immediately in the background (don't block the response)
-      setTimeout(async () => {
-        try {
-          console.log('🔄 Updating job status to processing...');
-          
-          // Update job status to processing
-          await adminSupabase
+      // Trigger the background job processor asynchronously
+      // This doesn't block the API response and handles the job processing properly
+      processJobAsync(job.id, userId, processedContent.content, adminSupabase)
+        .catch(error => {
+          console.error('❌ Async job processing failed:', error);
+          // Update job status to failed if async processing fails
+          adminSupabase
             .from('jobs')
             .update({ 
-              status: 'processing',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', job.id);
-          
-          // Prepare content for AI processing
-          const aiReadyContent = prepareContentForAI(processedContent.content);
-          
-          console.log('🤖 Starting Claude course generation...');
-          // Generate course using Claude
-          const generatedCourse = await generateCourseContent(aiReadyContent, userId);
-          console.log('✅ Claude course generation completed successfully');
-          
-          // Save course to database
-          const { data: courseData, error: courseError } = await adminSupabase
-            .from('courses')
-            .insert({
-              user_id: userId,
-              title: generatedCourse.title,
-              original_content: processedContent.content,
-              modules: generatedCourse.modules,
-              job_id: job.id,
-            })
-            .select('id')
-            .single();
-          
-          if (courseError) {
-            console.error('❌ Course save error:', courseError);
-            throw new Error(`Failed to save course: ${courseError.message}`);
-          }
-          
-          const finalCourseId = courseData?.id;
-          console.log('✅ Course saved successfully with ID:', finalCourseId);
-          
-          // Update monthly usage count
-          try {
-            await incrementMonthlyUsage(userId);
-            console.log('✅ Monthly usage updated');
-          } catch (error) {
-            console.error('⚠️ Monthly usage update error:', error);
-            // Don't fail the job for usage update errors
-          }
-          
-          // Update job status to completed with result
-          await adminSupabase
-            .from('jobs')
-            .update({ 
-              status: 'completed',
-              result: {
-                course_id: finalCourseId,
-                title: generatedCourse.title,
-                modules_count: generatedCourse.modules.length
-              },
+              status: 'failed',
+              error_message: error instanceof Error ? error.message : 'Unknown error during async processing',
               completed_at: new Date().toISOString()
             })
-            .eq('id', job.id);
-          
-          console.log('✅ Job completed successfully:', job.id);
-          
-          // Log the usage
-          const { error: logError } = await adminSupabase
-            .from('usage_logs')
-            .insert({
-              user_id: userId,
-              action: 'generate',
-              metadata: {
-                content_type: 'text',
-                course_id: finalCourseId,
-                job_id: job.id,
-              },
-            });
-          
-          if (logError) {
-            console.error('⚠️ Usage log error:', logError);
-            // Don't fail the job for logging errors
-          }
-          
-        } catch (error) {
-          console.error('❌ Immediate job processing failed:', error);
-          
-          // Update job status to failed
-          try {
-            await adminSupabase
-              .from('jobs')
-              .update({ 
-                status: 'failed',
-                error_message: error instanceof Error ? error.message : 'Unknown error during immediate processing',
-                completed_at: new Date().toISOString()
-              })
-              .eq('id', job.id);
-            
-            console.log('❌ Job marked as failed:', job.id);
-          } catch (updateError) {
-            console.error('❌ Failed to update job status after processing failure:', updateError);
-          }
-        }
-      }, 100); // Small delay to ensure response is sent first
+            .eq('id', job.id)
+            .then(() => console.log('❌ Job marked as failed:', job.id))
+            .catch(updateError => console.error('❌ Failed to update job status:', updateError));
+        });
+
+      // FALLBACK: Also trigger the background job processor API as a backup
+      // This ensures jobs get processed even if the async function above fails
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        fetch(`${baseUrl}/api/process-jobs`, { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        }).catch(error => {
+          console.warn('⚠️ Background job processor trigger failed (this is expected in development):', error.message);
+        });
+      } catch (error) {
+        console.warn('⚠️ Could not trigger background job processor:', error);
+      }
 
       // Return immediately with job ID - the actual processing happens asynchronously
       return NextResponse.json(

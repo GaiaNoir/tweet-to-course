@@ -34,7 +34,7 @@ export interface UserProfile {
 
 export interface UsageTracking {
   userId: string;
-  action: 'generate' | 'export_pdf' | 'export_notion';
+  action: 'generate' | 'export_pdf' | 'export_notion' | 'export_markdown';
   timestamp: string;
   metadata?: Record<string, any>;
 }
