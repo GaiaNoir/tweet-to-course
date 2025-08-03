@@ -54,39 +54,33 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Check if user is authenticated for protected routes
-  const protectedRoutes = [
-    '/dashboard',
-    // '/api/generate-course', // Temporarily removed for testing
-    '/api/export-pdf',
-    '/api/export-marketing-pdf',
-    // '/api/export-notion', // Temporarily removed for testing
-    '/api/export-slides',
-    '/api/export-package',
-    '/api/user',
-  ];
+  // Get the current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
+  // Protected routes that require authentication
+  const protectedRoutes = ['/dashboard', '/courses', '/billing'];
   const isProtectedRoute = protectedRoutes.some(route => 
     request.nextUrl.pathname.startsWith(route)
   );
 
-  if (isProtectedRoute) {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      // For API routes, return JSON error instead of redirect
-      if (request.nextUrl.pathname.startsWith('/api/')) {
-        return NextResponse.json(
-          { success: false, error: 'Authentication required' },
-          { status: 401 }
-        );
-      }
-      
-      // For page routes, redirect to sign-in page
-      const redirectUrl = new URL('/auth/sign-in', request.url);
-      redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
-      return NextResponse.redirect(redirectUrl);
-    }
+  // Auth routes that should redirect to dashboard if user is already logged in
+  const authRoutes = ['/auth/sign-in', '/auth/sign-up'];
+  const isAuthRoute = authRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  // If user is not authenticated and trying to access protected route
+  if (isProtectedRoute && !user) {
+    const redirectUrl = new URL('/auth/sign-in', request.url);
+    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // If user is authenticated and trying to access auth routes, redirect to dashboard
+  if (isAuthRoute && user) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return response;
@@ -94,9 +88,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

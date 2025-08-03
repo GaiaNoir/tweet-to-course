@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 
@@ -15,6 +15,8 @@ export default function SignInPage() {
   
   const { signIn } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ export default function SignInPage() {
 
     try {
       await signIn(email, password);
-      router.push('/dashboard');
+      router.push(redirectTo);
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
     } finally {
