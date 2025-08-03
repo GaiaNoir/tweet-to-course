@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Mail, CheckCircle, RefreshCw } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 
-export default function ConfirmEmailPage() {
+function ConfirmEmailContent() {
   const [email, setEmail] = useState('');
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
@@ -120,5 +120,25 @@ export default function ConfirmEmailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ConfirmEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center">
+            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Mail className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">Loading...</h1>
+            <p className="text-slate-600">Please wait while we load your confirmation page.</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ConfirmEmailContent />
+    </Suspense>
   );
 }
