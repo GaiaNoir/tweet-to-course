@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { filterInvalidHtmlAttributes } from '@/lib/markdown-utils';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 interface CourseInfo {
@@ -241,17 +242,50 @@ export function CourseDisplay({
                 <div className="prose prose-gray dark:prose-invert max-w-none">
                   <ReactMarkdown
                     components={{
-                      h1: ({ children }) => <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{children}</h1>,
-                      h2: ({ children }) => <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">{children}</h2>,
-                      h3: ({ children }) => <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{children}</h3>,
-                      p: ({ children }) => <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">{children}</p>,
-                      ul: ({ children }) => <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">{children}</ul>,
-                      ol: ({ children }) => <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">{children}</ol>,
-                      li: ({ children }) => <li className="text-gray-700 dark:text-gray-300">{children}</li>,
-                      strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-white">{children}</strong>,
-                      em: ({ children }) => <em className="italic text-gray-700 dark:text-gray-300">{children}</em>,
-                      code: ({ children }) => <code className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-sm font-mono">{children}</code>,
-                      blockquote: ({ children }) => <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-gray-700 dark:text-gray-300 mb-4">{children}</blockquote>,
+                      h1: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4" {...cleanProps}>{children}</h1>;
+                      },
+                      h2: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3" {...cleanProps}>{children}</h2>;
+                      },
+                      h3: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2" {...cleanProps}>{children}</h3>;
+                      },
+                      p: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed" {...cleanProps}>{children}</p>;
+                      },
+                      ul: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4" {...cleanProps}>{children}</ul>;
+                      },
+                      ol: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4" {...cleanProps}>{children}</ol>;
+                      },
+                      li: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <li className="text-gray-700 dark:text-gray-300" {...cleanProps}>{children}</li>;
+                      },
+                      strong: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <strong className="font-semibold text-gray-900 dark:text-white" {...cleanProps}>{children}</strong>;
+                      },
+                      em: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <em className="italic text-gray-700 dark:text-gray-300" {...cleanProps}>{children}</em>;
+                      },
+                      code: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <code className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-sm font-mono" {...cleanProps}>{children}</code>;
+                      },
+                      blockquote: ({ children, ...props }) => {
+                        const cleanProps = filterInvalidHtmlAttributes(props);
+                        return <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-gray-700 dark:text-gray-300 mb-4" {...cleanProps}>{children}</blockquote>;
+                      },
                     }}
                   >
                     {module.content}

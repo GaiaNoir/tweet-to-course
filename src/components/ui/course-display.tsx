@@ -5,7 +5,7 @@ import { Course, UserProfile } from '@/types';
 import { MarketingAssetsGenerator } from './marketing-assets-generator';
 import { useAuth } from '@/components/auth/AuthProvider';
 import ReactMarkdown from 'react-markdown';
-import { safeMarkdownComponents } from '@/lib/markdown-utils';
+import { safeMarkdownComponents, filterInvalidHtmlAttributes } from '@/lib/markdown-utils';
 import { ContentInspector } from '@/components/debug/content-inspector';
 
 interface CourseDisplayProps {
@@ -426,50 +426,79 @@ export function CourseDisplay({
                 <ReactMarkdown 
                   components={{
                     ...markdownComponents,
-                    h1: ({ children, ...props }) => (
-                      <h1 className="text-3xl font-bold mb-6 text-gray-900 border-b-2 border-green-500 pb-3" {...props}>
-                        {children}
-                      </h1>
-                    ),
-                    h2: ({ children, ...props }) => (
-                      <h2 className="text-2xl font-bold mb-4 text-gray-800 mt-8 flex items-center gap-3" {...props}>
-                        <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                          {String(children).includes('Overview') ? '📋' : 
-                           String(children).includes('Target') ? '👥' : 
-                           String(children).includes('Learning') ? '🎯' : 
-                           String(children).includes('Time') ? '⏱️' : '📌'}
-                        </span>
-                        {children}
-                      </h2>
-                    ),
-                    h3: ({ children, ...props }) => (
-                      <h3 className="text-xl font-semibold mb-3 text-gray-700 mt-6" {...props}>
-                        {children}
-                      </h3>
-                    ),
-                    p: ({ children, ...props }) => (
-                      <p className="mb-4 text-gray-700 leading-relaxed" {...props}>
-                        {children}
-                      </p>
-                    ),
-                    ul: ({ children, ...props }) => (
-                      <ul className="list-none mb-6 space-y-3" {...props}>
-                        {children}
-                      </ul>
-                    ),
-                    li: ({ children, ...props }) => (
-                      <li className="flex items-start gap-3 text-gray-700 bg-green-50 rounded-lg p-3 border border-green-200" {...props}>
-                        <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5 flex-shrink-0">
-                          ✓
-                        </span>
-                        <div className="flex-1">{children}</div>
-                      </li>
-                    ),
-                    strong: ({ children, ...props }) => (
-                      <strong className="font-bold text-gray-900" {...props}>
-                        {children}
-                      </strong>
-                    ),
+                    h1: ({ children, ...props }) => {
+                      const cleanProps = filterInvalidHtmlAttributes(props);
+                      return (
+                        <h1 className="text-3xl font-bold mb-6 text-gray-900 border-b-2 border-green-500 pb-3" {...cleanProps}>
+                          {children}
+                        </h1>
+                      );
+                    },
+                    h2: ({ children, ...props }) => {
+                      const cleanProps = filterInvalidHtmlAttributes(props);
+                      return (
+                        <h2 className="text-2xl font-bold mb-4 text-gray-800 mt-8 flex items-center gap-3" {...cleanProps}>
+                          <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                            {String(children).includes('Overview') ? '📋' : 
+                             String(children).includes('Target') ? '👥' : 
+                             String(children).includes('Learning') ? '🎯' : 
+                             String(children).includes('Time') ? '⏱️' : '📌'}
+                          </span>
+                          {children}
+                        </h2>
+                      );
+                    },
+                    h3: ({ children, ...props }) => {
+                      const cleanProps = filterInvalidHtmlAttributes(props);
+                      return (
+                        <h3 className="text-xl font-semibold mb-3 text-gray-700 mt-6" {...cleanProps}>
+                          {children}
+                        </h3>
+                      );
+                    },
+                    p: ({ children, ...props }) => {
+                      const cleanProps = filterInvalidHtmlAttributes(props);
+                      return (
+                        <p className="mb-4 text-gray-700 leading-relaxed" {...cleanProps}>
+                          {children}
+                        </p>
+                      );
+                    },
+                    ul: ({ children, ...props }) => {
+                      const cleanProps = filterInvalidHtmlAttributes(props);
+                      return (
+                        <ul className="list-none mb-6 space-y-3" {...cleanProps}>
+                          {children}
+                        </ul>
+                      );
+                    },
+                    ol: ({ children, ...props }) => {
+                      const cleanProps = filterInvalidHtmlAttributes(props);
+                      return (
+                        <ol className="list-decimal list-inside mb-6 space-y-3" {...cleanProps}>
+                          {children}
+                        </ol>
+                      );
+                    },
+                    li: ({ children, ...props }) => {
+                      const cleanProps = filterInvalidHtmlAttributes(props);
+                      return (
+                        <li className="flex items-start gap-3 text-gray-700 bg-green-50 rounded-lg p-3 border border-green-200" {...cleanProps}>
+                          <span className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5 flex-shrink-0">
+                            ✓
+                          </span>
+                          <div className="flex-1">{children}</div>
+                        </li>
+                      );
+                    },
+                    strong: ({ children, ...props }) => {
+                      const cleanProps = filterInvalidHtmlAttributes(props);
+                      return (
+                        <strong className="font-bold text-gray-900" {...cleanProps}>
+                          {children}
+                        </strong>
+                      );
+                    },
                   }}
                 >
                   {/* Extract and display the course overview section from first module */}
@@ -634,60 +663,87 @@ export function CourseDisplay({
                       <ReactMarkdown 
                         components={{
                           ...markdownComponents,
-                          h1: ({ children, ...props }) => (
-                            <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-gray-900 border-b-3 border-blue-500 pb-4" {...props}>
-                              {children}
-                            </h1>
-                          ),
-                          h2: ({ children, ...props }) => (
-                            <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800 mt-8 flex items-start gap-4" {...props}>
-                              <span className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0 mt-1">
-                                {String(children).includes('Overview') ? '📋' : 
-                                 String(children).includes('Content') ? '📖' : 
-                                 String(children).includes('Takeaway') ? '🎯' : 
-                                 String(children).includes('Module') ? '📚' : '📌'}
-                              </span>
-                              <span className="flex-1">{children}</span>
-                            </h2>
-                          ),
-                          h3: ({ children, ...props }) => (
-                            <h3 className="text-xl sm:text-2xl font-semibold mb-4 text-gray-700 mt-8 border-l-4 border-blue-400 pl-6 bg-blue-50 py-3 rounded-r-lg" {...props}>
-                              {children}
-                            </h3>
-                          ),
-                          h4: ({ children, ...props }) => (
-                            <h4 className="text-lg sm:text-xl font-medium mb-3 text-gray-600 mt-6" {...props}>
-                              {children}
-                            </h4>
-                          ),
-                          p: ({ children, ...props }) => (
-                            <p className="mb-6 text-gray-700 leading-relaxed text-base sm:text-lg" {...props}>
-                              {children}
-                            </p>
-                          ),
-                          ul: ({ children, ...props }) => (
-                            <ul className="list-none mb-8 space-y-4" {...props}>
-                              {children}
-                            </ul>
-                          ),
-                          ol: ({ children, ...props }) => (
-                            <ol className="list-none mb-8 space-y-4" {...props}>
-                              {children}
-                            </ol>
-                          ),
-                          li: ({ children, ...props }) => (
-                            <li className="flex items-start gap-4 text-gray-700 bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-300" {...props}>
-                              <span className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold mt-1 flex-shrink-0">
-                                ✓
-                              </span>
-                              <div className="flex-1 leading-relaxed">{children}</div>
-                            </li>
-                          ),
-                          strong: ({ children, ...props }) => (
-                            <strong className="font-bold text-gray-900 bg-yellow-100 px-2 py-1 rounded-md" {...props}>
-                              {children}
-                            </strong>
-                          ),
+                          h1: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-gray-900 border-b-3 border-blue-500 pb-4" {...cleanProps}>
+                                {children}
+                              </h1>
+                            );
+                          },
+                          h2: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800 mt-8 flex items-start gap-4" {...cleanProps}>
+                                <span className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0 mt-1">
+                                  {String(children).includes('Overview') ? '📋' : 
+                                   String(children).includes('Content') ? '📖' : 
+                                   String(children).includes('Takeaway') ? '🎯' : 
+                                   String(children).includes('Module') ? '📚' : '📌'}
+                                </span>
+                                <span className="flex-1">{children}</span>
+                              </h2>
+                            );
+                          },
+                          h3: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <h3 className="text-xl sm:text-2xl font-semibold mb-4 text-gray-700 mt-8 border-l-4 border-blue-400 pl-6 bg-blue-50 py-3 rounded-r-lg" {...cleanProps}>
+                                {children}
+                              </h3>
+                            );
+                          },
+                          h4: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <h4 className="text-lg sm:text-xl font-medium mb-3 text-gray-600 mt-6" {...cleanProps}>
+                                {children}
+                              </h4>
+                            );
+                          },
+                          p: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <p className="mb-6 text-gray-700 leading-relaxed text-base sm:text-lg" {...cleanProps}>
+                                {children}
+                              </p>
+                            );
+                          },
+                          ul: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <ul className="list-none mb-8 space-y-4" {...cleanProps}>
+                                {children}
+                              </ul>
+                            );
+                          },
+                          ol: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <ol className="list-none mb-8 space-y-4" {...cleanProps}>
+                                {children}
+                              </ol>
+                            );
+                          },
+                          li: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <li className="flex items-start gap-4 text-gray-700 bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-300" {...cleanProps}>
+                                <span className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold mt-1 flex-shrink-0">
+                                  ✓
+                                </span>
+                                <div className="flex-1 leading-relaxed">{children}</div>
+                              </li>
+                            );
+                          },
+                          strong: ({ children, ...props }) => {
+                            const cleanProps = filterInvalidHtmlAttributes(props);
+                            return (
+                              <strong className="font-bold text-gray-900 bg-yellow-100 px-2 py-1 rounded-md" {...cleanProps}>
+                                {children}
+                              </strong>
+                            );
+                          },
                           blockquote: ({ children, ...props }) => (
                             <blockquote className="border-l-4 border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 pl-6 pr-4 py-6 italic text-gray-700 my-8 rounded-r-xl shadow-sm" {...props}>
                               <div className="text-blue-600 text-4xl mb-2">"</div>

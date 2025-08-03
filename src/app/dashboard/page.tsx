@@ -7,7 +7,7 @@ import { getSubscriptionLimits } from '@/lib/subscription-utils';
 import Link from 'next/link';
 import { NotionConnection } from '@/components/ui/notion-connection';
 import { Navigation } from '@/components/ui/navigation';
-import { BrandingSettings } from '@/components/ui/branding-settings';
+
 import type { DbUser } from '@/lib/auth';
 
 export default function DashboardPage() {
@@ -286,12 +286,7 @@ function DashboardContent({ userProfile }: { userProfile: DbUser }) {
             </div>
           </div>
 
-          {/* Custom Branding Section - Only for Pro users */}
-          {userProfile.subscription_status !== 'free' && (
-            <div className="mt-8 sm:mt-12">
-              <BrandingSettings />
-            </div>
-          )}
+
 
           {/* Account Info */}
           <div className="mt-8 sm:mt-12 card p-6 sm:p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
