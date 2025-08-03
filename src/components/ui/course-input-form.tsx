@@ -123,18 +123,18 @@ export function CourseInputForm({
 
   if (!mounted) {
     return (
-      <div className="card max-w-3xl mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div className="card max-w-3xl mx-auto bg-white border border-gray-200">
         <div className="space-y-4">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-          <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-          <div className="h-12 bg-indigo-200 dark:bg-indigo-800 rounded animate-pulse"></div>
+          <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-12 bg-indigo-200 rounded animate-pulse"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="card max-w-3xl mx-auto p-6 sm:p-8 lg:p-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <div className="card max-w-3xl mx-auto p-6 sm:p-8 lg:p-10 bg-white border border-gray-200">
       {error && (
         <div className="mb-6 sm:mb-8">
           <ErrorDisplay
@@ -150,7 +150,7 @@ export function CourseInputForm({
         <div>
           <label
             htmlFor="content-input"
-            className="block text-left text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3"
+            className="block text-left text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3"
           >
             {getInputLabel()}
           </label>
@@ -167,21 +167,21 @@ export function CourseInputForm({
                 }
               })}
               placeholder={getPlaceholder()}
-              className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg leading-relaxed resize-none transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-lg ${errors.content
-                ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:border-red-500 dark:focus:border-red-400'
-                : 'border-slate-200 dark:border-gray-600 hover:border-slate-300 dark:hover:border-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400'
+              className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg leading-relaxed resize-none transition-all duration-200 bg-white text-gray-900 placeholder-gray-500 rounded-lg ${errors.content
+                ? 'border-red-300 bg-red-50 focus:border-red-500'
+                : 'border-slate-200 hover:border-slate-300 focus:border-indigo-500'
                 }`}
               rows={4}
               style={{ minHeight: '120px' }}
             />
-            <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-xs text-gray-500">
               {contentValue.length}/5000
             </div>
           </div>
           {errors.content && (
-            <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-700 dark:text-red-400 flex items-center gap-2">
-                <span className="text-red-500 dark:text-red-400">⚠️</span>
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700 flex items-center gap-2">
+                <span className="text-red-500">⚠️</span>
                 {errors.content.message}
               </p>
             </div>
@@ -210,18 +210,18 @@ export function CourseInputForm({
       </form>
 
       {/* Features highlight */}
-      <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-200 dark:border-gray-700">
+      <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-200">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center">
-          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-gray-400">
-            <span className="text-green-500 dark:text-green-400">⚡</span>
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
+            <span className="text-green-500">⚡</span>
             <span>Instant Generation</span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-gray-400">
-            <span className="text-blue-500 dark:text-blue-400">🎯</span>
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
+            <span className="text-blue-500">🎯</span>
             <span>AI-Structured</span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-gray-400">
-            <span className="text-purple-500 dark:text-purple-400">📄</span>
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
+            <span className="text-purple-500">📄</span>
             <span>Export Ready</span>
           </div>
         </div>
@@ -229,11 +229,11 @@ export function CourseInputForm({
 
       {/* Upgrade prompt */}
       <div className="mt-4 sm:mt-6 text-center">
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-gray-400">
+        <p className="text-xs sm:text-sm text-slate-500">
           Need unlimited generations?
           <button
             onClick={() => window.location.href = '/pricing'}
-            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 ml-1 font-medium underline decoration-2 underline-offset-2"
+            className="text-indigo-600 hover:text-indigo-700 ml-1 font-medium underline decoration-2 underline-offset-2"
           >
             Upgrade to Pro
           </button>
@@ -244,9 +244,9 @@ export function CourseInputForm({
       {contentValue && (
         <div className="mt-4 flex items-center justify-center">
           <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-            contentValue.length < 10 ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
-            contentValue.length > 4000 ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400' :
-            'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+            contentValue.length < 10 ? 'bg-red-100 text-red-700' :
+            contentValue.length > 4000 ? 'bg-yellow-100 text-yellow-700' :
+            'bg-green-100 text-green-700'
           }`}>
             <span className="w-2 h-2 bg-current rounded-full"></span>
             {contentValue.length} characters

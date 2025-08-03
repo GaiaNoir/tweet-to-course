@@ -310,13 +310,7 @@ footer {
         accentColor: '#3182ce',
         fontFamily: '"Inter", "Segoe UI", system-ui, sans-serif',
       },
-      dark: {
-        name: 'dark',
-        backgroundColor: '#1a202c',
-        textColor: '#e2e8f0',
-        accentColor: '#63b3ed',
-        fontFamily: '"Inter", "Segoe UI", system-ui, sans-serif',
-      },
+      // Dark theme removed - app is now light theme only
     };
   }
 

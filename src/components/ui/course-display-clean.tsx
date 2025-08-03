@@ -68,9 +68,9 @@ export function CourseDisplay({
   const { courseInfo, modules } = course;
 
   return (
-    <div className="max-w-7xl mx-auto bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-700 dark:to-purple-700 p-6 sm:p-8">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 sm:p-8">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
           {/* Course Title and Info */}
           <div className="flex-1">
@@ -168,20 +168,20 @@ export function CourseDisplay({
       </div>
 
       {/* Course Information Section */}
-      <div className="p-6 sm:p-8 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-6 sm:p-8 bg-gray-50 border-b border-gray-200">
         {/* Course Overview */}
         {courseInfo.overview && (
           <div className="mb-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">Course Overview</h2>
-            <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed">{courseInfo.overview}</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Course Overview</h2>
+            <p className="text-base sm:text-lg text-gray-700 leading-relaxed">{courseInfo.overview}</p>
           </div>
         )}
         
         {/* Target Audience */}
         {courseInfo.targetAudience && (
           <div className="mb-6">
-            <p className="text-gray-700 dark:text-gray-300">
-              <span className="font-semibold text-gray-900 dark:text-white">Target Audience:</span> {courseInfo.targetAudience}
+            <p className="text-gray-700">
+              <span className="font-semibold text-gray-900">Target Audience:</span> {courseInfo.targetAudience}
             </p>
           </div>
         )}
@@ -189,11 +189,11 @@ export function CourseDisplay({
         {/* Learning Outcomes */}
         {courseInfo.learningOutcomes.length > 0 && (
           <div className="mb-6">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Learning Outcomes:</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">Learning Outcomes:</h3>
             <ul className="space-y-2">
               {courseInfo.learningOutcomes.map((outcome, index) => (
-                <li key={index} className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
-                  <span className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-semibold mt-0.5 flex-shrink-0">
+                <li key={index} className="flex items-start gap-3 text-gray-700">
+                  <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-semibold mt-0.5 flex-shrink-0">
                     {index + 1}
                   </span>
                   <span>{outcome}</span>
@@ -206,85 +206,85 @@ export function CourseDisplay({
         {/* Estimated Time */}
         {courseInfo.estimatedTime && (
           <div>
-            <p className="text-gray-700 dark:text-gray-300">
-              <span className="font-semibold text-gray-900 dark:text-white">Estimated Time:</span> {courseInfo.estimatedTime}
+            <p className="text-gray-700">
+              <span className="font-semibold text-gray-900">Estimated Time:</span> {courseInfo.estimatedTime}
             </p>
           </div>
         )}
       </div>
 
       {/* Course Modules */}
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="divide-y divide-gray-200">
         {modules.map((module, index) => (
           <div key={index} className="p-6 sm:p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center font-semibold text-sm">
+                <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-semibold text-sm">
                   {index + 1}
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{module.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{module.estimatedReadingTime}</p>
+                  <h3 className="text-xl font-semibold text-gray-900">{module.title}</h3>
+                  <p className="text-sm text-gray-500">{module.estimatedReadingTime}</p>
                 </div>
               </div>
               <button
                 onClick={() => toggleModule(index)}
-                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
               >
                 {expandedModules.has(index) ? 'Collapse' : 'Expand'}
               </button>
             </div>
 
-            <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">{module.summary}</p>
+            <p className="text-gray-700 mb-4 leading-relaxed">{module.summary}</p>
 
             {expandedModules.has(index) && (
               <div className="space-y-6">
-                <div className="prose prose-gray dark:prose-invert max-w-none">
+                <div className="prose prose-gray max-w-none">
                   <ReactMarkdown
                     components={{
                       h1: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4" {...cleanProps}>{children}</h1>;
+                        return <h1 className="text-2xl font-bold text-gray-900 mb-4" {...cleanProps}>{children}</h1>;
                       },
                       h2: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3" {...cleanProps}>{children}</h2>;
+                        return <h2 className="text-xl font-semibold text-gray-900 mb-3" {...cleanProps}>{children}</h2>;
                       },
                       h3: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2" {...cleanProps}>{children}</h3>;
+                        return <h3 className="text-lg font-medium text-gray-900 mb-2" {...cleanProps}>{children}</h3>;
                       },
                       p: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed" {...cleanProps}>{children}</p>;
+                        return <p className="text-gray-700 mb-4 leading-relaxed" {...cleanProps}>{children}</p>;
                       },
                       ul: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4" {...cleanProps}>{children}</ul>;
+                        return <ul className="list-disc list-inside space-y-2 text-gray-700 mb-4" {...cleanProps}>{children}</ul>;
                       },
                       ol: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4" {...cleanProps}>{children}</ol>;
+                        return <ol className="list-decimal list-inside space-y-2 text-gray-700 mb-4" {...cleanProps}>{children}</ol>;
                       },
                       li: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <li className="text-gray-700 dark:text-gray-300" {...cleanProps}>{children}</li>;
+                        return <li className="text-gray-700" {...cleanProps}>{children}</li>;
                       },
                       strong: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <strong className="font-semibold text-gray-900 dark:text-white" {...cleanProps}>{children}</strong>;
+                        return <strong className="font-semibold text-gray-900" {...cleanProps}>{children}</strong>;
                       },
                       em: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <em className="italic text-gray-700 dark:text-gray-300" {...cleanProps}>{children}</em>;
+                        return <em className="italic text-gray-700" {...cleanProps}>{children}</em>;
                       },
                       code: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <code className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-sm font-mono" {...cleanProps}>{children}</code>;
+                        return <code className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm font-mono" {...cleanProps}>{children}</code>;
                       },
                       blockquote: ({ children, ...props }) => {
                         const cleanProps = filterInvalidHtmlAttributes(props);
-                        return <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-gray-700 dark:text-gray-300 mb-4" {...cleanProps}>{children}</blockquote>;
+                        return <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-gray-700 mb-4" {...cleanProps}>{children}</blockquote>;
                       },
                     }}
                   >
@@ -293,12 +293,12 @@ export function CourseDisplay({
                 </div>
 
                 {module.keyTakeaways.length > 0 && (
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4">
-                    <h4 className="font-semibold text-indigo-900 dark:text-indigo-300 mb-3">Key Takeaways:</h4>
+                  <div className="bg-indigo-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-indigo-900 mb-3">Key Takeaways:</h4>
                     <ul className="space-y-2">
                       {module.keyTakeaways.map((takeaway, takeawayIndex) => (
-                        <li key={takeawayIndex} className="flex items-start gap-2 text-indigo-800 dark:text-indigo-200">
-                          <span className="text-indigo-500 dark:text-indigo-400 mt-1">•</span>
+                        <li key={takeawayIndex} className="flex items-start gap-2 text-indigo-800">
+                          <span className="text-indigo-500 mt-1">•</span>
                           <span>{takeaway}</span>
                         </li>
                       ))}
@@ -312,8 +312,8 @@ export function CourseDisplay({
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-50 dark:bg-gray-800 p-6 sm:p-8 text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="bg-gray-50 p-6 sm:p-8 text-center">
+        <p className="text-sm text-gray-500">
           Course generated by TweetToCourse • {new Date().toLocaleDateString()}
         </p>
       </div>

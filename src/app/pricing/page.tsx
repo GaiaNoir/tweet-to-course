@@ -182,8 +182,8 @@ export default function PricingPage() {
                   <ul className="space-y-3 sm:space-y-4">
                     {tier.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start">
-                        <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mr-4 mt-0.5 flex-shrink-0">
-                          <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-4 mt-0.5 flex-shrink-0">
+                          <Check className="w-4 h-4 text-green-600" />
                         </div>
                         <span className="card-description leading-relaxed text-sm sm:text-base">{feature}</span>
                       </li>

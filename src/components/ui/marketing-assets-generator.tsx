@@ -186,37 +186,37 @@ export function MarketingAssetsGenerator({
           </div>
 
           {/* Cold DMs Section */}
-          <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🔥 Cold DMs & Outreach Messages</h4>
+          <Card className="p-6 bg-white border border-gray-200">
+            <h4 className="text-lg font-semibold mb-4 text-gray-900">🔥 Cold DMs & Outreach Messages</h4>
             <div className="space-y-4">
               {assets.coldDMs.map((dm, index) => (
-                <div key={index} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-100 dark:border-gray-600">
-                  <h5 className="font-medium mb-2 text-gray-900 dark:text-white">Message {index + 1}</h5>
-                  <p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">{dm}</p>
+                <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <h5 className="font-medium mb-2 text-gray-900">Message {index + 1}</h5>
+                  <p className="text-sm whitespace-pre-wrap text-gray-700">{dm}</p>
                 </div>
               ))}
             </div>
           </Card>
 
           {/* Social Media Posts Section */}
-          <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📱 Social Media Posts</h4>
+          <Card className="p-6 bg-white border border-gray-200">
+            <h4 className="text-lg font-semibold mb-4 text-gray-900">📱 Social Media Posts</h4>
             <div className="space-y-4">
               {assets.socialMediaPosts.map((post, index) => (
-                <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                  <h5 className="font-semibold mb-2 text-blue-900 dark:text-blue-200">Post {index + 1}</h5>
+                <div key={index} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <h5 className="font-semibold mb-2 text-blue-900">Post {index + 1}</h5>
                   <div className="space-y-3">
                     <div>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Headline</span>
-                      <p className="font-medium text-gray-900 dark:text-white">{post.headline}</p>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Headline</span>
+                      <p className="font-medium text-gray-900">{post.headline}</p>
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Content</span>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{post.primaryText}</p>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Content</span>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{post.primaryText}</p>
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Call to Action</span>
-                      <p className="text-sm font-medium text-blue-600 dark:text-blue-400">{post.cta}</p>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Call to Action</span>
+                      <p className="text-sm font-medium text-blue-600">{post.cta}</p>
                     </div>
                   </div>
                 </div>
@@ -225,34 +225,34 @@ export function MarketingAssetsGenerator({
           </Card>
 
           {/* Ad Copy Templates */}
-          <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📱 Ad Copy Templates</h4>
+          <Card className="p-6 bg-white border border-gray-200">
+            <h4 className="text-lg font-semibold mb-4 text-gray-900">📱 Ad Copy Templates</h4>
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                <h5 className="font-medium mb-2 text-gray-900 dark:text-white">Facebook/Meta Ads</h5>
-                <p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">{assets.adCopyTemplate.facebook}</p>
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <h5 className="font-medium mb-2 text-gray-900">Facebook/Meta Ads</h5>
+                <p className="text-sm whitespace-pre-wrap text-gray-700">{assets.adCopyTemplate.facebook}</p>
               </div>
-              <div className="p-4 bg-sky-50 dark:bg-sky-900/20 rounded-lg border border-sky-100 dark:border-sky-800">
-                <h5 className="font-medium mb-2 text-gray-900 dark:text-white">Twitter/X Promoted Posts</h5>
-                <p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">{assets.adCopyTemplate.twitter}</p>
+              <div className="p-4 bg-sky-50 rounded-lg border border-sky-100">
+                <h5 className="font-medium mb-2 text-gray-900">Twitter/X Promoted Posts</h5>
+                <p className="text-sm whitespace-pre-wrap text-gray-700">{assets.adCopyTemplate.twitter}</p>
               </div>
-              <div className="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-100 dark:border-pink-800">
-                <h5 className="font-medium mb-2 text-gray-900 dark:text-white">Instagram Ads</h5>
-                <p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">{assets.adCopyTemplate.instagram}</p>
+              <div className="p-4 bg-pink-50 rounded-lg border border-pink-100">
+                <h5 className="font-medium mb-2 text-gray-900">Instagram Ads</h5>
+                <p className="text-sm whitespace-pre-wrap text-gray-700">{assets.adCopyTemplate.instagram}</p>
               </div>
             </div>
           </Card>
 
           {/* Spreadsheet Template */}
-          <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📊 Marketing Tracking Spreadsheet</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{assets.spreadsheetTemplate.description}</p>
+          <Card className="p-6 bg-white border border-gray-200">
+            <h4 className="text-lg font-semibold mb-4 text-gray-900">📊 Marketing Tracking Spreadsheet</h4>
+            <p className="text-sm text-gray-600 mb-4">{assets.spreadsheetTemplate.description}</p>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 dark:border-gray-600">
+              <table className="w-full border-collapse border border-gray-300">
                 <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-700">
+                  <tr className="bg-gray-50">
                     {assets.spreadsheetTemplate.headers.map((header, index) => (
-                      <th key={index} className="border border-gray-300 dark:border-gray-600 p-2 text-left text-sm font-medium text-gray-900 dark:text-white">
+                      <th key={index} className="border border-gray-300 p-2 text-left text-sm font-medium text-gray-900">
                         {header}
                       </th>
                     ))}
@@ -260,9 +260,9 @@ export function MarketingAssetsGenerator({
                 </thead>
                 <tbody>
                   {assets.spreadsheetTemplate.sampleData.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="bg-white dark:bg-gray-800 even:bg-gray-50 dark:even:bg-gray-750">
+                    <tr key={rowIndex} className="bg-white even:bg-gray-50">
                       {row.map((cell, cellIndex) => (
-                        <td key={cellIndex} className="border border-gray-300 dark:border-gray-600 p-2 text-sm text-gray-700 dark:text-gray-300">
+                        <td key={cellIndex} className="border border-gray-300 p-2 text-sm text-gray-700">
                           {cell}
                         </td>
                       ))}
@@ -274,16 +274,16 @@ export function MarketingAssetsGenerator({
           </Card>
 
           {/* Bonus Resource */}
-          <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎯 Bonus Resource: {assets.bonusResource.title}</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <Card className="p-6 bg-white border border-gray-200">
+            <h4 className="text-lg font-semibold mb-4 text-gray-900">🎯 Bonus Resource: {assets.bonusResource.title}</h4>
+            <p className="text-sm text-gray-600 mb-4">
               Type: {assets.bonusResource.type.charAt(0).toUpperCase() + assets.bonusResource.type.slice(1)}
             </p>
             <div className="space-y-2">
               {assets.bonusResource.content.map((item, index) => (
                 <div key={index} className="flex items-start space-x-2">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-0.5">{index + 1}.</span>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{item}</p>
+                  <span className="text-sm font-medium text-gray-500 mt-0.5">{index + 1}.</span>
+                  <p className="text-sm text-gray-700">{item}</p>
                 </div>
               ))}
             </div>

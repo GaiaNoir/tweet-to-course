@@ -71,7 +71,7 @@ export function ErrorDisplay({
           <li>
             {tweetUrl ? (
               <span>
-                Open the tweet: <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline break-all">{tweetUrl}</a>
+                Open the tweet: <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline break-all">{tweetUrl}</a>
               </span>
             ) : (
               'Open the tweet in a new tab'
@@ -81,7 +81,7 @@ export function ErrorDisplay({
           <li>Paste it in the text box above</li>
           <li>Click "Generate Course" again</li>
         </ol>
-        <p className="text-xs opacity-75 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 p-2 rounded">
+        <p className="text-xs opacity-75 bg-blue-50 text-blue-800 p-2 rounded">
           💡 This actually works better since you can edit the text before generating your course!
         </p>
       </div>
@@ -91,14 +91,14 @@ export function ErrorDisplay({
   const baseClasses = "flex items-start space-x-3 p-4 rounded-lg border";
   
   const variantClasses = {
-    inline: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200",
-    modal: "bg-white dark:bg-gray-800 border-red-300 dark:border-red-700 shadow-lg text-gray-900 dark:text-white",
-    banner: "bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-900 dark:text-red-200"
+    inline: "bg-red-50 border-red-200 text-red-800",
+    modal: "bg-white border-red-300 shadow-lg text-gray-900",
+    banner: "bg-red-100 border-red-300 text-red-900"
   };
 
   return (
     <div className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
-      <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
+      <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
       
       <div className="flex-1 min-w-0">
         <h4 className="font-medium text-sm mb-1">
