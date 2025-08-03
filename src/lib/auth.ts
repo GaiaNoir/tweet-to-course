@@ -7,7 +7,7 @@ export type DbUser = Database['public']['Tables']['users']['Row'];
 
 // Client-side auth functions
 export const authClient = {
-  // Sign up with email and password (no email confirmation required)
+  // Sign up with email and password (with email confirmation)
   async signUp(email: string, password: string) {
     const supabase = createClient();
     
@@ -15,8 +15,7 @@ export const authClient = {
       email,
       password,
       options: {
-        // Email confirmation is disabled in Supabase settings
-        emailRedirectTo: undefined,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
