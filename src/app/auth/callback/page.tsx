@@ -19,13 +19,41 @@ function AuthCallbackContent() {
         const code = searchParams.get('code');
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
 
+        // Handle explicit errors first
         if (error) {
           setStatus('error');
           setMessage(errorDescription || error);
           return;
         }
 
+        // Check if user is already authenticated (email confirmation might be disabled)
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (user && !userError) {
+          // User is already authenticated, proceed with success
+          setStatus('success');
+          setMessage('Authentication successful! Redirecting...');
+          
+          const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+          const plan = searchParams.get('plan');
+          
+          let finalRedirect = redirectTo;
+          if (plan === 'pro') {
+            finalRedirect = '/billing';
+          } else if (redirectTo === '/dashboard' || redirectTo === '/') {
+            finalRedirect = '/dashboard';
+          }
+          
+          setTimeout(() => {
+            router.push(finalRedirect);
+          }, 1500);
+          return;
+        }
+
+        // Handle code-based confirmation (when email confirmation is enabled)
         if (code) {
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
@@ -39,30 +67,72 @@ function AuthCallbackContent() {
             setStatus('success');
             setMessage('Email confirmed successfully! Redirecting...');
             
-            // Check if there's a redirect URL or plan parameter
             const redirectTo = searchParams.get('redirectTo') || '/dashboard';
             const plan = searchParams.get('plan');
             
-            // If user was trying to access a pro plan, redirect to pricing or billing
             let finalRedirect = redirectTo;
             if (plan === 'pro') {
-              finalRedirect = '/billing'; // Take them to billing to complete pro subscription
+              finalRedirect = '/billing';
             } else if (redirectTo === '/dashboard' || redirectTo === '/') {
               finalRedirect = '/dashboard';
             }
             
-            // Redirect after a short delay
             setTimeout(() => {
               router.push(finalRedirect);
             }, 1500);
           }
-        } else {
+        } 
+        // Handle legacy token-based confirmation (fallback)
+        else if (accessToken && refreshToken) {
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (sessionError) {
+            setStatus('error');
+            setMessage(sessionError.message);
+            return;
+          }
+
+          if (data.user) {
+            setStatus('success');
+            setMessage('Authentication successful! Redirecting...');
+            
+            const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+            const plan = searchParams.get('plan');
+            
+            let finalRedirect = redirectTo;
+            if (plan === 'pro') {
+              finalRedirect = '/billing';
+            } else if (redirectTo === '/dashboard' || redirectTo === '/') {
+              finalRedirect = '/dashboard';
+            }
+            
+            setTimeout(() => {
+              router.push(finalRedirect);
+            }, 1500);
+          }
+        }
+        // No confirmation needed - redirect to sign in
+        else {
           setStatus('error');
-          setMessage('No confirmation code found');
+          setMessage('No confirmation data found. Please try signing in again.');
+          
+          // Auto-redirect to sign in after 3 seconds
+          setTimeout(() => {
+            router.push('/auth/sign-in');
+          }, 3000);
         }
       } catch (err: any) {
+        console.error('Auth callback error:', err);
         setStatus('error');
-        setMessage(err.message || 'An unexpected error occurred');
+        setMessage(err.message || 'An unexpected error occurred during authentication');
+        
+        // Auto-redirect to sign in after error
+        setTimeout(() => {
+          router.push('/auth/sign-in');
+        }, 3000);
       }
     };
 
