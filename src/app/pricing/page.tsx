@@ -26,7 +26,7 @@ export default function PricingPage() {
 
   const handleFreeTier = () => {
     if (!user) {
-      router.push('/sign-up');
+      router.push('/auth?plan=free');
     } else {
       router.push('/dashboard');
     }
@@ -34,7 +34,7 @@ export default function PricingPage() {
 
   const handleProSubscription = async () => {
     if (!user) {
-      router.push('/sign-up');
+      router.push('/auth?plan=pro');
       return;
     }
 
@@ -312,13 +312,13 @@ export default function PricingPage() {
                 onClick={handleFreeTier}
                 className="btn btn-secondary btn-lg w-full sm:w-auto"
               >
-                Start Free
+                Start Free Trial
               </button>
               <button
                 onClick={handleProSubscription}
                 className="btn btn-primary btn-lg w-full sm:w-auto"
               >
-                Go Pro Now
+                Start Pro Trial
                 <span className="ml-2">→</span>
               </button>
             </div>

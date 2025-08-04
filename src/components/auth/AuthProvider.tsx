@@ -10,7 +10,7 @@ interface AuthContextType {
   user: User | null;
   profile: DbUser | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, options?: { plan?: string; redirectTo?: string }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -94,10 +94,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [supabase.auth]);
 
   // Auth methods
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, options?: { plan?: string; redirectTo?: string }) => {
     setLoading(true);
     try {
-      await authClient.signUp(email, password);
+      await authClient.signUp(email, password, options);
       // User and profile will be set by the auth state change listener
     } catch (error) {
       setLoading(false);

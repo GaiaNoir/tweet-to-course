@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Loader2 } from 'lucide-react';
 
-export default function SignUpPage() {
+function SignUpContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -17,6 +17,11 @@ export default function SignUpPage() {
   
   const { signUp } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get plan and redirect parameters from URL
+  const plan = searchParams.get('plan');
+  const redirectTo = searchParams.get('redirectTo');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,9 +42,15 @@ export default function SignUpPage() {
     }
 
     try {
-      await signUp(email, password);
-      // Redirect to email confirmation page
-      router.push('/auth/confirm-email?email=' + encodeURIComponent(email));
+      // Pass plan and redirect information to signUp
+      await signUp(email, password, { plan: plan || undefined, redirectTo: redirectTo || undefined });
+      
+      // Redirect to email confirmation page with plan info
+      const confirmUrl = new URL('/auth/confirm-email', window.location.origin);
+      confirmUrl.searchParams.set('email', email);
+      if (plan) confirmUrl.searchParams.set('plan', plan);
+      
+      router.push(confirmUrl.toString());
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -60,7 +71,11 @@ export default function SignUpPage() {
               <span className="text-xl font-bold text-slate-900">TweetToCourse</span>
             </Link>
             <h1 className="text-2xl font-bold text-slate-900 mb-2">Create your account</h1>
-            <p className="text-slate-600">Start turning your tweets into courses</p>
+            <p className="text-slate-600">
+              {plan === 'pro' 
+                ? 'Sign up to start your Pro trial' 
+                : 'Start turning your tweets into courses'}
+            </p>
           </div>
 
           {/* Form */}
@@ -162,5 +177,25 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center">
+            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">Loading...</h1>
+            <p className="text-slate-600">Please wait while we load the sign-up page.</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <SignUpContent />
+    </Suspense>
   );
 }

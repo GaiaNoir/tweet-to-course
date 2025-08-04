@@ -8,14 +8,30 @@ export type DbUser = Database['public']['Tables']['users']['Row'];
 // Client-side auth functions
 export const authClient = {
   // Sign up with email and password (with email confirmation)
-  async signUp(email: string, password: string) {
+  async signUp(email: string, password: string, options?: { plan?: string; redirectTo?: string }) {
     const supabase = createClient();
+    
+    // Build redirect URL with plan and redirect parameters
+    const baseUrl = `${window.location.origin}/auth/callback`;
+    const params = new URLSearchParams();
+    
+    if (options?.plan) {
+      params.set('plan', options.plan);
+    }
+    
+    if (options?.redirectTo) {
+      params.set('redirectTo', options.redirectTo);
+    }
+    
+    const emailRedirectTo = params.toString() 
+      ? `${baseUrl}?${params.toString()}`
+      : baseUrl;
     
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo,
       },
     });
 

@@ -14,6 +14,9 @@ function ConfirmEmailContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  // Get plan information from URL
+  const plan = searchParams.get('plan');
+
   useEffect(() => {
     const emailParam = searchParams.get('email');
     if (emailParam) {
@@ -35,7 +38,9 @@ function ConfirmEmailContent() {
         type: 'signup',
         email: email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: plan 
+            ? `${window.location.origin}/auth/callback?plan=${plan}`
+            : `${window.location.origin}/auth/callback`
         }
       });
 
@@ -77,8 +82,17 @@ function ConfirmEmailContent() {
             <span className="font-medium text-slate-900">{email}</span>
           </p>
           <p className="text-sm text-slate-500 mb-8">
-            Click the link in the email to confirm your account and start using TweetToCourse.
+            Click the link in the email to confirm your account and {plan === 'pro' ? 'start your Pro trial' : 'start using TweetToCourse'}.
           </p>
+          
+          {plan === 'pro' && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-indigo-900 mb-2">🚀 Pro Trial Waiting</h3>
+              <p className="text-sm text-indigo-700">
+                After confirming your email, you'll be taken to complete your Pro subscription setup.
+              </p>
+            </div>
+          )}
 
           {/* Resend Section */}
           <div className="space-y-4">

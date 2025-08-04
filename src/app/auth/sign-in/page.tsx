@@ -17,6 +17,7 @@ function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+  const plan = searchParams.get('plan');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +26,14 @@ function SignInContent() {
 
     try {
       await signIn(email, password);
-      router.push(redirectTo);
+      
+      // Handle plan-specific redirects
+      let finalRedirect = redirectTo;
+      if (plan === 'pro') {
+        finalRedirect = '/billing'; // Take them to billing to complete pro subscription
+      }
+      
+      router.push(finalRedirect);
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
     } finally {
@@ -46,7 +54,11 @@ function SignInContent() {
               <span className="text-xl font-bold text-slate-900">TweetToCourse</span>
             </Link>
             <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome back</h1>
-            <p className="text-slate-600">Sign in to your account to continue</p>
+            <p className="text-slate-600">
+              {plan === 'pro' 
+                ? 'Sign in to start your Pro trial' 
+                : 'Sign in to your account to continue'}
+            </p>
           </div>
 
           {/* Form */}

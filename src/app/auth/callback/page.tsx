@@ -37,11 +37,23 @@ function AuthCallbackContent() {
 
           if (data.user) {
             setStatus('success');
-            setMessage('Email confirmed successfully! Redirecting to dashboard...');
+            setMessage('Email confirmed successfully! Redirecting...');
             
-            // Redirect to dashboard after a short delay
+            // Check if there's a redirect URL or plan parameter
+            const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+            const plan = searchParams.get('plan');
+            
+            // If user was trying to access a pro plan, redirect to pricing or billing
+            let finalRedirect = redirectTo;
+            if (plan === 'pro') {
+              finalRedirect = '/billing'; // Take them to billing to complete pro subscription
+            } else if (redirectTo === '/dashboard' || redirectTo === '/') {
+              finalRedirect = '/dashboard';
+            }
+            
+            // Redirect after a short delay
             setTimeout(() => {
-              router.push('/dashboard');
+              router.push(finalRedirect);
             }, 1500);
           }
         } else {

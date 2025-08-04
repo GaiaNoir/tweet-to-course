@@ -65,7 +65,7 @@ export default function LandingPage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Link
-                href="/auth/sign-up"
+                href="/auth?plan=free"
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 Get Started Free
@@ -126,7 +126,7 @@ export default function LandingPage() {
                 Join thousands of creators who are already turning their knowledge into courses.
               </p>
               <Link
-                href="/auth/sign-up"
+                href="/auth?plan=free"
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-xl transition-all duration-300 hover:scale-105 inline-block"
               >
                 Start Creating Now
