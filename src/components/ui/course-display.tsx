@@ -36,7 +36,7 @@ export function CourseDisplay({
   isExporting = false,
   isExportingComplete = false,
   isNotionConnected = false,
-  onNotionConnectionRequiredAction = () => {}
+  onNotionConnectionRequiredAction = () => { }
 }: CourseDisplayProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(course.title);
@@ -47,7 +47,7 @@ export function CourseDisplay({
 
   // Use the hook to get user profile and permissions
   const { user, profile, loading } = useAuth();
-  
+
   // Derive permissions from profile data
   const canExportNotion = profile?.subscription_status === 'pro' || profile?.subscription_status === 'lifetime';
   const isFreeTier = !profile?.subscription_status || profile?.subscription_status === 'free';
@@ -76,9 +76,9 @@ export function CourseDisplay({
 
   const handleDownloadPDF = async () => {
     if (isDownloadingPDF) return;
-    
+
     setIsDownloadingPDF(true);
-    
+
     try {
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
@@ -102,17 +102,17 @@ export function CourseDisplay({
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const filename = `${course.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '_')}_course.pdf`;
-      
+
       const downloadLink = document.createElement('a');
       downloadLink.href = url;
       downloadLink.download = filename;
       downloadLink.style.display = 'none';
-      
+
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
       window.URL.revokeObjectURL(url);
-      
+
     } catch (error) {
       console.error('PDF download error:', error);
       alert(`Failed to download PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -123,12 +123,12 @@ export function CourseDisplay({
 
   const handleDownloadMarkdown = async () => {
     if (isDownloadingMarkdown) return;
-    
+
     setIsDownloadingMarkdown(true);
-    
+
     try {
       console.log('🔄 Starting markdown export for course:', course.title);
-      
+
       const response = await fetch('/api/export-markdown', {
         method: 'POST',
         headers: {
@@ -152,7 +152,7 @@ export function CourseDisplay({
 
       const markdownContent = await response.text();
       console.log('✅ Markdown content generated:', markdownContent.length, 'characters');
-      
+
       // Validate content
       if (!markdownContent || markdownContent.length < 100) {
         throw new Error('Generated markdown content is too short or empty');
@@ -162,30 +162,30 @@ export function CourseDisplay({
       const blob = new Blob([markdownContent], { type: 'text/markdown; charset=utf-8' });
       const url = window.URL.createObjectURL(blob);
       const filename = `${course.title.replace(/[^a-z0-9\s\-_]/gi, '').replace(/\s+/g, '_').toLowerCase()}.md`;
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
       link.style.display = 'none';
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       console.log('✅ Markdown file downloaded successfully:', filename);
-      
+
       // Show success message
       if (typeof window !== 'undefined' && 'showNotification' in window) {
         // If you have a notification system
         (window as any).showNotification('Markdown exported successfully!', 'success');
       }
-      
+
     } catch (error) {
       console.error('❌ Markdown download failed:', error);
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       // Show user-friendly error message
       if (errorMessage.includes('401') || errorMessage.includes('Authentication')) {
         alert('Please sign in to download the markdown file.');
@@ -224,13 +224,13 @@ export function CourseDisplay({
   // Extract course overview and learning outcomes from the first module content if available
   const extractCourseOverview = (content: string) => {
     if (!content) return { overview: '', targetAudience: '', learningOutcomes: [], estimatedTime: '' };
-    
+
     const lines = content.split('\n');
     let overview = '';
     let targetAudience = '';
     let learningOutcomes: string[] = [];
     let estimatedTime = '';
-    
+
     // Simple extraction logic
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].toLowerCase();
@@ -248,20 +248,20 @@ export function CourseDisplay({
         estimatedTime = lines[i + 1] || '';
       }
     }
-    
+
     return { overview, targetAudience, learningOutcomes, estimatedTime };
   };
 
   // Get course info from the first module if available
   const firstModuleContent = course.modules && course.modules.length > 0 ? course.modules[0].summary : '';
-  const courseInfo = firstModuleContent 
-    ? extractCourseOverview(firstModuleContent) 
+  const courseInfo = firstModuleContent
+    ? extractCourseOverview(firstModuleContent)
     : {
-        overview: '',
-        targetAudience: '',
-        learningOutcomes: [],
-        estimatedTime: ''
-      };
+      overview: '',
+      targetAudience: '',
+      learningOutcomes: [],
+      estimatedTime: ''
+    };
 
   // Custom markdown components with proper typing
   const markdownComponents = safeMarkdownComponents;
@@ -318,7 +318,7 @@ export function CourseDisplay({
                   </div>
                 )}
               </div>
-              
+
               {/* Course Metadata */}
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 <span className="flex items-center gap-1">
@@ -329,7 +329,7 @@ export function CourseDisplay({
                 </span>
                 {profile && (
                   <span className="flex items-center gap-1">
-                    👤 
+                    👤
                     <span className={`font-medium ${isFreeTier ? 'text-orange-600' : 'text-green-600'}`}>
                       {profile.subscription_status?.toUpperCase()} Plan
                     </span>
@@ -337,7 +337,7 @@ export function CourseDisplay({
                 )}
               </div>
             </div>
-            
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 lg:min-w-[300px]">
               <button
@@ -356,7 +356,7 @@ export function CourseDisplay({
                   </>
                 )}
               </button>
-              
+
               <button
                 onClick={handleDownloadPDF}
                 disabled={isDownloadingPDF}
@@ -396,11 +396,10 @@ export function CourseDisplay({
               <button
                 onClick={handleExportComplete}
                 disabled={isExportingComplete}
-                className={`px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
-                  isFreeTier 
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600' 
-                    : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${isFreeTier
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
+                  : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isExportingComplete ? (
                   <>
@@ -423,10 +422,10 @@ export function CourseDisplay({
           {course.modules.length > 0 && (
             <div className="mb-8">
               <div className="prose prose-lg max-w-none">
-                <ReactMarkdown 
+                <ReactMarkdown
                   components={{
                     ...markdownComponents,
-                    h1: ({ children, ...props }) => {
+                    h1: ({ children, level, ...props }: any) => {
                       const cleanProps = filterInvalidHtmlAttributes(props);
                       return (
                         <h1 className="text-3xl font-bold mb-6 text-gray-900 border-b-2 border-green-500 pb-3" {...cleanProps}>
@@ -434,21 +433,21 @@ export function CourseDisplay({
                         </h1>
                       );
                     },
-                    h2: ({ children, ...props }) => {
+                    h2: ({ children, level, ...props }: any) => {
                       const cleanProps = filterInvalidHtmlAttributes(props);
                       return (
                         <h2 className="text-2xl font-bold mb-4 text-gray-800 mt-8 flex items-center gap-3" {...cleanProps}>
                           <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                            {String(children).includes('Overview') ? '📋' : 
-                             String(children).includes('Target') ? '👥' : 
-                             String(children).includes('Learning') ? '🎯' : 
-                             String(children).includes('Time') ? '⏱️' : '📌'}
+                            {String(children).includes('Overview') ? '📋' :
+                              String(children).includes('Target') ? '👥' :
+                                String(children).includes('Learning') ? '🎯' :
+                                  String(children).includes('Time') ? '⏱️' : '📌'}
                           </span>
                           {children}
                         </h2>
                       );
                     },
-                    h3: ({ children, ...props }) => {
+                    h3: ({ children, level, ...props }: any) => {
                       const cleanProps = filterInvalidHtmlAttributes(props);
                       return (
                         <h3 className="text-xl font-semibold mb-3 text-gray-700 mt-6" {...cleanProps}>
@@ -512,7 +511,7 @@ export function CourseDisplay({
               </div>
             </div>
           )}
-          
+
           {/* Course Stats Dashboard */}
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
             <h3 className="text-xl font-bold text-green-900 mb-6 flex items-center gap-3">
@@ -521,7 +520,7 @@ export function CourseDisplay({
               </span>
               Course Statistics
             </h3>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="bg-white rounded-xl p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="text-3xl font-bold text-green-800 mb-1">{course.modules.length}</div>
@@ -541,15 +540,15 @@ export function CourseDisplay({
               </div>
               <div className="bg-white rounded-xl p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="text-3xl font-bold text-green-800 mb-1">
-                  {course.metadata?.sourceType ? 
-                    course.metadata.sourceType.charAt(0).toUpperCase() + course.metadata.sourceType.slice(1) : 
+                  {course.metadata?.sourceType ?
+                    course.metadata.sourceType.charAt(0).toUpperCase() + course.metadata.sourceType.slice(1) :
                     'Tweet'
                   }
                 </div>
                 <div className="text-sm text-green-600 font-medium">Source</div>
               </div>
             </div>
-            
+
             {/* Course Progress Overview */}
             <div className="mt-6 pt-6 border-t border-green-200">
               <div className="flex items-center justify-between mb-3">
@@ -572,7 +571,7 @@ export function CourseDisplay({
           return (
             <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
               {/* Module Header */}
-              <div 
+              <div
                 className="module-header bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-b border-blue-200 p-6 sm:p-8 cursor-pointer hover:from-blue-100 hover:via-indigo-100 hover:to-purple-100 transition-all duration-300"
                 onClick={() => toggleModuleExpansion(index)}
               >
@@ -600,11 +599,11 @@ export function CourseDisplay({
                       {module.summary.split('\n')[0].replace(/^#+\s*/, '').substring(0, 200)}
                       {module.summary.length > 200 ? '...' : ''}
                     </p>
-                    
+
                     {/* Progress indicator */}
                     <div className="mt-4 flex items-center gap-3">
                       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
                           style={{ width: isExpanded ? '100%' : '0%' }}
                         ></div>
@@ -614,20 +613,20 @@ export function CourseDisplay({
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex-shrink-0">
                     <div className={`w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl ${isExpanded ? 'rotate-180 scale-110' : 'hover:scale-105'}`}>
-                      <svg 
-                        className="w-6 h-6" 
-                        fill="none" 
-                        stroke="currentColor" 
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M19 9l-7 7-7-7" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
                         />
                       </svg>
                     </div>
@@ -660,10 +659,10 @@ export function CourseDisplay({
                   {/* Module Content with Professional Formatting */}
                   <div className="course-content module-content">
                     <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 sm:p-8 mb-8 border border-gray-200">
-                      <ReactMarkdown 
+                      <ReactMarkdown
                         components={{
                           ...markdownComponents,
-                          h1: ({ children, ...props }) => {
+                          h1: ({ children, level, ...props }: any) => {
                             const cleanProps = filterInvalidHtmlAttributes(props);
                             return (
                               <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-gray-900 border-b-3 border-blue-500 pb-4" {...cleanProps}>
@@ -671,21 +670,21 @@ export function CourseDisplay({
                               </h1>
                             );
                           },
-                          h2: ({ children, ...props }) => {
+                          h2: ({ children, level, ...props }: any) => {
                             const cleanProps = filterInvalidHtmlAttributes(props);
                             return (
                               <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800 mt-8 flex items-start gap-4" {...cleanProps}>
                                 <span className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0 mt-1">
-                                  {String(children).includes('Overview') ? '📋' : 
-                                   String(children).includes('Content') ? '📖' : 
-                                   String(children).includes('Takeaway') ? '🎯' : 
-                                   String(children).includes('Module') ? '📚' : '📌'}
+                                  {String(children).includes('Overview') ? '📋' :
+                                    String(children).includes('Content') ? '📖' :
+                                      String(children).includes('Takeaway') ? '🎯' :
+                                        String(children).includes('Module') ? '📚' : '📌'}
                                 </span>
                                 <span className="flex-1">{children}</span>
                               </h2>
                             );
                           },
-                          h3: ({ children, ...props }) => {
+                          h3: ({ children, level, ...props }: any) => {
                             const cleanProps = filterInvalidHtmlAttributes(props);
                             return (
                               <h3 className="text-xl sm:text-2xl font-semibold mb-4 text-gray-700 mt-8 border-l-4 border-blue-400 pl-6 bg-blue-50 py-3 rounded-r-lg" {...cleanProps}>
@@ -693,7 +692,7 @@ export function CourseDisplay({
                               </h3>
                             );
                           },
-                          h4: ({ children, ...props }) => {
+                          h4: ({ children, level, ...props }: any) => {
                             const cleanProps = filterInvalidHtmlAttributes(props);
                             return (
                               <h4 className="text-lg sm:text-xl font-medium mb-3 text-gray-600 mt-6" {...cleanProps}>
@@ -785,7 +784,7 @@ export function CourseDisplay({
                             Essential insights from Module {index + 1}
                           </p>
                         </div>
-                        
+
                         <div className="grid gap-6">
                           {module.takeaways.map((takeaway, takeawayIndex) => (
                             <div
@@ -812,7 +811,7 @@ export function CourseDisplay({
                                     {takeaway}
                                   </p>
                                 )}
-                                
+
                                 {/* Action indicator */}
                                 <div className="mt-4 flex items-center gap-2 text-sm text-indigo-600">
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -824,7 +823,7 @@ export function CourseDisplay({
                             </div>
                           ))}
                         </div>
-                        
+
                         {/* Summary stats */}
                         <div className="mt-8 pt-6 border-t border-indigo-200">
                           <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
@@ -861,12 +860,12 @@ export function CourseDisplay({
                           {module.takeaways?.length || 0} key takeaways
                         </span>
                       </div>
-                      
+
                       {/* Progress Bar */}
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-gray-500 font-medium">Progress:</span>
                         <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
                             style={{ width: `${((index + 1) / course.modules.length) * 100}%` }}
                           ></div>
@@ -902,11 +901,11 @@ export function CourseDisplay({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-sm text-gray-500">
             <p>
-              Course generated with AI • {course.modules.length} modules • 
+              Course generated with AI • {course.modules.length} modules •
               {course.modules.reduce((total, module) => total + (module.estimatedReadTime || 5), 0)} min read
             </p>
           </div>
-          
+
           <div className="flex gap-3">
             <button
               onClick={() => window.location.href = '/pricing'}
@@ -923,7 +922,7 @@ export function CourseDisplay({
           </div>
         </div>
       </div>
-      
+
       {/* Debug Content Inspector */}
       <ContentInspector course={course} />
     </div>

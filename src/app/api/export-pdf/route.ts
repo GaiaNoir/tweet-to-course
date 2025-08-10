@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase';
 import jsPDF from 'jspdf';
 
+/**
+ * PDF Export API - Canva Optimized
+ * 
+ * This API generates PDFs optimized for copy-paste into Canva and other design tools:
+ * - Clean ASCII-only text (no emojis or special characters)
+ * - Normalized line endings and spacing
+ * - Improved text boundaries for easy selection
+ * - Better visual separation between sections
+ * - Consistent formatting throughout
+ * - Professional typography and margins
+ */
+
 interface ExportPDFRequest {
   courseId?: string;
   courseData?: unknown;
@@ -92,8 +104,8 @@ export async function POST(request: NextRequest) {
     // All users can export PDF, but Pro users get custom branding and no watermark
     const isPro = profile.subscription_status === 'pro' || profile.subscription_status === 'lifetime';
 
-    // Use course data directly
-    const course = courseData;
+    // Use course data directly with proper typing
+    const course = courseData as any;
 
     // For now, use default branding (we can add custom branding later)
     const branding = {
@@ -103,13 +115,13 @@ export async function POST(request: NextRequest) {
     };
     console.log('🎨 Branding settings:', { isPro, branding });
 
-    // Generate PDF
-    console.log('📄 Starting PDF generation with jsPDF');
+    // Generate clean, professional PDF inspired by business documents
+    console.log('📄 Starting clean, professional PDF generation');
     
-    const pdf = new jsPDF();
+    const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 20;
+    const margin = 25; // Slightly larger margins for professional look
     const maxWidth = pageWidth - (margin * 2);
     
     let yPosition = margin;
@@ -121,90 +133,230 @@ export async function POST(request: NextRequest) {
       maxWidth
     });
 
-    // Skip logo for now - we can add this feature later if needed
-    // This simplifies the PDF generation and avoids potential image loading errors
-
-    // Helper function to add text with word wrapping and custom colors
-    const addText = (text: string, fontSize: number = 12, isBold: boolean = false, useCustomColor: boolean = false) => {
-      pdf.setFontSize(fontSize);
-      pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-      
-      // Apply custom colors for Pro users
-      if (isPro && useCustomColor && branding.primary_color) {
-        const color = branding.primary_color;
-        const r = parseInt(color.slice(1, 3), 16);
-        const g = parseInt(color.slice(3, 5), 16);
-        const b = parseInt(color.slice(5, 7), 16);
-        pdf.setTextColor(r, g, b);
-      } else {
-        pdf.setTextColor(0, 0, 0); // Default black
-      }
-      
-      const lines = pdf.splitTextToSize(text, maxWidth);
-      
-      // Check if we need a new page
-      if (yPosition + (lines.length * fontSize * 0.5) > pageHeight - margin) {
+    // Helper function to check if we need a new page
+    const checkPageBreak = (requiredSpace: number) => {
+      if (yPosition + requiredSpace > pageHeight - 50) {
         pdf.addPage();
         yPosition = margin;
+        return true;
       }
-      
-      pdf.text(lines, margin, yPosition);
-      yPosition += lines.length * fontSize * 0.5 + 5;
+      return false;
     };
 
-    // Add title with custom color
-    addText(course.title, 20, true, true);
+    // Helper function to add a text block with clear boundaries for Canva
+    const addTextBlock = (text: string, fontSize: number = 11, isBold: boolean = false, spacingBefore: number = 5, spacingAfter: number = 10) => {
+      if (!text || !text.trim()) return;
+      
+      // Add spacing before the text block
+      yPosition += spacingBefore;
+      
+      // Add the text
+      addText(text, fontSize, isBold, spacingAfter);
+    };
+
+    // Helper function to add clean text optimized for Canva copy-paste
+    const addText = (text: string, fontSize: number = 11, isBold: boolean = false, spacingAfter: number = 8) => {
+      if (!text || !text.trim()) return;
+      
+      // Canva-optimized text cleaning - preserve structure but remove problematic characters
+      const cleanText = text
+        .replace(/[^\x20-\x7E\n\r]/g, '') // Keep only printable ASCII + line breaks
+        .replace(/\r\n/g, '\n') // Normalize line endings
+        .replace(/\r/g, '\n') // Convert remaining \r to \n
+        .replace(/\t/g, '    ') // Convert tabs to spaces
+        .replace(/\s+/g, ' ') // Normalize whitespace but preserve single spaces
+        .replace(/\n\s+/g, '\n') // Remove leading spaces after line breaks
+        .replace(/\s+\n/g, '\n') // Remove trailing spaces before line breaks
+        .trim();
+      
+      if (!cleanText) return;
+      
+      pdf.setFontSize(fontSize);
+      pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+      pdf.setTextColor(0, 0, 0);
+      
+      // Optimize line splitting for better copy-paste experience
+      const lines = pdf.splitTextToSize(cleanText, maxWidth);
+      const textHeight = lines.length * (fontSize * 0.35);
+      
+      checkPageBreak(textHeight + spacingAfter);
+      
+      // Add invisible text boundaries for better selection (using spaces)
+      pdf.text(lines, margin, yPosition);
+      yPosition += textHeight + spacingAfter;
+    };
+
+    // Helper function to add section with Canva-optimized spacing
+    const addSection = (title: string, content: string = '', titleSize: number = 14) => {
+      // Add extra space before sections for better visual separation
+      yPosition += 8;
+      
+      // Section title with clear boundaries
+      addText(title, titleSize, true, 14);
+      
+      // Section content with proper spacing
+      if (content) {
+        addText(content, 11, false, 16);
+      }
+    };
+
+    // Helper function to add bullet point optimized for Canva copy-paste
+    const addBulletPoint = (text: string, indent: number = 15) => {
+      const cleanText = text
+        .replace(/[^\x20-\x7E\n]/g, '') // Keep line breaks for better structure
+        .replace(/^\s*[-•*]\s*/, '') // Remove existing bullet markers
+        .replace(/\s+/g, ' ') // Normalize spaces
+        .trim();
+      
+      if (!cleanText) return;
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(0, 0, 0);
+      
+      // Use simple bullet for better copy-paste compatibility
+      pdf.text('•', margin + 5, yPosition);
+      
+      // Add text with proper wrapping and spacing for easy selection
+      const lines = pdf.splitTextToSize(cleanText, maxWidth - indent);
+      const textHeight = lines.length * (11 * 0.35);
+      
+      checkPageBreak(textHeight + 8);
+      
+      pdf.text(lines, margin + indent, yPosition);
+      yPosition += textHeight + 8; // Extra spacing for better visual separation
+    };
+
+    // Helper function to process content with Canva copy-paste optimization
+    const processContent = (content: string) => {
+      const lines = content.split('\n');
+      
+      for (const line of lines) {
+        const cleanLine = line.trim();
+        if (!cleanLine) {
+          // Add small spacing for empty lines to maintain structure
+          yPosition += 4;
+          continue;
+        }
+        
+        // Handle markdown headers with better spacing
+        if (cleanLine.startsWith('###')) {
+          const headerText = cleanLine.replace(/^#+\s*/, '');
+          addSection(headerText, '', 12);
+        } else if (cleanLine.startsWith('##')) {
+          const headerText = cleanLine.replace(/^#+\s*/, '');
+          addSection(headerText, '', 13);
+        } else if (cleanLine.startsWith('#')) {
+          const headerText = cleanLine.replace(/^#+\s*/, '');
+          addSection(headerText, '', 14);
+        }
+        // Handle bold text as subsection headers
+        else if (cleanLine.startsWith('**') && cleanLine.endsWith('**')) {
+          const boldText = cleanLine.replace(/^\*\*|\*\*$/g, '');
+          addText(boldText, 12, true, 12);
+        }
+        // Handle bullet points with improved formatting
+        else if (cleanLine.match(/^\s*[-•*]\s/)) {
+          addBulletPoint(cleanLine);
+        }
+        // Handle numbered lists with consistent formatting
+        else if (cleanLine.match(/^\d+\.\s/)) {
+          const numberedText = cleanLine.replace(/^\d+\.\s*/, '');
+          const number = cleanLine.match(/^\d+/)?.[0];
+          addText(`${number}. ${numberedText}`, 11, false, 8);
+        }
+        // Handle regular paragraphs with clean formatting
+        else {
+          const paragraph = cleanLine
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+            .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
+            .replace(/`(.*?)`/g, '$1') // Remove code formatting
+            .replace(/\[(.*?)\]\(.*?\)/g, '$1'); // Remove links, keep text
+          
+          addText(paragraph, 11, false, 12);
+        }
+      }
+    };
+
+    // Document title with clear spacing for easy selection
+    addText(course.title, 18, true, 25);
+    
+    // Document info with separator line for visual clarity
+    addText(`Generated: ${new Date().toLocaleDateString()}`, 9, false, 15);
+    
+    // Add a visual separator for better content organization
     yPosition += 10;
 
-    // Add generation date
-    addText(`Generated on: ${new Date().toLocaleDateString()}`, 10);
-    yPosition += 15;
-
-    // Add modules
+    // Course overview section with improved formatting for Canva
     const modules = Array.isArray(course.modules) ? course.modules : [];
+    const totalReadTime = modules.reduce((total: number, module: any) => total + (module.estimatedReadTime || 8), 0);
+    const totalTakeaways = modules.reduce((total: number, module: any) => total + (module.takeaways?.length || 0), 0);
     
-    modules.forEach((module: unknown, index: number) => {
-      // Module title with custom color
-      addText(`Module ${index + 1}: ${(module as any).title}`, 16, true, true);
-      yPosition += 5;
+    addSection('COURSE OVERVIEW');
+    addText(`Modules: ${modules.length}`, 11, false, 8);
+    addText(`Reading Time: ${totalReadTime} minutes`, 11, false, 8);
+    addText(`Key Points: ${totalTakeaways}`, 11, false, 25);
+
+    // Process each module with Canva-optimized formatting
+    modules.forEach((module: any, index: number) => {
+      // Module header with clear separation
+      addSection(`MODULE ${index + 1}: ${module.title.toUpperCase()}`, '', 15);
       
-      // Module summary
+      // Module info with clean formatting
+      const readTime = module.estimatedReadTime || 8;
+      const takeawayCount = module.takeaways?.length || 0;
+      addText(`Reading Time: ${readTime} minutes | Key Points: ${takeawayCount}`, 10, false, 18);
+      
+      // Process module content with better structure
       if (module.summary) {
-        addText(module.summary, 12);
-        yPosition += 10;
+        console.log(`Processing module ${index + 1} content (${module.summary.length} chars)`);
+        processContent(module.summary);
+        yPosition += 10; // Extra space after content
       }
       
-      // Takeaways
-      if (module.takeaways && Array.isArray(module.takeaways)) {
-        addText('Key Takeaways:', 14, true, true);
-        yPosition += 5;
+      // Add takeaways with improved formatting for Canva copy-paste
+      if (module.takeaways && Array.isArray(module.takeaways) && module.takeaways.length > 0) {
+        addSection('KEY TAKEAWAYS', '', 13);
         
-        module.takeaways.forEach((takeaway: string) => {
-          addText(`• ${takeaway}`, 12);
+        module.takeaways.forEach((takeaway: string, idx: number) => {
+          const cleanTakeaway = takeaway
+            .replace(/[^\x20-\x7E\n]/g, '') // Keep line breaks
+            .replace(/^\s*[-•*]\s*/, '') // Remove bullet markers
+            .replace(/\s+/g, ' ') // Normalize spaces
+            .replace(/\s+$/, '') // Remove trailing spaces
+            .trim();
+          
+          if (cleanTakeaway) {
+            // Add each takeaway as a separate text block for easier selection
+            addTextBlock(`${idx + 1}. ${cleanTakeaway}`, 11, false, 2, 8);
+          }
         });
-        yPosition += 15;
+        
+        yPosition += 20; // Extra space after takeaways for module separation
       }
     });
 
-    // Add footer to each page
+    // Add clean, professional footer
     const totalPages = pdf.getNumberOfPages();
-    console.log('📄 Adding footer to', totalPages, 'pages. isPro:', isPro);
+    console.log('📄 Adding clean footer to', totalPages, 'pages. isPro:', isPro);
     
     for (let i = 1; i <= totalPages; i++) {
       pdf.setPage(i);
-      pdf.setFontSize(10);
-      pdf.setTextColor(150, 150, 150);
       
-      if (isPro) {
-        // Use custom footer text for Pro users
-        const footerText = 'Generated by TweetToCourse';
-        console.log('📄 Adding Pro footer:', footerText);
-        pdf.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
-      } else {
-        // Add watermark for free users
-        console.log('📄 Adding watermark for free user');
-        pdf.text('Generated by TweetToCourse - Upgrade to remove watermark', 
-          pageWidth / 2, pageHeight - 10, { align: 'center' });
+      // Clean footer line
+      pdf.setDrawColor(220, 220, 220);
+      pdf.line(margin, pageHeight - 30, pageWidth - margin, pageHeight - 30);
+      
+      // Page number (right aligned)
+      pdf.setFontSize(9);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(`${i}`, pageWidth - margin, pageHeight - 20, { align: 'right' });
+      
+      // Company name (left aligned, only for free users)
+      if (!isPro) {
+        pdf.setFontSize(9);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text('TweetToCourse', margin, pageHeight - 20);
       }
     }
 
